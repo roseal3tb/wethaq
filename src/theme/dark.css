@@ -105,3 +105,31 @@ html[data-theme="dark"] .demo-tour-button{border-color:#506848;background:#293B3
 @media(max-width:880px){.theme-control{min-width:90px}.theme-control-compact{display:none}.demo-tour-button>span{display:none}}
 @media(max-width:480px){.theme-control{min-width:88px}.theme-control select{font-size:10px}.demo-tour-button{padding:0 9px}.demo-tour-actions .btn{flex:1}}
 @media(prefers-reduced-motion:reduce){.theme-control,.demo-tour-button{transition:none}}
+/* Contrast audit refinements: charts, risk tables, selection, secondary surfaces */
+html[data-theme="dark"] .chart-box svg path[stroke="#0F2A44"]{stroke:#DAE9F1!important}
+html[data-theme="dark"] .chart-box svg path[fill="#0F2A44"]{fill:#DAE9F1!important}
+html[data-theme="dark"] .chart-box svg path[fill="#FFFFFF"]{fill:#1A2B3C!important}
+html[data-theme="dark"] .chart-box svg path[fill="#8A9A4B"]{fill:#A9B978!important}
+html[data-theme="dark"] .chart-box svg path[stroke="#8A9A4B"]{stroke:#BACE81!important}
+html[data-theme="dark"] .donut-wrap svg path[fill="#0F2A44"]{fill:#C0D1DF!important}
+html[data-theme="dark"] .chart-box svg .recharts-reference-line-label{fill:#BCCBD4!important}
+html[data-theme="dark"] .overview-trust{background:linear-gradient(110deg,#253B42,#1B302F)}
+html[data-theme="dark"] .network-banner{background:linear-gradient(110deg,#1A2B3C,#203E3D)}
+html[data-theme="dark"] .detail-kpis>div,html[data-theme="dark"] .journey-node,html[data-theme="dark"] .journey-tx,
+html[data-theme="dark"] .model-toggle.on,html[data-theme="dark"] .table-select{background:#2A4052;color:#DCE7EE}
+html[data-theme="dark"] .activity-icon.danger,html[data-theme="dark"] .validation-item.failed .rule-icon{background:#51343A;color:#F2ADA6}
+html[data-theme="dark"] .validation-item.pending .rule-icon{background:#2A3C4D;color:#AEC0CE}
+html[data-theme="dark"] .soft-label{background:#2D4152;color:#D0DFE9}
+html[data-theme="dark"] .click-row:focus-visible{background:#304A5D}
+html[data-theme="dark"] .form-error{background:#543139;color:#FFC4BE;border-color:#8A4C54}
+html[data-theme="dark"] .input-action:hover{background:#30483B;color:#D9E6B1}
+html[data-theme="dark"] .recharts-tooltip-wrapper .recharts-default-tooltip{background-color:#1A2B3C!important;border-color:#425A6C!important;color:#F1F4F7!important;box-shadow:0 15px 35px #0005!important}
+html[data-theme="dark"] .recharts-tooltip-item{color:#DAE9EF!important}
+html[data-theme="dark"] .col-menu label{color:#D8E4EB}
+html[data-theme="dark"] .grid-count{color:#BFCCD6}
+html[data-theme="dark"] .sidebar .nav-item.active{background:#2B4537;color:#E4F0C7}
+html[data-theme="dark"] .empty{color:#B5C4CF}
+html[data-theme="dark"] .state-icon{background:#2A4051}
+@media (prefers-reduced-motion:reduce) {
+  *,*::before,*::after {animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
