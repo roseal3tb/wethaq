@@ -9,7 +9,7 @@ describe('Synthetic data consistency', () => {
   it('references only existing parts and matching transaction shipments', () => {
     const d = initialData(); const partIds = new Set(PARTS.map(p => p.id)); const shipmentIds = new Set(d.shipments.map(s => s.id));
     expect(d.shipments.length).toBeGreaterThanOrEqual(40);
-    expect(d.transactions.filter(t => t.status === 'Rejected')).toHaveLength(10);
+    expect(d.transactions.filter(t => t.status === 'Rejected')).toHaveLength(10); expect(d.transactions.filter(t => t.status === 'Rejected').every(t => t.type === 'ATTEMPT')).toBe(true);
     for (const s of d.shipments) expect(partIds.has(s.partId)).toBe(true);
     for (const t of d.transactions) { expect(t.hash).toMatch(/^[0-9a-f]{64}$/); if (t.status === 'Committed') expect(shipmentIds.has(t.shipmentId)).toBe(true); else expect(t.block).toBeUndefined(); }
   });
