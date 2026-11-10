@@ -270,3 +270,119 @@ html[data-theme='dark'] .overview-trust span{color:#DDEBD7!important}
 html[data-theme='dark'] .overview-trust>a{color:#DCECAF!important}
 html[data-theme='dark'] .overview-trust>a:hover{color:#F4FBD9!important}
 html[data-theme='dark'] .overview-trust svg{color:#B8CFAB!important}
+
+/*
+ * Login layout regression fix
+ * Theme toggle is an absolute overlay, never a third CSS-grid item
+ * Desktop: complete brand panel on the left, sign-in panel on the right
+ * Mobile: compact brand hero above a full-width sign-in form
+ */
+.login {
+  position:relative;
+  isolation:isolate;
+  display:grid;
+  grid-template-columns:minmax(0,1.05fr) minmax(420px,.95fr);
+  align-items:stretch;
+  min-height:100dvh;
+  overflow-x:clip;
+}
+.login > .login-theme{
+  position:absolute!important;
+  z-index:12;
+  right:clamp(16px,2.3vw,36px);
+  top:clamp(16px,2.3vw,28px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:44px;
+  height:44px;
+  grid-column:auto;
+  grid-row:auto;
+}
+.login > .login-brand{
+  grid-column:1;
+  grid-row:1;
+  min-width:0;
+  min-height:100dvh;
+  padding-bottom:clamp(36px,5vw,65px);
+}
+.login > .login-right{
+  grid-column:2;
+  grid-row:1;
+  min-width:0;
+  min-height:100dvh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:clamp(76px,8vw,106px) clamp(30px,5vw,86px) 50px;
+}
+.login .login-form-wrap{width:100%;min-width:0;max-width:460px}
+.login .login-theme .theme-icon-toggle{
+  width:44px;height:44px;min-width:44px;border-radius:14px;
+}
+.login-brand-top,.login-message{max-width:100%}
+.login-message h1{overflow-wrap:normal}
+html[data-theme='light'] .login > .login-right{background:#F8FAFB;color:#172F41}
+html[data-theme='dark'] .login > .login-right{background:#101B28;color:#EFF3F6}
+html[data-theme='dark'] .login-right .login-form-wrap{background:transparent}
+html[data-theme='dark'] .login form .field>span{color:#DCE7EC!important}
+html[data-theme='dark'] .login-heading h2{color:#F3F7F9}
+html[data-theme='dark'] .login-topline{color:#B1C2CE}
+html[data-theme='dark'] .login .info-banner{color:#D6E3EB}
+@media(max-width:1020px) and (min-width:761px) {
+  .login{grid-template-columns:minmax(0,1fr) minmax(380px,1fr)}
+  .login>.login-brand{padding:35px;min-height:100dvh}
+  .login>.login-right{padding:78px 32px 38px;min-height:100dvh}
+  .login-message{margin:36px 0 25px}
+  .login-message h1{font-size:clamp(33px,4vw,47px)}
+  .login-message p{font-size:12px}
+}
+@media(max-width:760px){
+  .login{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:auto auto;
+    min-height:100dvh;
+    align-content:start;
+  }
+  .login>.login-brand{
+    grid-column:1;
+    grid-row:1;
+    min-height:0;
+    padding:31px 24px 27px;
+    border-radius:0;
+  }
+  .login>.login-right{
+    grid-column:1;
+    grid-row:2;
+    min-height:0;
+    padding:35px clamp(18px,5vw,38px) 45px;
+    align-items:flex-start;
+  }
+  .login>.login-theme{
+    position:absolute!important;
+    right:18px;top:18px;left:auto;bottom:auto;
+  }
+  .login .login-brand-top{padding-right:54px}
+  .login .login-brand-top img{width:148px;max-height:73px}
+  .login .login-message{margin:21px 0 0}
+  .login .login-message h1{font-size:clamp(28px,6vw,36px);line-height:1.12;margin:12px 0 0}
+  .login .login-message h1 br:nth-of-type(n+2){display:none}
+  .login .login-brand-footer{display:none}
+  .login .login-topline{margin-bottom:24px}
+  .login .login-heading h2{font-size:31px}
+  .login .login-graphic{display:none}
+  .login .login-form-wrap{max-width:520px;margin:auto}
+  .login .login-theme .theme-icon-toggle{
+    background:#1B3648;color:#D6E4B1;border-color:#557060;
+  }
+  html[data-theme='dark'] .login .login-theme .theme-icon-toggle{background:#2B4354}
+}
+@media(max-width:480px){
+  .login>.login-brand{padding:24px 19px 23px}
+  .login>.login-right{padding:28px 20px 36px}
+  .login>.login-theme{right:15px;top:16px;width:40px;height:40px}
+  .login .login-theme .theme-icon-toggle{width:40px;height:40px;min-width:40px}
+  .login .login-message h1{font-size:28px;line-height:1.18}
+  .login .login-heading h2{font-size:30px}
+  .login .login form{gap:15px}
+}
