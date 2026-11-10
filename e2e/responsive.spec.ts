@@ -49,6 +49,13 @@ async function verifyLoginLayout(page: Page) {
   expect(geometry.theme.x).toBeGreaterThan(geometry.viewport - 100);
   expect(geometry.theme.y).toBeLessThanOrEqual(40);
   await expect(page.locator('.login-brand .login-message h1')).toBeVisible();
+  if (geometry.viewport <= 760) {
+    const breaks = await page.locator('.login-brand .login-message h1 br').evaluateAll(els =>
+      els.map(el => getComputedStyle(el).display)
+    );
+    expect(breaks).toHaveLength(3);
+    expect(breaks.every(style => style !== 'none')).toBe(true);
+  }
   await expect(page.locator('.login-right .login-form-wrap')).toBeVisible();
 }
 
