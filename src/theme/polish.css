@@ -366,7 +366,7 @@ html[data-theme='dark'] .login .info-banner{color:#D6E3EB}
   .login .login-brand-top img{width:148px;max-height:73px}
   .login .login-message{margin:21px 0 0}
   .login .login-message h1{font-size:clamp(28px,6vw,36px);line-height:1.12;margin:12px 0 0}
-  .login .login-message h1 br:nth-of-type(n+2){display:none}
+  /* Preserve deliberate heading line breaks on narrow screens */
   .login .login-brand-footer{display:none}
   .login .login-topline{margin-bottom:24px}
   .login .login-heading h2{font-size:31px}
