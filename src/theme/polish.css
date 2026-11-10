@@ -218,3 +218,39 @@ html[data-theme='dark'] .theme-control .w-select-trigger{color:#EEF4F5!important
 .w-select-trigger.table-select{width:140px}
 .w-select-menu{max-width:calc(100vw - 24px)}
 }
+
+/* Deliberate one-action theme control: Sun for light, Moon for Midnight Navy */
+.theme-icon-toggle {
+  -webkit-tap-highlight-color: transparent;
+  appearance:none;display:inline-grid;place-items:center;flex-shrink:0;
+  height:42px;width:42px;min-width:42px;padding:0;
+  background:#EDF2EF;color:#586F3D;border:1px solid #D9E4DE;
+  border-radius:14px;box-shadow:0 2px 7px #18384A08;
+  transition:background .18s,color .18s,transform .18s,border-color .18s;
+}
+.theme-icon-toggle:hover {background:#E5EDD9;color:#415D28;border-color:#B2C99B;transform:translateY(-1px)}
+.theme-icon-toggle:active {transform:scale(.96)}
+html[data-theme='dark'] .theme-icon-toggle {
+  background:#1C3347;color:#D0DF9C;border:1px solid #3A5369;
+  box-shadow:0 2px 9px #0002;
+}
+html[data-theme='dark'] .theme-icon-toggle:hover {
+  background:#2C4756;color:#EDF4D4;border-color:#6C8669
+}
+.login-theme .theme-icon-toggle {
+  background:#F4F7F2;color:#597642;border-color:#DEE7DC;
+  box-shadow:0 9px 30px #102C4716
+}
+html[data-theme='dark'] .login-theme .theme-icon-toggle {
+  background:#243D4F;color:#D4E2A7;border-color:#496273
+}
+@media (max-width:760px) {
+  .theme-icon-toggle-compact{width:40px;min-width:40px;height:40px;border-radius:13px}
+  .theme-icon-toggle-compact svg{width:18px;height:18px}
+  .login-theme .theme-icon-toggle{height:43px;width:43px}
+}
+@media(max-width:480px) {
+  .theme-icon-toggle-compact{width:36px;min-width:36px;height:36px;border-radius:12px}
+  .theme-icon-toggle-compact svg{width:17px;height:17px}
+}
+@media(prefers-reduced-motion:reduce){.theme-icon-toggle{transition:none!important;transform:none!important}}
