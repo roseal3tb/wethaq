@@ -1,14 +1,45 @@
-# Welcome to your Lovable project
+# Wethaq Logistics Command
+
+Build WETHAQ (وثاق), an exceptionally polished, fully interactive enterprise logistics dashboard. START IMPLEMENTING IMMEDIATELY, not just planning. This is a King Saud University academic prototype using SYNTHETIC data. English-only LTR interface; retain Arabic logo artwork. Aim for a distinctive, luxurious, calm, highly refined SaaS experience: the craftsmanship of Linear/Stripe/Vercel without copying them. No generic admin template.
+
+VISUAL DIRECTION — EXTREMELY IMPORTANT:
+Brand navy #0F2A44, signature olive #8A9A4B, deep olive #5F6B32, off-white #F7F8FA, white surfaces, subtle cool-gray borders #E4E9EC. Light theme only; NEVER use bright mint/emerald. Use consistent CSS design tokens. Editorial typography (Manrope headings, Inter body, JetBrains Mono for hashes), beautiful hierarchy, tabular KPI numerals, generous but efficient whitespace, 8px spacing rhythm. Navy left sidebar with olive active indicator, white header, spacious responsive main canvas. Refined card radius 18–22px, modals 22–24px, inputs 12–14px, pill badges; NO sharp corners. Hairline borders and feather-soft shadows, never heavy glow. Thoughtful asymmetrical dashboard composition and clean grid alignment. All buttons MUST have nuanced hover, active, focus, disabled and loading states; navy primary buttons with smooth olive-accent interaction, secondary buttons with pale olive hover, directional icon motion ~2px, subtle pressed scale 0.985. Dropdowns, modals, drawers and tooltips rounded and beautifully styled; subtle 150–250ms transitions, accessible keyboard behavior, reduced-motion support. Icon buttons must have meaningful tooltips. All interactive cards have subtle hover; static cards must not falsely imply clickability. Do not leave ANY dead buttons, fake search, fake filters, placeholder sections, or Lorem Ipsum. Icons: consistent Lucide set. Charts: bespoke Recharts styling with restrained navy/olive palette, subtle grid, premium tooltips, legible legends, accessible table alternative.
+
+BRAND ASSETS: Wethaq original olive SVG logo assets should be used if supplied. Do not invent/redraw/recolor the logo. On light surfaces use olive lockup dark variant; on navy use olive lockup light variant; sidebar collapsed uses icon only. If original assets are unavailable, create a restrained typographic temporary wordmark and make replacement straightforward; do not pretend it is the original.
+
+SHELL: Collapsible ~264px navy sidebar (~78px collapsed), navigation Overview, Demand Forecasting, Inventory & Alerts, Shipments & Ledger, Users & Roles (Admin only). White top bar with breadcrumbs, current title, global search across parts and shipment IDs, alert bell with functional popover, role switcher showing identity/organization, avatar menu and sign-out. Footer with version, synthetic-data label and functional About This Prototype modal.
+
+LOGIN: Premium split-screen navy brand panel with elegant abstract logistics connection-line artwork, strong brand presence, restrained olive detail, spacious editorial headline; clean white/off-white login panel with email, password, show/hide password, demo role selection and validation. Nonempty credentials succeed except password 'wrong'; Enter submits; polished loading/error feedback. Roles: Logistics Planner, Dispatcher, Receiver, Admin. Fictional identities. Persistent demo role switcher instantly updates permissions and navigation.
+
+OVERVIEW: The flagship visual page: exceptional hierarchy and art direction. Five KPI cards: Parts Tracked (60), Active Alerts, Shipments In Transit, Pending Receipt, Committed Ledger Transactions. Interactive navigation, coherent counts. Large demand forecast snapshot (history, forecast, uncertainty band, part selector), top-five inventory risk panel, shipment status distribution and five recent shipments, five recent ledger activities including rejected attempts, active alerts with acknowledge actions. Beautiful purposeful asymmetry, not repetitive generic cards.
+
+FORECASTS: Searchable part selector (60 parts), three locations plus All, demand class Smooth/Erratic/Intermittent/Lumpy, 3/6/12-month horizons. Interactive monthly demand chart with 72 months of history, chronological last-12-month holdout, actual vs predictions, uncertainty band, training/holdout marker, overlay toggles for Naive baseline, Croston and XGBoost. Computed MAE/MASE/Bias comparison table, undefined MASE marked n/a with explanation; model error by demand class chart; collapsible methodology (chronological holdout, no leakage, synthetic-data limitations). Download chart CSV and 'Send to replenishment view' navigates to inventory with filters, NOT an order.
+
+INVENTORY & ALERTS: Three tabs Inventory, Policy Comparison, Alerts. Sophisticated searchable sortable filterable paginated inventory table (25/page), sticky header, column visibility, CSV export, status chips, row hover and keyboard selection. Columns part ID/name, demand class, location, on-hand, in-transit, forecast demand over lead time, lead time, reorder point, days of cover, status. Row drawer with stock history chart, stock projection, reorder recommendation, clearly labeled assumptions (lead time, safety stock, service level). Planner-only 'Create simulated shipment request' modal with editable recommended quantity, location, forecast month and required review note; creates unique Requested shipment, updates shared state and toast, never purchase. Policy comparison: reorder-point vs fixed-threshold, synthetic demand fulfillment, average inventory and stockout events per class, chart + table and honest assumptions. Alerts: shortage and shipment discrepancies, severity/type filters, timestamps, New/Acknowledged, functional acknowledgement updates counts.
+
+SHIPMENTS & LEDGER: Two tabs. Shipments searchable/filterable/sortable table: ID, part, quantity, origin/destination, status, requested by, dispatched/received dates, linked recommendation, ledger status. Detail drawer with elegant vertical Requested→Dispatched→In Transit→Received timeline, actor/org/timestamp and linked transaction references, conceptual supplier→warehouse→distribution center→deployment site route, quantity mismatch, original planning context and verification limitations. Dispatcher-only record dispatch for Requested shipments, and mark eligible Dispatched shipments In Transit; Receiver-only confirm receipt for eligible Dispatched/In Transit. Each action opens proper modal and shows beautifully animated smart-contract-style validation checklist: authorized organization, valid shipment reference, valid quantity, valid transition, not duplicate receipt; success adds committed DISPATCH/STATUS_CHANGE/RECEIPT record as appropriate and updates all views. Invalid operation Demo Tools: duplicate receipt, unauthorized organization, invalid transition, quantity exceeds dispatched, unknown shipment reference. Each correctly rejected with failed rule highlighted, logged as a rejected ATTEMPT (never falsely a committed ledger record), relevant alert generated. CRITICAL END-TO-END: Planner creates request→Dispatcher dispatches→Dispatcher marks In Transit→Receiver confirms receipt→timeline, three linked committed transactions and Overview update consistently. Requested is application record, not a committed ledger transaction.
+
+LEDGER TAB: Professional searchable/sortable/paginated CSV-exportable transaction table: Tx ID, type, shipment, part, qty, org, user, timestamp, block number (committed only), hash, endorsement, status, rejection reason. Show rejected attempts by default. Monospace short hashes with working copy actions. Transaction drawer with metadata, endorsement policy results, ordering context, read-only JSON payload, and explanatory note. Clearly label network card 'Simulated Hyperledger Fabric Test Network' (two peer orgs, one ordering org, wethaq-channel). No claim of actual chain or physical delivery.
+
+USERS & ROLES: Admin-only mock management table, add user, change role, deactivate/reactivate with confirmation, validation and toasts; permission matrix. Planner can view Overview/Forecasts/Inventory/Shipments/Ledger and create request. Dispatcher can view those and record dispatch/transit. Receiver can view Overview/Inventory/Shipments/Ledger and confirm receipt. Admin has read access and user management, not operational write privileges. Route guards show beautiful Access Restricted page.
+
+DATA: Deterministic coherent seeded synthetic dataset: 60 aviation-style spare parts SP-001..SP-060, majority intermittent/lumpy; three fictional locations Central Warehouse, Distribution Center, Deployment Site; 72 monthly demand observations per part/location = 12,960 records; zero-inflated intermittent patterns; forecast overlays and metrics calculated consistently; inventory with 10–15% risk cases; ~40 shipments across statuses including delays and mismatch; ~80–100 consistent transactions plus ~8–10 rejected attempts, 64-character hex hashes and sequential committed block numbers; ~12–15 alerts; ~8 fictional users. Clearly distinguish synthetic aviation demand and separate adapted synthetic civilian shipment scenarios; cross-module links are constructed demonstrations, not real joined records. Shared state updates must be coherent, with session persistence where appropriate.
+
+IMPLEMENTATION: React + Vite + strict TypeScript + React Router + Tailwind + accessible components + Lucide + Recharts. Central design tokens, typed domain models, modular feature components, central permissions, async mock data-access functions, no TypeScript any. Loading skeletons, informative empty/error/retry states, robust modal focus/escape behavior, clear toasts, meaningful form validation, CSV downloads, correct number/date formatting, URL filter persistence where feasible. Responsive at 1440, 1280, 1024, 768 and 390px; no horizontal PAGE overflow, contained table scrolling, adaptive sidebar and toolbars. Accessible WCAG AA contrast and focus, charts table alternative. Add tests for metrics, permissions and validation where feasible. Ensure dev/build work without errors.
+
+ACADEMIC HONESTY: About modal and login notice explain synthetic academic data, human decisions, no automated purchasing, ledger record not independent proof of physical delivery/cargo condition, stock/lead time/stockouts are assumptions/simulation, no invented performance claims.
+
+EXECUTION PRIORITY: (1) establish premium cohesive brand and design system, (2) build all page structures, (3) make every visible interaction functional, (4) complete flagship workflow, (5) polish responsiveness, hover, accessibility, errors and tests. If constrained, preserve coherent complete flows over decorative extras; never silently replace functionality with static mockups. Do not waste output on planning: BUILD THE APP. Every pixel, radius, hover, alignment, chart, table and interaction must feel meticulously art-directed.
 
 This project was built with [Lovable](https://lovable.dev).
 
 ## Build with Lovable
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/306bec37-9c5a-414e-ad1d-9f469ef0c07f).
 
 - **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+- **Stay in sync**: every change made in Lovable is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
 
 ## Development
 
@@ -20,10 +51,3 @@ cd <repository-name>
 npm i
 npm run dev
 ```
-
-## Built with
-
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
