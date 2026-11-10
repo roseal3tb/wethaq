@@ -17,6 +17,48 @@ async function setTheme(page: Page, theme: 'Dark' | 'Light') {
   await expect(page.locator('html')).toHaveAttribute('data-theme', target);
   await expect(page.getByRole('button', { name: `Switch to ${target === 'dark' ? 'light' : 'dark'} mode` })).toBeVisible();
 }
+async function verifyLoginLayout(page: Page) {
+  const geometry = await page.evaluate(() => {
+    const hero = document.querySelector('.login-brand')!.getBoundingClientRect();
+    const form = document.querySelector('.login-right')!.getBoundingClientRect();
+    const theme = document.querySelector('.login-theme')!.getBoundingClientRect();
+    const wrapper = document.querySelector('.login')!.getBoundingClientRect();
+    return {
+      viewport: window.innerWidth, viewportHeight: window.innerHeight,
+      hero: { x: hero.x, y: hero.y, width: hero.width, height: hero.height },
+      form: { x: form.x, y: form.y, width: form.width, height: form.height },
+      theme: { x: theme.x, y: theme.y, width: theme.width },
+      wrapper: { x: wrapper.x, y: wrapper.y, width: wrapper.width }
+    };
+  });
+  expect(Math.abs(geometry.wrapper.x)).toBeLessThanOrEqual(1);
+  expect(geometry.wrapper.width).toBeGreaterThanOrEqual(geometry.viewport - 2);
+  expect(Math.abs(geometry.hero.x)).toBeLessThanOrEqual(2);
+  expect(Math.abs(geometry.hero.y)).toBeLessThanOrEqual(2);
+  if (geometry.viewport > 760) {
+    // Brand and form MUST sit side by side, not diagonal with two empty cells
+    expect(Math.abs(geometry.form.y)).toBeLessThanOrEqual(2);
+    expect(Math.abs(geometry.form.x - geometry.hero.width)).toBeLessThanOrEqual(3);
+    expect(geometry.hero.height).toBeGreaterThanOrEqual(geometry.viewportHeight - 2);
+    expect(geometry.form.height).toBeGreaterThanOrEqual(geometry.viewportHeight - 2);
+  } else {
+    expect(Math.abs(geometry.form.x)).toBeLessThanOrEqual(2);
+    expect(Math.abs(geometry.form.y - geometry.hero.height)).toBeLessThanOrEqual(3);
+  }
+  // Icon is a top-right overlay, not a separate grid column or grid row
+  expect(geometry.theme.x).toBeGreaterThan(geometry.viewport - 100);
+  expect(geometry.theme.y).toBeLessThanOrEqual(40);
+  await expect(page.locator('.login-brand .login-message h1')).toBeVisible();
+  if (geometry.viewport <= 760) {
+    const breaks = await page.locator('.login-brand .login-message h1 br').evaluateAll(els =>
+      els.map(el => getComputedStyle(el).display)
+    );
+    expect(breaks).toHaveLength(3);
+    expect(breaks.every(style => style !== 'none')).toBe(true);
+  }
+  await expect(page.locator('.login-right .login-form-wrap')).toBeVisible();
+}
+
 async function noDocumentOverflow(page: Page) {
   await expect.poll(async () => page.evaluate(() =>
     document.documentElement.scrollWidth - document.documentElement.clientWidth
@@ -28,6 +70,8 @@ for (const theme of ['Dark', 'Light'] as const) {
     await page.goto('/login');
     await setTheme(page, theme);
     await noDocumentOverflow(page);
+    await verifyLoginLayout(page);
+    await page.screenshot({ path: info.outputPath(`${theme.toLowerCase()}-login.png`), fullPage: false });
     await login(page);
     await noDocumentOverflow(page);
     await expect(page.locator('html')).toHaveAttribute('data-theme', theme.toLowerCase());
