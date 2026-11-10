@@ -11,7 +11,23 @@ export function Empty({ title = 'No records found', body = 'Try changing the sea
 export function Modal({ open, onClose, title, description, children, footer, width = '540px' }: { open: boolean; onClose: () => void; title: string; description?: string; children: React.ReactNode; footer?: React.ReactNode; width?: string; }) { return <DialogPrimitive.Root open={open} onOpenChange={v => !v && onClose()}><DialogPrimitive.Portal><DialogPrimitive.Overlay className="dialog-overlay" /><DialogPrimitive.Content className="dialog" style={{ maxWidth: width }} aria-describedby={description ? 'modal-desc' : undefined}><div className="dialog-head"><div><DialogPrimitive.Title>{title}</DialogPrimitive.Title>{description && <DialogPrimitive.Description id="modal-desc">{description}</DialogPrimitive.Description>}</div><DialogPrimitive.Close className="icon-btn" aria-label="Close dialog"><X size={19} /></DialogPrimitive.Close></div><div className="dialog-body">{children}</div>{footer && <div className="dialog-footer">{footer}</div>}</DialogPrimitive.Content></DialogPrimitive.Portal></DialogPrimitive.Root>; }
 export function Drawer({ open, onClose, title, eyebrow, children }: { open: boolean; onClose: () => void; title: string; eyebrow?: string; children: React.ReactNode; }) { return <DialogPrimitive.Root open={open} onOpenChange={v => !v && onClose()}><DialogPrimitive.Portal><DialogPrimitive.Overlay className="dialog-overlay" /><DialogPrimitive.Content className="drawer" aria-describedby={undefined}><div className="drawer-head"><div>{eyebrow && <span className="eyebrow">{eyebrow}</span>}<DialogPrimitive.Title>{title}</DialogPrimitive.Title></div><DialogPrimitive.Close aria-label="Close detail panel" className="icon-btn"><X size={19} /></DialogPrimitive.Close></div><div className="drawer-content">{children}</div></DialogPrimitive.Content></DialogPrimitive.Portal></DialogPrimitive.Root>; }
 export function InfoBanner({ children, variant = 'info' }: { children: React.ReactNode; variant?: 'info' | 'warning' | 'success'; }) { return <div className={`info-banner banner-${variant}`}>{variant === 'warning' ? <AlertTriangle size={17} /> : variant === 'success' ? <CheckCircle2 size={17} /> : <Info size={17} />}<span>{children}</span></div>; }
-export function Tabs({ items, value, onChange }: { items: { id: string; label: string; count?: number; }[]; value: string; onChange: (v: string) => void; }) { return <div className="tabs" role="tablist">{items.map(t => <button key={t.id} role="tab" aria-selected={value === t.id} className={`tab ${value === t.id ? 'active' : ''}`} onClick={() => onChange(t.id)}>{t.label}{t.count !== undefined && <span className="tab-count">{t.count}</span>}</button>)}</div>; }
+export function Tabs({ items, value, onChange }: { items: { id: string; label: string; count?: number; }[]; value: string; onChange: (v: string) => void; }) {
+  const keyNav = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!['ArrowLeft','ArrowRight','Home','End'].includes(e.key) || !items.length) return;
+    e.preventDefault();
+    const i = Math.max(0, items.findIndex(t => t.id === value));
+    const next = e.key === 'Home' ? 0 : e.key === 'End' ? items.length - 1 :
+      (i + (e.key === 'ArrowRight' ? 1 : -1) + items.length) % items.length;
+    onChange(items[next].id);
+    e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus();
+  };
+  return <div className="tabs" role="tablist" aria-label="Page section" onKeyDown={keyNav}>
+    {items.map(t => <button type="button" key={t.id} role="tab" aria-selected={value === t.id}
+      tabIndex={value === t.id ? 0 : -1}
+      className={`tab ${value === t.id ? 'active' : ''}`}
+      onClick={() => onChange(t.id)}>{t.label}{t.count !== undefined && <span className="tab-count">{t.count}</span>}</button>)}
+  </div>;
+}
 export type Column<T> = { key: string; label: string; render: (r: T) => React.ReactNode; sort?: (r: T) => string | number | undefined; export?: (r: T) => unknown; width?: string; };
 export function DataGrid<T extends object>({ rows, columns, keyOf, onRow, exportName = 'wethaq-data', pageSize = 25, search, toolbar = true }: { rows: T[]; columns: Column<T>[]; keyOf: (r: T) => string; onRow?: (r: T) => void; exportName?: string; pageSize?: number; search?: string; toolbar?: boolean; }) {
   const [sort, setSort] = useState<string>(''); const [desc, setDesc] = useState(false); const [page, setPage] = useState(0); const [hidden, setHidden] = useState<string[]>([]); const [columnMenu, setColumnMenu] = useState(false);

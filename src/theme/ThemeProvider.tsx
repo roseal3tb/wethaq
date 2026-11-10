@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
-import { Monitor, Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 
 export type ThemePreference = 'light' | 'dark' | 'system';
 type ResolvedTheme = 'light' | 'dark';
@@ -48,18 +48,21 @@ export function useTheme() {
   return value;
 }
 
+/** Icon-only switch — initially follows OS preference, then saves the visitor's choice */
 export function ThemeControl({ compact = false }: { compact?: boolean }) {
-  const { preference, setPreference } = useTheme();
-  const Icon = preference === 'dark' ? Moon : preference === 'light' ? Sun : Monitor;
+  const { resolved, setPreference } = useTheme();
+  const next = resolved === 'dark' ? 'light' : 'dark';
+  const label = `Switch to ${next} mode`;
   return (
-    <label className={'theme-control ' + (compact ? 'theme-control-compact' : '')}>
-      <Icon size={17} aria-hidden="true" />
-      <span className="sr-only">Color theme</span>
-      <select aria-label="Color theme" value={preference} onChange={e => setPreference(e.target.value as ThemePreference)}>
-        <option value="light">Light</option>
-        <option value="dark">Dark</option>
-        <option value="system">System</option>
-      </select>
-    </label>
+    <button
+      type="button"
+      className={`theme-icon-toggle ${compact ? 'theme-icon-toggle-compact' : ''}`}
+      aria-label={label}
+      title={label}
+      aria-pressed={resolved === 'dark'}
+      onClick={() => setPreference(next)}
+    >
+      {resolved === 'dark' ? <Moon size={19} strokeWidth={1.95} aria-hidden="true" /> : <Sun size={19} strokeWidth={1.95} aria-hidden="true" />}
+    </button>
   );
 }
