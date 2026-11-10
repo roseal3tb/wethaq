@@ -133,3 +133,8 @@ html[data-theme="dark"] .state-icon{background:#2A4051}
 @media (prefers-reduced-motion:reduce) {
   *,*::before,*::after {animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
 }
+
+.about-actions{display:flex;justify-content:flex-end;margin-top:18px;padding-top:13px;border-top:1px solid var(--border)}
+html[data-theme="dark"] .about-actions{border-color:#405267}
+html[data-theme="dark"] .btn-danger{background:#913E4B;color:white;border-color:#B85862}
+html[data-theme="dark"] .btn-danger:hover{background:#B14F5B}
