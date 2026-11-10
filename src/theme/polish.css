@@ -181,3 +181,40 @@ html[data-theme='dark'] .global-search.expanded input{background:#172A3D!importa
   .header-icon{min-width:31px}
 }
 @media(prefers-reduced-motion:reduce){.w-dropdown,.tab,.w-role-trigger{animation:none!important;transition:none!important}}
+
+/* Select system: the same soft, accessible menu across every dashboard filter */
+.w-select-trigger{display:inline-flex!important;align-items:center!important;justify-content:space-between!important;gap:10px;width:100%;min-height:43px;padding:9px 12px!important;background:#fff!important;color:#264056!important;border:1px solid #D7E1E5!important;border-radius:12px!important;box-shadow:none!important;text-align:left;max-width:100%;font-size:12px;font-weight:650;cursor:pointer}
+.w-select-trigger:hover{border-color:#8DA66F!important;background:#FDFEFB!important}
+.w-select-trigger[data-state='open']{border-color:#899D63!important;box-shadow:0 0 0 3px #9DB67726!important}
+.w-select-trigger>span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.w-select-trigger svg{flex-shrink:0;color:#77906B}
+html[data-theme='dark'] .w-select-trigger{background:#172B3D!important;color:#EAF2F7!important;border:1px solid #455E70!important}
+html[data-theme='dark'] .w-select-trigger:hover,html[data-theme='dark'] .w-select-trigger[data-state='open']{background:#263E51!important;border-color:#8FAE71!important}
+html[data-theme='dark'] .w-select-trigger svg{color:#C2D59A}
+.w-select-menu{z-index:105;background:#FDFEFE;border:1px solid #DAE4E7;border-radius:16px;box-shadow:0 19px 50px #12283F2F;min-width:var(--radix-select-trigger-width);max-width:min(460px,calc(100vw - 24px));max-height:min(var(--radix-select-content-available-height),370px);overflow:hidden;animation:wMenuIn .16s ease}
+.w-select-viewport{padding:6px;overflow-y:auto}
+.w-select-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;min-height:41px;font-weight:650;font-size:12px;line-height:1.4;color:#264159;background:transparent;border-radius:10px;cursor:pointer;outline:none;max-width:100%}
+.w-select-item>span:first-child{min-width:0;white-space:normal;overflow-wrap:anywhere}
+.w-select-item[data-highlighted]{background:#EDF3E5;color:#456633}
+.w-select-item[data-state='checked']{background:#E6EFD9;color:#4D6934}
+.w-select-indicator{color:#6C8B3D;flex-shrink:0}
+.w-select-scroll{text-align:center;background:#F2F5F5;color:#5D797F;font-weight:800;font-size:12px}
+html[data-theme='dark'] .w-select-menu{background:#192E41;border:1px solid #476071;box-shadow:0 25px 60px #0008}
+html[data-theme='dark'] .w-select-item{color:#DFEAF2}
+html[data-theme='dark'] .w-select-item[data-highlighted]{background:#2C493D;color:#E1EDC4}
+html[data-theme='dark'] .w-select-item[data-state='checked']{background:#314C40;color:#E1EECB}
+html[data-theme='dark'] .w-select-indicator{color:#BDD58F}
+html[data-theme='dark'] .w-select-scroll{background:#22394D;color:#C2D2DA}
+.theme-control{display:flex;align-items:center;gap:5px;padding:0 8px!important;min-width:102px}
+.theme-control .w-select-trigger{padding:0 2px!important;min-height:33px;border:0!important;background:transparent!important;color:inherit!important;font-size:11px;font-weight:800;gap:4px}
+.theme-control .w-select-trigger:hover,.theme-control .w-select-trigger[data-state='open']{background:transparent!important;border:0!important;box-shadow:none!important}
+.theme-control .w-select-trigger svg{width:13px;height:13px}
+html[data-theme='dark'] .theme-control .w-select-trigger{color:#EEF4F5!important;background:transparent!important;border:0!important}
+.w-select-trigger.table-select{min-height:33px;width:170px;padding:7px 10px!important;font-size:11px}
+@media(max-width:760px){.w-select-item{min-height:44px}.w-select-trigger{min-height:44px}.theme-control-compact{min-width:77px!important}}
+@media(max-width:480px){
+.theme-control-compact{min-width:52px!important;max-width:62px!important;gap:2px!important}
+.theme-control-compact .w-select-trigger{min-width:0;font-size:9px!important}
+.w-select-trigger.table-select{width:140px}
+.w-select-menu{max-width:calc(100vw - 24px)}
+}
