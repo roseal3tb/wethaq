@@ -6,6 +6,9 @@ async function login(page: Page) {
   await page.getByRole('button', { name: /Sign in to Wethaq/i }).click();
   await expect(page).toHaveURL(/\/overview/);
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  // SPA navigation from a taller login form must not keep its old scroll offset
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await expect.poll(() => page.locator('.topbar').evaluate(el => Math.abs(el.getBoundingClientRect().top))).toBeLessThanOrEqual(2);
 }
 async function setTheme(page: Page, theme: 'Dark' | 'Light') {
   const target = theme.toLowerCase();
@@ -29,7 +32,10 @@ for (const theme of ['Dark', 'Light'] as const) {
     await noDocumentOverflow(page);
     await expect(page.locator('html')).toHaveAttribute('data-theme', theme.toLowerCase());
     await expect(page.locator('.header-actions .theme-icon-toggle')).toBeVisible();
-    await page.screenshot({ path: info.outputPath(`${theme.toLowerCase()}-overview.png`), fullPage: true });
+    await page.screenshot({ path: info.outputPath(`${theme.toLowerCase()}-overview.png`), fullPage: false });
+    await page.locator('.footer').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: info.outputPath(`${theme.toLowerCase()}-footer.png`), fullPage: false });
+    await page.evaluate(() => window.scrollTo(0, 0));
 
     await page.goto('/shipments');
     await expect(page.getByRole('tab', { name: /Ledger/i })).toBeVisible();
@@ -44,13 +50,13 @@ for (const theme of ['Dark', 'Light'] as const) {
       const bg = await header.evaluate(el => getComputedStyle(el).backgroundColor);
       expect(bg).not.toMatch(/rgb\(255, 255, 255\)|rgb\(250, 251, 252\)/);
     }
-    await page.screenshot({ path: info.outputPath(`${theme.toLowerCase()}-ledger.png`), fullPage: true });
+    await page.screenshot({ path: info.outputPath(`${theme.toLowerCase()}-ledger.png`), fullPage: false });
 
     await page.getByRole('button', { name: /About this prototype/i }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     const src = await page.locator('.about-logo-surface img').getAttribute('src');
     expect(src).toContain(theme === 'Dark' ? '-light.svg' : '-dark.svg');
-    await page.screenshot({ path: info.outputPath(`${theme.toLowerCase()}-about.png`), fullPage: true });
+    await page.screenshot({ path: info.outputPath(`${theme.toLowerCase()}-about.png`), fullPage: false });
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toBeHidden();
     await noDocumentOverflow(page);
