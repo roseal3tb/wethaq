@@ -8,9 +8,11 @@ async function login(page: Page) {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 }
 async function setTheme(page: Page, theme: 'Dark' | 'Light') {
-  await page.getByRole('combobox', { name: 'Color theme' }).click();
-  await page.getByRole('option', { name: theme, exact: true }).click();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', theme.toLowerCase());
+  const target = theme.toLowerCase();
+  const current = await page.locator('html').getAttribute('data-theme');
+  if (current !== target) await page.getByRole('button', { name: `Switch to ${target} mode` }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', target);
+  await expect(page.getByRole('button', { name: `Switch to ${target === 'dark' ? 'light' : 'dark'} mode` })).toBeVisible();
 }
 async function noDocumentOverflow(page: Page) {
   await expect.poll(async () => page.evaluate(() =>
@@ -25,6 +27,8 @@ for (const theme of ['Dark', 'Light'] as const) {
     await noDocumentOverflow(page);
     await login(page);
     await noDocumentOverflow(page);
+    await expect(page.locator('html')).toHaveAttribute('data-theme', theme.toLowerCase());
+    await expect(page.locator('.header-actions .theme-icon-toggle')).toBeVisible();
     await page.screenshot({ path: info.outputPath(`${theme.toLowerCase()}-overview.png`), fullPage: true });
 
     await page.goto('/shipments');
