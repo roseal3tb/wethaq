@@ -17,7 +17,13 @@ const Ctx = createContext<Store | null>(null);
 export function Provider({ children }: { children: React.ReactNode; }) {
   const [role, setRoleInner] = useState<Role>(() => load('wethaq.role', 'Planner', 'local'));
   const [authenticated, setAuth] = useState(() => load('wethaq.auth', false));
-  const [data, setData] = useState<AppData>(() => load('wethaq.data', initialData()));
+  const [data, setData] = useState<AppData>(() => {
+    const restored = load('wethaq.data', initialData());
+    // Repair previous demo-session records when moving to the clearer ATTEMPT terminology
+    return { ...restored, transactions: restored.transactions.map(t =>
+      t.status === 'Rejected' && t.type !== 'ATTEMPT' ? { ...t, type: 'ATTEMPT' as const } : t
+    ) };
+  });
   const [toast, setToast] = useState('');
   useEffect(() => { try { localStorage.setItem('wethaq.role', JSON.stringify(role)); } catch { } }, [role]);
   useEffect(() => { try { sessionStorage.setItem('wethaq.auth', JSON.stringify(authenticated)); } catch { } }, [authenticated]);
