@@ -1,0 +1,315 @@
+# Wethaq (وثاق) — Dashboard Web Application: Build Brief
+
+> Hand-off brief for a front-end / web specialist. Please read it fully before starting. Section 14 lists the questions I expect you to raise before you begin.
+
+---
+
+## 1. Your role and the deliverable
+
+You are building the **front end of the Wethaq dashboard**: a polished, production-quality, single-page web application running entirely on **mock data**. It is the visual and interactive face of a graduation project (KSU, GP481). The team will later connect it to a real back end, so the code must be clean, typed, modular, and ready for that swap.
+
+**Deliverable:** a runnable React + Vite + TypeScript project (source code, README, and `npm run dev` / `npm run build` working out of the box), implementing every page, role, and behavior described below.
+
+**Quality bar:** this will be demoed to an academic committee. It should look like a real enterprise logistics product: consistent, calm, data-dense but never cluttered, with no placeholder lorem ipsum, no broken states, and no dead buttons.
+
+---
+
+## 2. Product context
+
+Wethaq is an academic, web-based **military logistics management prototype** that unifies three capabilities:
+
+1. **AI demand forecasting** for spare parts (intermittent demand).
+2. **Inventory optimization**: replenishment recommendations from forecasts, stock, and lead times.
+3. **Permissioned-blockchain shipment tracking** (Hyperledger Fabric): dispatch, receipt, and status-change records, with smart-contract validation.
+
+Tagline: **«ثقة ترافق كل شحنة»** ("Trust accompanies every shipment"). It is already part of the logo lockup artwork.
+
+**Product vision (use as the tone for copy):** *For military logistics planners, inventory personnel, and authorized supply-chain participants who need to anticipate supply requirements, plan inventory replenishment, and maintain reliable records of supply movements, Wethaq is a web-based logistics management prototype that integrates AI-based demand forecasting, inventory optimization, and permissioned blockchain tracking.*
+
+### Mandatory honesty guardrails (must be visible in the UI)
+
+These come from the project's scope and must appear as a persistent, unobtrusive "About this prototype" element (footer link opening a modal, plus a one-line banner on the login page):
+
+- This is an **academic prototype using synthetic data**. No real, classified, or operational military data.
+- **Forecasts and recommendations support human decisions.** Nothing is ever auto-purchased or auto-submitted to the ledger.
+- A committed ledger record **does not independently prove physical delivery or cargo condition**.
+- Stock levels, lead times, and stockouts are **simulation outputs or assumptions**, not field observations.
+- Do not invent performance claims (e.g., "saves 30% cost"). Show measured mock results only, labeled as mock.
+
+---
+
+## 3. Technical requirements
+
+- **Stack:** React 18 + Vite + TypeScript (strict mode). React Router for routing. A charting library of your choice (Recharts, Visx, or ECharts; justify in the README). Tailwind CSS or CSS Modules with design tokens: your choice, but all colors, spacing, radii, and shadows must come from central tokens.
+- **Language / direction:** English only, LTR. (Keep the code i18n-ready, with strings not scattered in JSX, but do not build Arabic or RTL.)
+- **Responsive:** desktop-first (1440 px primary, 1280 min comfortable), fully usable on tablet (768 px+). Phone is not required, but nothing should break horizontally.
+- **Mock data layer:** all data comes from typed modules behind a thin async data-access layer (`src/api/*.ts`) that returns Promises with a small artificial delay (200–600 ms). Pages must handle loading, empty, and error states through this layer, so replacing it with real Express endpoints later requires **zero page-level changes**.
+- **State:** lightweight (React Context + hooks, or Zustand). No Redux.
+- **No backend, no real auth, no external network calls at runtime.** Fonts must be self-hosted or from a single well-known CDN with a system-font fallback.
+- **Accessibility:** WCAG 2.1 AA contrast, full keyboard navigation, visible focus rings, semantic landmarks, `aria-label`s on icon buttons, charts with accessible text summaries or a "view as table" toggle.
+- **Browser support:** latest Chrome, Edge, Safari, Firefox.
+- **Performance:** route-level code splitting, memoized heavy charts, Lighthouse performance ≥ 90 on the production build.
+
+---
+
+## 4. Brand and design system
+
+### 4.1 Palette (derived from the Wethaq logo)
+
+The logo uses a **deep navy** and an **olive green**. Build the whole UI around these two.
+
+- **Navy (primary):** approx. `#102A47`. Sample the exact value from the logo files.
+- **Olive (accent):** approx. `#8A9A4B`. Sample the exact value from the logo files.
+- Derive full tonal scales (50–900) for both, plus a neutral gray scale with a very slight cool/navy tint.
+- **Do NOT use the bright mint/emerald green** from the `wathaq-green-*` logo files anywhere in the UI. Olive only.
+- **Single theme: light.** No dark mode.
+
+### 4.2 Semantic colors
+
+Define semantic tokens and keep them consistent everywhere:
+
+| Meaning | Usage | Direction |
+|---|---|---|
+| Success / Confirmed | confirmed receipt, committed transaction | derived from olive (darkened for contrast) |
+| Info / In transit | in-transit shipments, neutral highlights | derived from navy (lighter tint) |
+| Warning | low stock, nearing reorder point, pending | warm amber, muted |
+| Danger / Rejected | stockout, rejected transaction, discrepancy | muted brick red |
+| Neutral | draft, unknown, disabled | gray |
+
+Never rely on color alone: always pair with an icon or text label.
+
+### 4.3 Typography
+
+A modern, highly legible sans-serif (e.g., Inter, IBM Plex Sans, or Source Sans 3), with tabular figures enabled (`font-variant-numeric: tabular-nums`) for all numeric tables and KPIs. A monospace face (e.g., JetBrains Mono / IBM Plex Mono) for transaction IDs and hashes. Define a type scale (display, h1–h4, body, small, caption, mono) and use it consistently.
+
+### 4.4 Layout language
+
+- Left **sidebar** in navy with olive active-state indicator; top **header bar** in white.
+- Content on a very light neutral background; **cards** in white with subtle 1px borders and a very soft shadow; consistent 8-px spacing grid; moderate radii (8–12 px).
+- Charts use a restrained palette: navy and olive as the primary pair, then tints; avoid rainbow charts. Gridlines subtle; direct labels where possible.
+- Icons: a single consistent icon set (Lucide or Phosphor).
+
+### 4.5 Logo usage
+
+Logo files (PNG + SVG) are provided in the attached zip: `wathaq-olive-icon-*`, `wathaq-olive-logo-*`, `wathaq-olive-lockup-*` (and the `wathaq-green-*` set, which is **not to be used**).
+
+- Check which variant renders correctly on each surface (`-dark` / `-light` naming appears to refer to the background the artwork is meant for; **verify visually** before choosing).
+- **Login page:** full lockup (with tagline), centered, on a light surface.
+- **Sidebar header (expanded):** the logo (wordmark + icon) in the variant that works on navy. If no variant works on navy, place it in a white rounded tile.
+- **Sidebar (collapsed) and favicon:** the icon only.
+- Use **SVG** in the app; keep clear-space around the logo equal to the padlock-shackle width; never recolor, stretch, or add effects.
+
+---
+
+## 5. Roles and permissions
+
+Four roles. Authentication is **mocked**.
+
+| Role | Purpose in the prototype |
+|---|---|
+| **Logistics Planner** | Reviews forecasts, inventory recommendations, alerts; reviews shipment status and ledger history. Creates a *simulated shipment request* after reviewing a recommendation. |
+| **Dispatcher** (authorized dispatch actor, issuing organization) | Records shipment **dispatch** events. |
+| **Receiver** (authorized receiving actor, receiving organization) | Confirms **receipt** events. |
+| **Admin** | Manages application access (users and roles). Full read access. |
+
+### Permission matrix (enforce in UI; hide or disable with a tooltip explaining why)
+
+| Capability | Planner | Dispatcher | Receiver | Admin |
+|---|:--:|:--:|:--:|:--:|
+| View Overview | ✔ | ✔ | ✔ | ✔ |
+| View Forecasts | ✔ | ✔ | — | ✔ |
+| View Inventory & Alerts | ✔ | ✔ | ✔ | ✔ |
+| Create shipment request (from a recommendation) | ✔ | — | — | — |
+| View Shipments & Ledger | ✔ | ✔ | ✔ | ✔ |
+| Record dispatch | — | ✔ | — | — |
+| Confirm receipt | — | — | ✔ | — |
+| View Users & Roles | — | — | — | ✔ |
+| Manage users (add / change role / deactivate; mock) | — | — | — | ✔ |
+
+### Login and demo role switcher
+
+- **Login page:** email + password fields (mock validation), "Sign in" button, a role selector labeled "Sign in as (demo)" with the four roles, and a prominent prototype notice. Any non-empty credentials succeed. Include one invalid-credentials state (e.g., password `wrong`) to demonstrate error handling.
+- **Persistent demo role switcher** in the header (dropdown showing current role and organization). Switching changes navigation items, visible actions, and the displayed user identity **instantly without re-login**. Persist the selected role in `localStorage` (wrapped in try/catch).
+- Route guards: visiting a page not allowed for the current role shows a clear "Access restricted for your role" page with a button back to Overview. No blank screens.
+
+### Mock identities (for the header and the audit trail)
+
+- Planner: "Col. Planner" (use neutral synthetic names, e.g., *Planner A. Harbi*), Org: Logistics Command.
+- Dispatcher: *Dispatcher M. Qahtani*, Org: **Org1 (Issuing)**.
+- Receiver: *Receiver S. Otaibi*, Org: **Org2 (Receiving)**.
+- Admin: *Admin R. Dossary*, Org: System Administration.
+
+(These are fictional; do not use real names or ranks of real people.)
+
+---
+
+## 6. App shell
+
+- **Sidebar** (collapsible): logo, nav items filtered by role (icon + label), small "Prototype · synthetic data" tag at the bottom.
+- **Header:** page title + breadcrumb, global search field (can filter parts / shipment IDs within mock data), notification bell showing the count of active alerts (opens a dropdown listing the latest alerts, each linking to its page), demo role switcher, user avatar menu (sign out).
+- **Footer:** "About this prototype" link (opens the guardrails modal from §2), version tag.
+- Toasts for action confirmations (non-blocking), consistent modals and drawers.
+
+---
+
+## 7. Pages (detailed)
+
+### 7.1 Login
+As described in §5. Split layout is welcome: left: brand panel (navy) with the lockup and a short product statement; right: the form card. Must work at tablet width.
+
+### 7.2 Overview (command dashboard)
+The unified "command & logistics" view combining all four modules at a glance.
+
+- **KPI row (5 cards):** Parts tracked (60), Active alerts, Shipments in transit, Shipments pending receipt confirmation, Ledger transactions committed (this period). Each shows value, a small delta or sparkline, and links to the relevant page.
+- **Demand forecast snapshot:** line chart for a selected part (default: a representative part), showing history + next-N-month forecast with the forecast band; a part selector.
+- **Inventory risk panel:** top 5 parts by shortage risk (days of cover vs. lead time), with severity chips.
+- **Shipment status panel:** a stacked bar or donut of shipments by status, plus the 5 most recent shipments.
+- **Latest ledger activity:** the last 5 committed or rejected transactions (Tx ID, type, org, status, time), with a "View all" link.
+- **Active alerts list:** shortage alerts and shipment-discrepancy alerts, newest first.
+
+### 7.3 Forecasts (demand forecasting)
+
+Purpose: let planners inspect forecasts and how the models were evaluated.
+
+- **Filters:** part (searchable select; 60 parts), location (3 locations + "All"), demand class (Smooth / Erratic / Intermittent / Lumpy), forecast horizon (e.g., 3 / 6 / 12 months).
+- **Main chart:** monthly demand history (72 months of mock history), the forecast for the horizon, and a shaded uncertainty band. A toggle to overlay each candidate model's forecast: **Naive baseline**, **Croston (intermittent-demand method)**, **XGBoost (candidate ML model)**. A marker line separates the *training period* from the *chronological holdout period*, and a tooltip showing actual vs. forecast on holdout months.
+- **Model comparison table** (for the selected scope): rows = models; columns = **MAE**, **MASE**, **Bias**, with the best value per column highlighted (and an icon, not only color). Where MASE is undefined (e.g., zero-demand series), show "n/a" with an info tooltip explaining why.
+- **Results by demand class:** a grouped bar chart of MAE (or MASE) per demand class per model.
+- **Methodology panel (collapsible):** short text: monthly histories, chronological holdout, predictors limited to information available at the forecast date (no leakage), MAE / MASE definitions, and the note "performance claims are based on measured results on synthetic data."
+- **Action:** "Send to replenishment view" button, which navigates to Inventory with that part and location preselected. It must **not** create any order.
+- A **"Download chart data (CSV)"** button (client-side, from mock data).
+
+### 7.4 Inventory & Alerts
+
+- **Inventory table:** part ID, part name, demand class, location, on-hand stock, in-transit quantity, forecasted demand over lead time, lead time (days), reorder point, days of cover, status chip (Healthy / Watch / Below reorder point / Stockout risk). Sortable, filterable (location, status, demand class), searchable, paginated (25 per page), with column visibility menu and CSV export.
+- **Row drawer (click a row):** stock history chart, forecast vs. stock projection to the end of lead time, the **recommendation card**: "Recommended reorder: *N units* (policy: reorder-point, safety-stock assumption: *X*)", and the assumptions list (lead time, safety stock, service-level assumption), each labeled **"assumption"**.
+- **Recommendation action:** a **"Create simulated shipment request"** button (Planner only), opening a confirmation modal: part, location, forecast month, recommended quantity (editable), required note ("Reviewed by planner"), and an explicit line: *"This creates a simulated request only. No purchase order is created."* On confirm, a new shipment with a synthetic ID appears in Shipments with the status **Requested**, and a toast confirms.
+- **Policy comparison tab:** compares **reorder-point policy vs. fixed-threshold baseline** from the mock simulation (SimPy-style results): demand fulfillment (%), average inventory (units), stockout events, per demand class; simple grouped bars plus a table. Include the note: *"Simulation compares policies under documented assumptions; it does not claim optimal stock levels or measured cost savings."*
+- **Alerts tab (or panel):** list of **shortage alerts** (low stock) and **shipment-discrepancy alerts** (e.g., receipt pending much longer than expected, received quantity ≠ dispatched quantity, duplicate receipt attempt). Each alert: severity, type, related part / shipment, time, status (New / Acknowledged), and an "Acknowledge" action (all roles except none restricted; mock only). Filters by type and severity. Alerts are **simulated** and shown in-app only; make it clear there is no real-time external notification service.
+
+### 7.5 Shipments & Ledger
+
+Two tabs: **Shipments** and **Ledger**.
+
+**Shipments tab**
+- Table: Shipment ID (e.g., `SHP-2026-0001`), part, quantity, from → to location, status chip, requested by, dispatched at, received at, linked recommendation (if any), ledger status ("Committed" / "Not yet on ledger" / "Rejected attempt").
+- **Statuses and allowed transitions:** `Requested → Dispatched → In transit → Received`. Disallowed transitions must be impossible in the UI and shown as rejected in the demo (see below).
+- **Shipment detail drawer** with:
+  - A **vertical timeline of the journey**: Requested → Dispatched → In transit → Received, each node with timestamp, actor, organization, and a **ledger badge** linking to the corresponding Tx ID. (The product concept also tracks supplier → central warehouse → distribution center → deployment location: show this as the route line, with the current leg highlighted.)
+  - Quantity summary: requested / dispatched / received, flagging any mismatch.
+  - Planning context: the originating recommendation (part, location, forecast month, planner who reviewed it) so the **planning decision and the transaction statuses can be followed together**.
+  - Verification notes (what the ledger confirms and what it does not).
+- **Actions by role:**
+  - Dispatcher: "Record dispatch" on a *Requested* shipment → modal (dispatched quantity, carrier note) → creates a committed DISPATCH transaction (mock) with a new Tx ID; status moves to Dispatched.
+  - Receiver: "Confirm receipt" on a *Dispatched / In transit* shipment → modal (received quantity, condition note labeled "informational; not verified by ledger") → creates a RECEIPT transaction.
+  - Each action shows a short **"Validating against smart-contract rules…"** step (1–2 s) with a checklist that resolves one rule at a time: *authorized organization ✓ · valid shipment reference ✓ · valid quantity ✓ · valid status transition ✓ · not a duplicate receipt ✓*, then commits. This makes the verification story visible in the demo.
+- **Demo: invalid operations.** Include a clearly labeled **"Demo: try an invalid operation"** menu (visible in a collapsible "Demo tools" panel) that lets the presenter trigger: *duplicate receipt*, *unauthorized organization*, *invalid status transition*, *quantity exceeds dispatched*, and *unknown shipment reference*. Each is **rejected** with the specific failed rule highlighted in red in the checklist, a rejected entry appears in the ledger tab (status Rejected, reason), and a discrepancy alert is generated where appropriate.
+
+**Ledger tab (blockchain transaction history)**
+- Table: Tx ID (mono), transaction type (DISPATCH / RECEIPT / STATUS_CHANGE), shipment ID, part, quantity, submitting organization (Org1/Org2), submitting user, timestamp, **block number**, short hash (first 8 + last 4 chars, mono, with copy button), endorsement result, status (**Committed** / **Rejected**), rejection reason.
+- Filters: type, status, organization, date range; search by Tx ID or shipment ID. Sortable, paginated, CSV export.
+- **Transaction detail drawer:** all fields; **endorsement panel** showing the endorsement policy result by organization (Org1 ✓, Org2 ✓) and the ordering service; the **minimal on-ledger payload** (JSON, read-only: shipment ID, type, quantity, status, org, timestamp) and a note that *detailed inventory and demonstration data stay off-chain*.
+- **Network info card:** "Local Hyperledger Fabric test network (simulated): 2 peer organizations, 1 ordering organization, channel `wethaq-channel`" (names are mock). Make clear it is a demonstration network.
+- Rejected transactions are visually distinct but **never hidden by default**: transparency of rejections is part of the demo.
+
+### 7.6 Users & Roles (Admin only)
+A simple page, intentionally minimal: table of mock users (name, email, role, organization, status Active/Inactive, last sign-in), "Add user" modal (name, email, role, organization), inline role change, deactivate/reactivate. All client-side only; show a toast. Include a read-only **permission matrix** reference card reproducing §5.
+
+### 7.7 Shared pages
+- **Access restricted** (role not allowed), **404**, and **error boundary** pages, all in brand style.
+- **About this prototype** modal (guardrails from §2, data provenance note, team credit line).
+
+---
+
+## 8. Mock data specification
+
+Create realistic, internally **consistent** mock data (the same part, location, shipment, and transaction IDs must cross-reference correctly across pages). Use a **seeded generator or static JSON**, so data is deterministic between reloads, except for items the user creates during the session (kept in memory/`sessionStorage` with try/catch).
+
+- **Parts:** 60 spare parts with IDs `SP-001 … SP-060`, plausible aviation-style names (e.g., "Hydraulic pump seal kit", "Fuel filter element", "Landing gear bushing", "Avionics cooling fan"), each with a demand class (Smooth / Erratic / Intermittent / Lumpy; the majority intermittent or lumpy), unit of measure, and a criticality tag (Critical / Standard).
+- **Locations (3):** e.g., *Central Warehouse*, *Distribution Center*, *Deployment Site* (synthetic names, no real bases).
+- **History:** 72 months of monthly demand per part-location (12,960 part-location-month records overall = 60 × 3 × 72). Intermittent series contain many zero months with occasional spikes (zero-inflated pattern).
+- **Forecasts:** per part-location, for 3 / 6 / 12 months ahead from each of the three models, with a chronological holdout period (the last 12 months) containing actuals; consistent MAE / MASE / bias values calculated from the mock series themselves (compute them in code rather than hard-coding, so tables and charts agree).
+- **Inventory:** on-hand, in-transit, lead time (days; tagged as *assumption*), safety stock (assumption), reorder point, days of cover; ~10–15% of rows at Watch / Below reorder / Stockout risk so alerts have content.
+- **Policy simulation results:** fill-rate and average-inventory outcomes for *reorder-point* vs *fixed-threshold* policies per demand class, plausible and modest (no dramatic miracle gains; the honest story is that results vary by class).
+- **Shipments:** ~40 shipments across all statuses, including: a few mid-flight, a few awaiting receipt confirmation for a long time (→ discrepancy alert), one with a quantity mismatch, and **one fully worked planning-to-transfer scenario** (recommendation for a chosen part, location, and forecast month → planner-reviewed request → dispatch → receipt) using a shared synthetic shipment ID. This is the flagship demo path: it must work end-to-end.
+- **Ledger:** ~80–100 transactions consistent with the shipments (every dispatch / receipt has a Tx), plus ~8–10 **rejected** attempts (duplicate receipts, unauthorized organization, invalid transition, quantity exceeds dispatched, unknown reference). Tx IDs and hashes look like real hex strings (64 hex chars; display shortened), monotonically increasing block numbers, timestamps in a plausible recent window (Oct–Nov 2026).
+- **Alerts:** ~12–15 mixed shortage and discrepancy alerts with severity and status.
+- **Users:** ~8 mock users across the four roles/organizations.
+
+Label mock outputs honestly in the UI (e.g., small "Synthetic data" badge on chart cards).
+
+---
+
+## 9. Interaction, feedback, and states
+
+- Every data view has **loading skeletons**, **empty states** (with a helpful message and next action), and **error states** (with retry).
+- Tables: sticky header, row hover, keyboard-selectable rows, column sorting indicators, persistent filters in the URL query string (so a filtered view is shareable and the browser back button works).
+- Drawers and modals: focus trapped, `Esc` to close, return focus to the trigger.
+- Subtle motion only (150–250 ms ease): drawer slide, toast, skeleton shimmer, chart entrance; respect `prefers-reduced-motion`.
+- Number formatting: thousands separators, fixed decimals for metrics, consistent date/time format (e.g., `10 Nov 2026, 23:11`; display times in the user's locale/time zone, store as ISO).
+- Destructive or irreversible-looking actions require confirmation modals (even if mock).
+
+---
+
+## 10. Suggested architecture (adjust if you have a better one)
+
+```
+src/
+  api/              # async data-access layer (mock now, real later)
+  data/             # typed mock datasets + seeded generators + metric calculators
+  components/       # ui primitives (Button, Card, Table, Drawer, Modal, Chip, Toast...)
+  features/
+    auth/           # login, role context, route guards, demo role switcher
+    overview/
+    forecasts/
+    inventory/
+    shipments/
+    ledger/
+    users/
+  layouts/          # AppShell, Sidebar, Header
+  styles/           # tokens, global styles
+  types/            # shared domain types (Part, Location, Forecast, Shipment, LedgerTx, Alert, User, Role)
+  utils/            # formatting, csv export, permissions helpers
+```
+
+- Central `permissions.ts` defining the matrix in §5 as data; UI reads from it (no scattered `if (role === ...)`).
+- All domain types in one place; no `any`.
+- Unit tests (Vitest) for: metric calculators (MAE, MASE, bias), permission helpers, the transaction-validation rule engine used by the mock "smart contract" checklist.
+- Lint + format configured (ESLint, Prettier).
+
+---
+
+## 11. Acceptance criteria (I will test these)
+
+1. `npm install && npm run dev` runs with no errors or warnings; `npm run build` succeeds.
+2. Palette is navy + olive only (no mint green); logo shown correctly on every surface; favicon set.
+3. The demo role switcher changes navigation and available actions **instantly**, per the §5 matrix; restricted routes show the Access-restricted page.
+4. **Flagship scenario works end-to-end:** Planner opens a recommendation → creates a simulated shipment request → switches to Dispatcher and records dispatch → switches to Receiver and confirms receipt → the shipment timeline, the ledger tab (3 linked transactions), and the Overview KPIs all update consistently.
+5. All five **invalid operations** in the demo tools are rejected with the correct failed rule highlighted, appear in the ledger as Rejected, and (where relevant) raise an alert.
+6. Forecast page shows history, forecast, band, holdout marker, three-model overlay, and a comparison table whose MAE / MASE / bias values are **computed**, and consistent with the chart.
+7. Inventory page shows recommendations with explicit **assumption** labels, the policy comparison tab, and alerts; no UI element implies automatic purchasing.
+8. Guardrail statements from §2 are visible and accurate.
+9. Keyboard-only navigation works across all pages; contrast passes AA; charts have a "view as table" alternative.
+10. Layout holds at 1440, 1280, 1024, and 768 px widths without horizontal scroll.
+11. Lighthouse (production build): Performance ≥ 90, Accessibility ≥ 95.
+12. Code follows §10; Vitest tests pass.
+
+---
+
+## 12. Out of scope (do not build)
+
+Real authentication or back end; real blockchain calls; real forecasting or simulation engines (results are mock, precomputed or computed from mock series); email/SMS/push notifications; GPS/maps/live tracking; payments or purchase-order flows; Arabic/RTL; dark mode; phone-size optimization.
+
+---
+
+## 13. Delivery format
+
+- Git-ready repository (or zip) with a clear README: setup, scripts, folder map, how mock data is generated, how to swap `src/api/*` for real endpoints, and a table mapping each page to the future real data source (Express API / Python forecasting service / Fabric Gateway SDK / PostgreSQL).
+- Short **Loom-style walkthrough notes** (a written list is fine) of the flagship demo path.
+- A list of any deviations from this brief and why.
+
+---
+
+## 14. Questions I expect from you before you start
+
+Please reply with (a) any ambiguity you see in this brief, (b) your charting-library and styling choices with a one-line reason each, (c) your proposed timeline in milestones (shell + design system → pages → flagship scenario → polish/tests), and (d) any risks. Do not start building until you have confirmed the plan.
