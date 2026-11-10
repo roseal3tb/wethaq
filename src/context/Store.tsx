@@ -50,7 +50,7 @@ export function Provider({ children }: { children: React.ReactNode; }) {
     if (scenario === 'Unknown shipment reference') { refTarget = undefined; reference = 'SHP-UNKNOWN-9999'; }
     if (scenario === 'Duplicate receipt') { refTarget = data.shipments.find(s => s.status === 'Received') || target; reference = refTarget?.id; }
     const v = validateOperation(op, refTarget, qty, r, data.transactions, reference);
-    const now = new Date().toISOString(); const id = uid('TX-REJ'); const entry: Transaction = { id, type: op === 'dispatch' ? 'DISPATCH' : op === 'transit' ? 'STATUS_CHANGE' : 'RECEIPT', shipmentId: reference || 'SHP-UNKNOWN-9999', partId: refTarget?.partId || 'N/A', quantity: qty, org: identities[r].org, user: 'Demo validation tool', timestamp: now, status: 'Rejected', hash: hash(Date.now()), reason: v.failure || scenario, failedRule: v.rules.find(x => !x.passed)?.key };
+    const now = new Date().toISOString(); const id = uid('TX-REJ'); const entry: Transaction = { id, type: op === 'dispatch' ? 'DISPATCH' : 'RECEIPT', shipmentId: reference || 'SHP-UNKNOWN-9999', partId: refTarget?.partId || 'N/A', quantity: qty, org: identities[r].org, user: 'Demo validation tool', timestamp: now, status: 'Rejected', hash: hash(Date.now()), reason: v.failure || scenario, failedRule: v.rules.find(x => !x.passed)?.key };
     const al: Alert = { id: uid('ALT'), type: 'Rejected attempt', severity: 'Medium', title: `Rejected · ${scenario}`, detail: `${reference}: ${v.failure}`, shipmentId: refTarget?.id, at: now, acknowledged: false };
     setData(prev => ({ ...prev, transactions: [entry, ...prev.transactions], alerts: [al, ...prev.alerts] })); notify(`Demo operation rejected: ${v.failure}`); return v;
   };
