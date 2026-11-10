@@ -6,6 +6,7 @@ const load = <T,>(key: string, defaultValue: T, storage: 'session' | 'local' = '
 interface Store {
   role: Role; authenticated: boolean; setRole: (r: Role) => void; login: (email: string, password: string, role: Role) => boolean; logout: () => void;
   data: AppData; toast: string; notify: (s: string) => void; dismiss: () => void;
+  resetDemo: () => void;
   createRequest: (p: { partId: string; location: Location; qty: number; month: string; note: string; }) => string;
   validate: (operation: Operation, ship: Shipment | undefined, qty: number, reference?: string) => CheckResult;
   perform: (operation: Operation, shipmentId: string, qty: number, note: string) => CheckResult;
@@ -72,11 +73,12 @@ export function Provider({ children }: { children: React.ReactNode; }) {
     const al: Alert = { id: uid('ALT'), type: 'Rejected attempt', severity: 'Medium', title: `Rejected · ${scenario}`, detail: `${reference}: ${v.failure}`, shipmentId: refTarget?.id, at: now, acknowledged: false };
     setData(prev => ({ ...prev, transactions: [entry, ...prev.transactions], alerts: [al, ...prev.alerts] })); notify(`Demo operation rejected: ${v.failure}`); return v;
   };
+  const resetDemo = () => { setData(initialData()); notify('Demonstration data restored'); };
   const ack = (id: string) => setData(prev => ({ ...prev, alerts: prev.alerts.map(a => a.id === id ? { ...a, acknowledged: true } : a) }));
   const addUser = (user: Omit<DemoUser, 'id' | 'lastSeen'>) => { if (role !== 'Admin') return; setData(p => ({ ...p, users: [{ ...user, id: uid('USR'), lastSeen: new Date().toISOString() }, ...p.users] })); notify('Demo user created'); };
   const setUserRole = (id: string, r: Role) => { if (role !== 'Admin') return; setData(p => ({ ...p, users: p.users.map(u => u.id === id ? { ...u, role: r } : u) })); notify('Role updated'); };
   const toggleUser = (id: string) => { if (role !== 'Admin') return; setData(p => ({ ...p, users: p.users.map(u => u.id === id ? { ...u, active: !u.active } : u) })); notify('User status updated'); };
-  const store = useMemo<Store>(() => ({ role, authenticated, setRole, login, logout, data, toast, notify, dismiss: () => setToast(''), createRequest, validate, perform, invalidDemo, ack, addUser, setUserRole, toggleUser }), [role, authenticated, data, toast]);
+  const store = useMemo<Store>(() => ({ role, authenticated, setRole, login, logout, data, toast, notify, dismiss: () => setToast(''), createRequest, validate, perform, invalidDemo, ack, addUser, setUserRole, toggleUser, resetDemo }), [role, authenticated, data, toast]);
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>;
 }
 export function useStore() { const ctx = useContext(Ctx); if (!ctx) throw Error('Store is missing'); return ctx; }
