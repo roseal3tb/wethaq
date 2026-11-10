@@ -16,7 +16,13 @@ export const nf = (v: number, dp = 0) => new Intl.NumberFormat('en-US', { minimu
 export const date = (v?: string) => v ? new Date(v).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
 export const month = (v: string) => new Date(v + '-01T00:00:00Z').toLocaleDateString('en-US', { month: 'short', year: '2-digit', timeZone: 'UTC' });
 export const uid = (prefix: string) => `${prefix}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
-export const downloadCSV = (name: string, rows: Record<string, unknown>[]) => { if (!rows.length) return; const cols = Object.keys(rows[0]); const csv = [cols, ...rows.map(r => cols.map(c => String(r[c] ?? '')))].map(line => line.map(v => '"' + v.replace(/"/g, '""') + '"').join(',')).join('\r\n'); const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob(['\ufeff', csv], { type: 'text/csv;charset=utf-8' })); link.download = name + '.csv'; link.click(); setTimeout(() => URL.revokeObjectURL(link.href), 1000); };
+/** Prevent imported user text being interpreted as spreadsheet formulae. */
+export const csvSafe = (value: unknown): string => {
+  const raw = String(value ?? '');
+  if (typeof value === 'number') return raw;
+  return /^[\s]*[=+\-@\t\r]/.test(raw) ? "'" + raw : raw;
+};
+export const downloadCSV = (name: string, rows: Record<string, unknown>[]) => { if (!rows.length) return; const cols = Object.keys(rows[0]); const csv = [cols, ...rows.map(r => cols.map(c => csvSafe(r[c])))].map(line => line.map(v => '"' + v.replace(/"/g, '""') + '"').join(',')).join('\r\n'); const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob(['\ufeff', csv], { type: 'text/csv;charset=utf-8' })); link.download = name + '.csv'; link.click(); setTimeout(() => URL.revokeObjectURL(link.href), 1000); };
 export function validateOperation(operation: Operation, shipment: Shipment | undefined, qty: number, role: Role, transactions: Transaction[], ref?: string): CheckResult {
   const required = operation === 'receive' ? 'Receiver' : 'Dispatcher';
   const expectedOrg = operation === 'receive' ? 'Org2 (Receiving)' : 'Org1 (Issuing)';

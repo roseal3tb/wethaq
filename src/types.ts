@@ -2,7 +2,7 @@ export type Role = 'Planner' | 'Dispatcher' | 'Receiver' | 'Admin';
 export type DemandClass = 'Smooth' | 'Erratic' | 'Intermittent' | 'Lumpy';
 export type Location = 'Central Warehouse' | 'Distribution Center' | 'Deployment Site';
 export type ShipmentStatus = 'Requested' | 'Dispatched' | 'In Transit' | 'Received';
-export type TxType = 'DISPATCH' | 'STATUS_CHANGE' | 'RECEIPT';
+export type TxType = 'DISPATCH' | 'STATUS_CHANGE' | 'RECEIPT' | 'ATTEMPT';
 export type TxStatus = 'Committed' | 'Rejected';
 export type Operation = 'dispatch' | 'transit' | 'receive';
 export interface Part { id: string; name: string; demandClass: DemandClass; criticality: 'Critical' | 'Standard'; unit: string; }
