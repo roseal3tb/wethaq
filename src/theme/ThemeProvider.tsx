@@ -1,3 +1,4 @@
+import { NiceSelect } from '../components/NiceSelect';
 import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
 import { Monitor, Moon, Sun } from 'lucide-react';
 
@@ -52,14 +53,14 @@ export function ThemeControl({ compact = false }: { compact?: boolean }) {
   const { preference, setPreference } = useTheme();
   const Icon = preference === 'dark' ? Moon : preference === 'light' ? Sun : Monitor;
   return (
-    <label className={'theme-control ' + (compact ? 'theme-control-compact' : '')}>
+    <div className={'theme-control ' + (compact ? 'theme-control-compact' : '')}>
       <Icon size={17} aria-hidden="true" />
       <span className="sr-only">Color theme</span>
-      <select aria-label="Color theme" value={preference} onChange={e => setPreference(e.target.value as ThemePreference)}>
+      <NiceSelect aria-label="Color theme" value={preference} onChange={e => setPreference(e.target.value as ThemePreference)}>
         <option value="light">Light</option>
         <option value="dark">Dark</option>
         <option value="system">System</option>
-      </select>
-    </label>
+      </NiceSelect>
+    </div>
   );
 }
