@@ -1,16 +1,14 @@
-import { defineConfig } from "vitest/config";
-import react from "@vitejs/plugin-react";
-import path from "node:path";
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
 
+// Run the real Wethaq domain tests from /tests in Node
+// The previous Lovable scaffold config pointed at unused /src/test files and required a missing jsdom package
 export default defineConfig({
   plugins: [react()],
   test: {
-    environment: "jsdom",
-    globals: true,
-    setupFiles: ["./src/test/setup.ts"],
-    include: ["src/**/*.{test,spec}.{ts,tsx}"],
-  },
-  resolve: {
-    alias: { "@": path.resolve(__dirname, "./src") },
+    environment: 'node',
+    globals: false,
+    include: ['tests/**/*.test.ts'],
+    exclude: ['node_modules/**', 'dist/**'],
   },
 });
