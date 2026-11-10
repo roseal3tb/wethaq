@@ -7,8 +7,8 @@ export default defineConfig({
   reporter: [['list'], ['html', { open: 'never' }]],
   use: { baseURL: 'http://127.0.0.1:4173', trace: 'retain-on-failure', screenshot: 'only-on-failure' },
   projects: [
-    { name: 'mobile-390', use: { ...devices['iPhone 13'], viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } },
-    { name: 'mobile-430', use: { ...devices['iPhone 13'], viewport: { width: 430, height: 932 }, isMobile: true, hasTouch: true } },
+    { name: 'mobile-390', use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, browserName: 'chromium' } },
+    { name: 'mobile-430', use: { ...devices['Pixel 7'], viewport: { width: 430, height: 932 }, isMobile: true, hasTouch: true } },
     { name: 'tablet-768', use: { viewport: { width: 768, height: 1024 } } },
     { name: 'desktop-1440', use: { viewport: { width: 1440, height: 900 } } },
   ],
