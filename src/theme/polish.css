@@ -254,3 +254,19 @@ html[data-theme='dark'] .login-theme .theme-icon-toggle {
   .theme-icon-toggle-compact svg{width:17px;height:17px}
 }
 @media(prefers-reduced-motion:reduce){.theme-icon-toggle{transition:none!important;transform:none!important}}
+
+/* Additional QA: prevent poor contrast in the overview decision-support banner */
+html[data-theme='dark'] .overview-trust {
+  background:linear-gradient(105deg,#213A39,#1B3039)!important;
+  border-color:#405A50!important;
+  color:#DDEAD4!important;
+}
+html[data-theme='dark'] .overview-trust strong {
+  color:#E4F0C4!important;
+  display:inline;font-weight:800;
+}
+html[data-theme='dark'] .overview-trust>div,
+html[data-theme='dark'] .overview-trust span{color:#DDEBD7!important}
+html[data-theme='dark'] .overview-trust>a{color:#DCECAF!important}
+html[data-theme='dark'] .overview-trust>a:hover{color:#F4FBD9!important}
+html[data-theme='dark'] .overview-trust svg{color:#B8CFAB!important}
