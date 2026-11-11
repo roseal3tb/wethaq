@@ -1,0 +1,170 @@
+:root {
+  --wethaq-ease: cubic-bezier(.22, .8, .24, 1);
+  --wethaq-quick: 150ms;
+  --wethaq-panel: 320ms;
+}
+
+@keyframes workspace-rise {
+  from { opacity: .72; transform: translateY(9px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes workspace-pop {
+  from { opacity: .42; transform: translateY(-5px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes workspace-fade-out {
+  to { opacity: 0; }
+}
+
+@keyframes workspace-dialog-out {
+  to { opacity: 0; transform: translate(-50%, calc(-50% + 8px)) scale(.985); }
+}
+
+@keyframes workspace-drawer-out {
+  to { opacity: .65; transform: translateX(100%); }
+}
+
+@keyframes workspace-chart-in {
+  from { opacity: .45; }
+  to { opacity: 1; }
+}
+
+/* The loaded page animates once. Scrolling and filtering keep content visible. */
+.app-shell .page:not(.skeleton-page, .overview-page) {
+  animation: workspace-rise 270ms var(--wethaq-ease);
+}
+
+.overview-hero-content,
+.overview-page .kpi-link,
+.overview-page .overview-primary > .panel,
+.overview-page .overview-bottom > .panel {
+  animation: workspace-rise 360ms var(--wethaq-ease) backwards;
+  animation-delay: var(--entrance-delay, 0ms);
+}
+
+.overview-page .kpi-link:nth-child(1) { --entrance-delay: 24ms; }
+.overview-page .kpi-link:nth-child(2) { --entrance-delay: 48ms; }
+.overview-page .kpi-link:nth-child(3) { --entrance-delay: 72ms; }
+.overview-page .kpi-link:nth-child(4) { --entrance-delay: 96ms; }
+.overview-page .kpi-link:nth-child(5) { --entrance-delay: 120ms; }
+.overview-page .overview-primary > .panel { --entrance-delay: 104ms; }
+.overview-page .overview-primary > .panel + .panel { --entrance-delay: 132ms; }
+.overview-page .overview-bottom > .panel { --entrance-delay: 142ms; }
+.overview-page .overview-bottom > .panel + .panel { --entrance-delay: 166ms; }
+.overview-page .forecast-chart { animation: workspace-chart-in 220ms ease-out both; }
+
+.app-shell .search-popover,
+.app-shell .alert-popover,
+.app-shell .col-menu {
+  transform-origin: top right;
+  animation: workspace-pop 180ms var(--wethaq-ease);
+}
+.app-shell .toast { animation: workspace-rise 240ms var(--wethaq-ease); }
+
+.dialog-overlay[data-state="closed"] { animation: workspace-fade-out 180ms ease-in both; }
+.dialog[data-state="closed"] { animation: workspace-dialog-out 180ms ease-in both; }
+.drawer[data-state="closed"] { animation: workspace-drawer-out 210ms ease-in both; }
+.w-dropdown[data-state="closed"], .w-select-menu[data-state="closed"] {
+  animation: workspace-fade-out 110ms ease-in both;
+}
+
+.app-shell .icon-btn,
+.app-shell .mobile-nav-close,
+.app-shell .text-link,
+.app-shell .forecast-period button,
+.app-shell .demo-tour-button,
+.app-shell .footer-about {
+  transition: background-color var(--wethaq-quick), color var(--wethaq-quick),
+    border-color var(--wethaq-quick), box-shadow var(--wethaq-quick),
+    transform var(--wethaq-quick) var(--wethaq-ease);
+}
+.app-shell .w-role-chevron,
+.app-shell .w-select-trigger > svg,
+.app-shell .overview-hero-link > svg,
+.app-shell .text-link > svg {
+  transition: transform 180ms var(--wethaq-ease);
+}
+.app-shell .w-select-trigger[data-state="open"] > svg { transform: rotate(180deg); }
+
+@media (hover: hover) {
+  .app-shell .overview-hero-link:hover > svg,
+  .app-shell .text-link:hover > svg { transform: translateX(3px); }
+}
+.app-shell .btn:active:not(:disabled),
+.app-shell .icon-btn:active:not(:disabled),
+.app-shell .forecast-period button:active,
+.app-shell .demo-tour-button:active,
+.app-shell .overview-hero-link:active,
+.app-shell .mobile-nav-close:active { transform: scale(.97); }
+.overview-page .kpi-link:active .kpi { transform: scale(.985); }
+
+@media (min-width: 1021px) {
+  .app-shell .sidebar { transition: width var(--wethaq-panel) var(--wethaq-ease); }
+  .app-shell .main-area { transition: margin-left var(--wethaq-panel) var(--wethaq-ease); }
+  .app-shell .sidebar-brand > a,
+  .app-shell .nav-item > span {
+    animation: workspace-chart-in 220ms ease-out both;
+  }
+}
+
+@media (max-width: 760px) {
+  .app-shell .sidebar {
+    transform: perspective(850px) translateX(-105%) rotateY(-10deg);
+    transform-origin: left center;
+    opacity: .82;
+    transition: transform var(--wethaq-panel) var(--wethaq-ease),
+      opacity 250ms ease, visibility 0s var(--wethaq-panel);
+  }
+  .app-shell.mobile-open .sidebar {
+    transform: perspective(850px) translateX(0) rotateY(0deg);
+    opacity: 1;
+    transition-delay: 0s;
+  }
+  .app-shell .mobile-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: #081c30a6;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 260ms ease, visibility 0s var(--wethaq-panel);
+  }
+  .app-shell.mobile-open .mobile-overlay {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition-delay: 0s;
+  }
+  .mobile-open .side-nav .nav-item {
+    animation: workspace-rise 260ms var(--wethaq-ease) backwards;
+    animation-delay: var(--nav-delay, 45ms);
+  }
+  .side-nav .nav-item:nth-child(2) { --nav-delay: 65ms; }
+  .side-nav .nav-item:nth-child(3) { --nav-delay: 85ms; }
+  .side-nav .nav-item:nth-child(4) { --nav-delay: 105ms; }
+  .side-nav .nav-item:nth-child(5) { --nav-delay: 125ms; }
+
+  .menu-mark { display: grid; gap: 4px; place-items: center; width: 21px; }
+  .menu-mark i {
+    width: 18px;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+    transition: transform 250ms var(--wethaq-ease), opacity 160ms ease;
+  }
+  .mobile-open .menu-mark i:first-child { transform: translateY(6px) rotate(45deg); }
+  .mobile-open .menu-mark i:nth-child(2) { opacity: 0; transform: scaleX(.4); }
+  .mobile-open .menu-mark i:last-child { transform: translateY(-6px) rotate(-45deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell *, .app-shell *::before, .app-shell *::after,
+  .dialog, .dialog-overlay, .drawer, .w-dropdown, .w-select-menu {
+    animation: none !important;
+    transition: none !important;
+  }
+}

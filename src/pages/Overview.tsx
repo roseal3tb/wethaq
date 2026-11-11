@@ -82,7 +82,7 @@ export default function Overview() {
             <span><i className="legend-line olive" /> Synthetic candidate</span>
             <span><i className="legend-band" /> Uncertainty</span>
           </div>
-          <ForecastChart data={forecast.points} compact />
+          <ForecastChart key={`${part}-${horizon}`} data={forecast.points} compact />
           <div className="chart-foot">
             <span>Synthetic aviation spare parts · monthly units</span>
             {canForecast && <Link className="text-link" to={`/forecasts?part=${part}&horizon=${horizon}`}>Open forecast <ArrowUpRight size={15} aria-hidden="true" /></Link>}
