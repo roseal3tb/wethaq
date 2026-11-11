@@ -135,3 +135,37 @@ test('All three workflow areas stay reachable at narrow viewports', async ({ pag
     await page.getByRole('button', { name: 'Close menu' }).click();
   }
 });
+
+test('Overview controls carry the selected records and forecast into their modules', async ({ page }) => {
+  await login(page);
+  const forecast = page.getByRole('combobox', { name: 'Select forecast part' });
+  await forecast.click();
+  await page.getByRole('option', { name: /SP-002/ }).click();
+  await page.getByRole('button', { name: '3 mo' }).click();
+  await expect(page.getByRole('button', { name: '3 mo' })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('link', { name: 'Open forecast' }).click();
+  await expect(page).toHaveURL(/part=SP-002&horizon=3/);
+
+  await page.goto('/overview');
+  await page.getByRole('link', { name: /Pending receipt/ }).click();
+  await expect(page.getByRole('combobox', { name: 'Status' })).toContainText('Pending receipt');
+  await expect(page.locator('tbody tr').filter({ hasText: /Received|Requested/ })).toHaveCount(0);
+  await page.getByRole('tab', { name: /Ledger/ }).click();
+  await expect(page.getByRole('combobox', { name: 'Status' })).toContainText('All statuses');
+
+  await page.goto('/overview');
+  await page.getByRole('link', { name: 'Review alerts' }).click();
+  await expect(page.getByRole('combobox', { name: 'Alert state' })).toContainText('New');
+  await expect(page.locator('tbody tr').filter({ hasText: 'Acknowledged' })).toHaveCount(0);
+});
+
+test('Mobile navigation can be dismissed and returns keyboard focus', async ({ page }) => {
+  test.skip(page.viewportSize()!.width > 760, 'Mobile navigation only');
+  await login(page);
+  const trigger = page.getByRole('button', { name: 'Open menu' });
+  await trigger.click();
+  await expect(page.getByRole('button', { name: 'Close menu' })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeHidden();
+  await expect(trigger).toBeFocused();
+});
