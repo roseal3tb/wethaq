@@ -224,26 +224,16 @@ html[data-theme='dark'] .theme-control .w-select-trigger{color:#EEF4F5!important
   -webkit-tap-highlight-color: transparent;
   appearance:none;display:inline-grid;place-items:center;flex-shrink:0;
   height:42px;width:42px;min-width:42px;padding:0;
-  background:#EDF2EF;color:#586F3D;border:1px solid #D9E4DE;
-  border-radius:14px;box-shadow:0 2px 7px #18384A08;
-  transition:background .18s,color .18s,transform .18s,border-color .18s;
+  background:var(--theme-toggle-bg);color:var(--theme-toggle-ink);
+  border:1px solid var(--theme-toggle-border);border-radius:14px;
+  box-shadow:0 2px 7px #18384a0a;
+  transition:background-color var(--theme-duration),color var(--theme-duration),
+    transform 150ms var(--theme-ease),border-color var(--theme-duration);
 }
-.theme-icon-toggle:hover {background:#E5EDD9;color:#415D28;border-color:#B2C99B;transform:translateY(-1px)}
+@media (hover: hover) {
+  .theme-icon-toggle:hover {background:var(--theme-toggle-hover);transform:translateY(-1px)}
+}
 .theme-icon-toggle:active {transform:scale(.96)}
-html[data-theme='dark'] .theme-icon-toggle {
-  background:#1C3347;color:#D0DF9C;border:1px solid #3A5369;
-  box-shadow:0 2px 9px #0002;
-}
-html[data-theme='dark'] .theme-icon-toggle:hover {
-  background:#2C4756;color:#EDF4D4;border-color:#6C8669
-}
-.login-theme .theme-icon-toggle {
-  background:#F4F7F2;color:#597642;border-color:#DEE7DC;
-  box-shadow:0 9px 30px #102C4716
-}
-html[data-theme='dark'] .login-theme .theme-icon-toggle {
-  background:#243D4F;color:#D4E2A7;border-color:#496273
-}
 @media (max-width:760px) {
   .theme-icon-toggle-compact{width:40px;min-width:40px;height:40px;border-radius:13px}
   .theme-icon-toggle-compact svg{width:18px;height:18px}
@@ -372,10 +362,6 @@ html[data-theme='dark'] .login .info-banner{color:#D6E3EB}
   .login .login-heading h2{font-size:31px}
   .login .login-graphic{display:none}
   .login .login-form-wrap{max-width:520px;margin:auto}
-  .login .login-theme .theme-icon-toggle{
-    background:#1B3648;color:#D6E4B1;border-color:#557060;
-  }
-  html[data-theme='dark'] .login .login-theme .theme-icon-toggle{background:#2B4354}
 }
 @media(max-width:480px){
   .login>.login-brand{padding:24px 19px 23px}

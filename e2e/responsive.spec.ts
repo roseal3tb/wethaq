@@ -189,3 +189,39 @@ test('Reduced motion turns off dashboard entrance and sidebar transitions', asyn
     await expect(page.locator('.mobile-overlay')).toBeHidden();
   }
 });
+
+test('Theme switches animate on login and overview without changing the login layout', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'no-preference' });
+  await page.goto('/login');
+  const hero = page.locator('.login-brand');
+  const lightColor = await hero.evaluate(element => getComputedStyle(element).backgroundColor);
+  const originalLayout = await hero.boundingBox();
+  const heroTransition = hero.evaluate(element => new Promise<boolean>(resolve => {
+    element.addEventListener('transitionrun', event => {
+      if (event.target === element && event.propertyName === 'background-color') resolve(true);
+    });
+    window.setTimeout(() => resolve(false), 2500);
+  }));
+  await setTheme(page, 'Dark');
+  expect(await heroTransition).toBe(true);
+  await expect(page.locator('.login-brand .login-logo-paper')).toHaveCSS('opacity', '1');
+  await expect(page.locator('.theme-moon')).toHaveCSS('opacity', '1');
+  await expect(hero).not.toHaveCSS('background-color', lightColor);
+  expect(await hero.boundingBox()).toEqual(originalLayout);
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#101B28');
+
+  await login(page);
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  const topbarTransition = page.locator('.topbar').evaluate(element => new Promise<boolean>(resolve => {
+    element.addEventListener('transitionrun', event => {
+      if (event.target === element && event.propertyName === 'background-color') resolve(true);
+    });
+    window.setTimeout(() => resolve(false), 2500);
+  }));
+  await setTheme(page, 'Light');
+  expect(await topbarTransition).toBe(true);
+  await expect(page.locator('.theme-sun')).toHaveCSS('opacity', '1');
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#F7F8FA');
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+});

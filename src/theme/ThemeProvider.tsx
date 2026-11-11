@@ -62,7 +62,10 @@ export function ThemeControl({ compact = false }: { compact?: boolean }) {
       aria-pressed={resolved === 'dark'}
       onClick={() => setPreference(next)}
     >
-      {resolved === 'dark' ? <Moon size={19} strokeWidth={1.95} aria-hidden="true" /> : <Sun size={19} strokeWidth={1.95} aria-hidden="true" />}
+      <span className="theme-toggle-icons" aria-hidden="true">
+        <Sun className="theme-sun" size={19} strokeWidth={1.95} />
+        <Moon className="theme-moon" size={19} strokeWidth={1.95} />
+      </span>
     </button>
   );
 }

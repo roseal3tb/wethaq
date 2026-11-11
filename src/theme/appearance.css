@@ -1,0 +1,114 @@
+:root {
+  --theme-duration: 300ms;
+  --theme-ease: cubic-bezier(.24, .72, .28, 1);
+  --theme-toggle-bg: #eef3e7;
+  --theme-toggle-ink: #455f2c;
+  --theme-toggle-border: #cdd8c3;
+  --theme-toggle-hover: #e2ead8;
+  --login-hero-base: #e3edf1;
+  --login-hero-ink: #102b44;
+  --login-hero-accent: #4d612d;
+  --login-hero-muted: #3f5b6e;
+  --login-hero-line: #163e5c21;
+  --login-hero-halo: #26597a0b;
+  --login-form-muted: #526778;
+}
+
+html[data-theme="dark"] {
+  --theme-toggle-bg: #243c4e;
+  --theme-toggle-ink: #dce9af;
+  --theme-toggle-border: #506c7d;
+  --theme-toggle-hover: #304c60;
+  --login-hero-base: #10263b;
+  --login-hero-ink: #f4f8fb;
+  --login-hero-accent: #cadb99;
+  --login-hero-muted: #b7cad7;
+  --login-hero-line: #d3e5ed1f;
+  --login-hero-halo: #c6e3f309;
+  --login-form-muted: #b9c8d5;
+}
+
+/* The same gradient and geometry work with both base colors. */
+.login .login-brand {
+  background: radial-gradient(ellipse at 20% 0%, #5796bb37, transparent 65%),
+    linear-gradient(155deg, transparent 35%, #0d284316);
+  background-color: var(--login-hero-base);
+  color: var(--login-hero-ink);
+}
+
+.login .login-brand::before {
+  border-color: var(--login-hero-line);
+  box-shadow: 0 0 0 70px var(--login-hero-halo), 0 0 0 150px var(--login-hero-halo);
+  transition: border-color var(--theme-duration) var(--theme-ease), box-shadow var(--theme-duration) var(--theme-ease);
+}
+
+html[data-theme] .login .login-message h1 {
+  color: var(--login-hero-ink);
+  letter-spacing: -.05em;
+}
+.login .login-message h1 em, .login .olive-eyebrow, .login .login-brand-footer svg {
+  color: var(--login-hero-accent);
+}
+html[data-theme] .login .login-message p,
+.login .login-brand-footer,
+.login .brand-version {
+  color: var(--login-hero-muted);
+}
+
+html[data-theme] .login .login-heading p,
+html[data-theme] .login .login-topline,
+html[data-theme] .login .login-foot {
+  color: var(--login-form-muted);
+}
+
+.login-logo {
+  display: inline-grid;
+  place-items: center;
+}
+.login-logo > img { grid-area: 1 / 1; display: block; }
+.login-logo-paper { opacity: 0; }
+html[data-theme="dark"] .login-logo-ink { opacity: 0; }
+html[data-theme="dark"] .login-logo-paper { opacity: 1; }
+.login-logo > img { transition: opacity var(--theme-duration) var(--theme-ease); }
+.login-brand-top .login-logo { max-width: 100%; }
+
+.theme-toggle-icons {
+  display: grid;
+  place-items: center;
+  line-height: 0;
+}
+.theme-toggle-icons > svg {
+  grid-area: 1 / 1;
+  transition: opacity var(--theme-duration) var(--theme-ease), transform var(--theme-duration) var(--theme-ease);
+}
+.theme-moon { opacity: 0; transform: rotate(-35deg) scale(.74); }
+html[data-theme="dark"] .theme-sun { opacity: 0; transform: rotate(40deg) scale(.74); }
+html[data-theme="dark"] .theme-moon { opacity: 1; transform: rotate(0) scale(1); }
+
+/* Transition painted colors without delaying interaction or moving any layout. */
+:where(body, .login, .login-brand, .login-right, .login-form-wrap, .login-heading h2,
+  .login-heading p, .login-message h1, .login-message h1 em, .login-message p,
+  .login-brand-footer, .login-brand-footer svg, .olive-eyebrow, .brand-version, .mini-mark,
+  .login-topline, .login-foot, .field > span, .input-icon > svg,
+  .app-shell, .topbar, .header-page, .breadcrumbs, .footer-title strong, .footer-title small,
+  .kpi-label, .kpi-value, .kpi-note, .panel-heading h3, .panel-heading p, .info-banner) {
+  transition: background-color var(--theme-duration) var(--theme-ease),
+    color var(--theme-duration) var(--theme-ease), border-color var(--theme-duration) var(--theme-ease);
+}
+
+.login .input-icon input,
+.login .w-role-form,
+.login .login-submit,
+.app-shell .global-search input,
+.app-shell .w-role-header,
+.app-shell .w-select-trigger,
+.app-shell .kpi,
+.app-shell .panel {
+  transition: background-color var(--theme-duration) var(--theme-ease),
+    color var(--theme-duration) var(--theme-ease), border-color var(--theme-duration) var(--theme-ease),
+    box-shadow 180ms var(--theme-ease), transform 180ms var(--theme-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --theme-duration: 0ms; }
+}
