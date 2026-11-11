@@ -54,7 +54,12 @@ function Shell({ children }: { children: React.ReactNode; }) {
       if (content) content.inert = false;
       desktop.removeEventListener('change', closeMenu);
       window.removeEventListener('keydown', onKey);
-      mobileTrigger.current?.focus({ preventScroll: true });
+      const trigger = mobileTrigger.current;
+      requestAnimationFrame(() => {
+        if (trigger?.getAttribute('aria-expanded') === 'false') {
+          trigger.focus({ preventScroll: true });
+        }
+      });
     };
   }, [mobile]);
 

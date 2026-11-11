@@ -52,6 +52,7 @@ html[data-theme="dark"] .app-shell {
 
 .overview-page {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--workspace-gap);
   padding-top: clamp(16px, 2.4vw, 36px);
 }
@@ -173,7 +174,7 @@ html[data-theme="dark"] .overview-page .kpi-amber .kpi-icon { background: #46382
 .overview-page .overview-bottom { gap: var(--workspace-gap); grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .overview-page .overview-bottom > .panel:last-child { grid-column: auto; }
 .overview-chart-controls { display: flex; align-items: center; justify-content: space-between; gap: 9px; margin-bottom: 13px; }
-.overview-part-select.w-select-trigger { width: min(100%, 310px); min-height: 42px; }
+.overview-part-select.w-select-trigger { width: min(100%, 310px); min-width: 0; min-height: 42px; }
 .forecast-period { display: flex; flex: none; padding: 3px; gap: 2px; border-radius: 12px; border: 1px solid var(--border); background: var(--workspace-hover); }
 .forecast-period button { min-height: 34px; padding: 0 10px; border: 1px solid transparent; border-radius: 9px; background: transparent; color: var(--workspace-muted); font-size: 11px; font-weight: 800; white-space: nowrap; }
 .forecast-period button:hover { color: var(--workspace-text); }
@@ -226,7 +227,7 @@ html[data-theme="dark"] .overview-page .legend-band { background: #627049; }
   .overview-page .kpi-note { font-size: 10px; }
 }
 @media (max-width: 960px) {
-  .overview-page .overview-primary { grid-template-columns: 1fr; }
+  .overview-page .overview-primary { grid-template-columns: minmax(0, 1fr); }
   .overview-hero-art { inset-inline-start: 55%; }
 }
 @media (max-width: 760px) {
@@ -258,7 +259,7 @@ html[data-theme="dark"] .overview-page .legend-band { background: #627049; }
   .overview-page .kpi-link:last-child .kpi-value { grid-column: 3; grid-row: 1 / 3; }
   .overview-page .kpi-link:last-child .kpi-note { grid-column: 2; }
   .overview-page .kpi-link:last-child .kpi-arrow { top: 50%; margin-top: -8px; }
-  .overview-page .overview-bottom { grid-template-columns: 1fr; }
+  .overview-page .overview-bottom { grid-template-columns: minmax(0, 1fr); }
   .overview-page .overview-bottom > .overview-alerts { grid-column: auto; }
 }
 @media (max-width: 365px) {
