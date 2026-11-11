@@ -165,7 +165,27 @@ test('Mobile navigation can be dismissed and returns keyboard focus', async ({ p
   const trigger = page.getByRole('button', { name: 'Open menu' });
   await trigger.click();
   await expect(page.getByRole('button', { name: 'Close menu' })).toBeFocused();
+  const sidebar = page.locator('#workspace-navigation');
+  const backdrop = page.locator('.mobile-overlay');
+  await expect(sidebar).toHaveCSS('opacity', '1');
+  await expect(backdrop).toHaveCSS('opacity', '1');
   await page.keyboard.press('Escape');
+  await expect(sidebar).toHaveJSProperty('inert', true);
+  await expect(backdrop).toHaveCSS('opacity', '0');
   await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeHidden();
   await expect(trigger).toBeFocused();
+});
+
+
+test('Reduced motion turns off dashboard entrance and sidebar transitions', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await login(page);
+  await expect(page.locator('.overview-hero-content')).toHaveCSS('animation-name', 'none');
+  await expect(page.locator('#workspace-navigation')).toHaveCSS('transition-duration', '0s');
+  if (page.viewportSize()!.width <= 760) {
+    await page.getByRole('button', { name: 'Open menu' }).click();
+    await expect(page.locator('.mobile-overlay')).toHaveCSS('opacity', '1');
+    await page.getByRole('button', { name: 'Close menu' }).click();
+    await expect(page.locator('.mobile-overlay')).toBeHidden();
+  }
 });
