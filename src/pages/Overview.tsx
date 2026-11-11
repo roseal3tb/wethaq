@@ -1,8 +1,154 @@
-import { useMemo, useState } from 'react'; import { Link, useNavigate } from 'react-router-dom'; import { Activity, ArrowRight, ArrowUpRight, Bell, Boxes, CheckCircle2, Database, PackageCheck, ShieldCheck, Truck, AlertTriangle, Clock3 } from 'lucide-react'; import { useStore } from '../context/Store'; import { PARTS, BASE_INVENTORY } from '../data/mock'; import { getForecast } from '../data/forecast'; import { computeInventory } from '../data/mock'; import { ForecastChart, ShipmentDonut } from '../components/Charts'; import { Panel, MiniStat, Status, Badge, Button } from '../components/UI'; import { date, nf } from '../utils/core';
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import {
+  AlertTriangle, ArrowRight, ArrowUpRight, Bell, Boxes, CheckCircle2,
+  Clock3, Database, ShieldCheck, Truck,
+} from 'lucide-react';
+import { ForecastChart, ShipmentDonut } from '../components/Charts';
+import { NiceSelect } from '../components/NiceSelect';
+import { MiniStat, Panel, Status } from '../components/UI';
+import { useStore } from '../context/Store';
+import { getForecast } from '../data/forecast';
+import { computeInventory, PARTS } from '../data/mock';
+import { allowed, date, nf } from '../utils/core';
+
+const shipmentStages = ['Requested', 'Dispatched', 'In Transit', 'Received'];
+const partsById = new Map(PARTS.map(part => [part.id, part]));
+
 export default function Overview() {
-  const { data, ack } = useStore(); const nav = useNavigate(); const [part, setPart] = useState('SP-001'); const inv = useMemo(() => computeInventory(data.shipments), [data.shipments]); const risk = inv.filter(r => r.status !== 'Healthy').sort((a, b) => a.daysCover - b.daysCover).slice(0, 5); const active = data.alerts.filter(a => !a.acknowledged); const recent = [...data.shipments].sort((a, b) => b.requestedAt.localeCompare(a.requestedAt)).slice(0, 5); const tx = [...data.transactions].sort((a, b) => b.timestamp.localeCompare(a.timestamp)).slice(0, 5); const f = useMemo(() => getForecast(part, 'All locations', 6), [part]); const stats = [{ label: 'Parts tracked', value: PARTS.length, icon: <Boxes size={19} />, note: 'Across 3 locations', path: '/inventory' }, { label: 'Active alerts', value: active.length, icon: <Bell size={19} />, note: 'Requiring review', path: '/inventory?tab=alerts' }, { label: 'In transit', value: data.shipments.filter(s => s.status === 'In Transit').length, icon: <Truck size={19} />, note: 'Simulated shipments', path: '/shipments' }, { label: 'Pending receipt', value: data.shipments.filter(s => ['In Transit', 'Dispatched'].includes(s.status)).length, icon: <Clock3 size={19} />, note: 'Awaiting confirmation', path: '/shipments' }, { label: 'Ledger committed', value: data.transactions.filter(t => t.status === 'Committed').length, icon: <ShieldCheck size={19} />, note: 'Synthetic records', path: '/shipments?tab=ledger' }]; const groups = ['Requested', 'Dispatched', 'In Transit', 'Received'].map(s => ({ name: s, value: data.shipments.filter(x => x.status === s).length }));
-  return <div className="page"><div className="page-title-row"><div><span className="eyebrow">COMMAND CENTER / OPERATIONS</span><h1>Operations <em>overview</em></h1><p>A unified view of demand, inventory readiness, and supply movements</p></div><div className="page-title-side"><Badge tone="olive">Synthetic data</Badge><span className="asof">DEMO SNAPSHOT · NOV 2026</span></div></div><div className="kpi-grid">{stats.map(s => <Link to={s.path} className="kpi-link" key={s.label}><MiniStat label={s.label} value={nf(s.value)} icon={s.icon} note={s.note} href={s.path} /></Link>)}</div>
-    <div className="overview-primary"><Panel className="forecast-panel" title="Demand forecast snapshot" subtitle="Historical consumption and projected requirements" action={<div className="action-inline"><select className="small-select" value={part} onChange={e => setPart(e.target.value)} aria-label="Select forecast part">{PARTS.map(p => <option key={p.id} value={p.id}>{p.id} · {p.name}</option>)}</select><Link className="text-link" to={`/forecasts?part=${part}`}>Explore <ArrowUpRight size={15} /></Link></div>}><div className="chart-legend"><span><i className="legend-line navy" /> Historical demand</span><span><i className="legend-line olive" /> Synthetic candidate</span><span><i className="legend-band" /> Uncertainty</span></div><ForecastChart data={f.points} compact /><div className="chart-foot"><span>Source: synthetic aviation spare parts · monthly units</span><span>Illustrative forecast · 6 months</span></div></Panel><Panel title="Inventory risk watch" subtitle="Items closest to a potential shortage" action={<Link to="/inventory" className="text-link">View inventory <ArrowUpRight size={15} /></Link>}><div className="risk-list">{risk.map((r, i) => <button key={r.id} className="risk-row" onClick={() => nav(`/inventory?search=${r.partId}`)}><span className="risk-rank">{String(i + 1).padStart(2, '0')}</span><span className="risk-body"><strong>{PARTS.find(p => p.id === r.partId)?.name}</strong><small>{r.partId} · {r.location}</small></span><span className="risk-right"><Status value={r.status} /><small>{nf(r.daysCover, 0)}d cover</small></span></button>)}</div><div className="panel-notice"><AlertTriangle size={16} /> Risk based on simulated stock and lead-time assumptions</div></Panel></div>
-    <div className="overview-bottom"><Panel title="Shipment status" subtitle="A snapshot across the supply journey" action={<Link to="/shipments" className="text-link">All shipments <ArrowUpRight size={15} /></Link>}><div className="donut-layout"><ShipmentDonut data={groups} /><div className="status-legend">{groups.map((g, i) => <div key={g.name}><span><i className={`status-dot dot-${i}`} />{g.name}</span><strong>{g.value}</strong></div>)}</div></div><div className="mini-divider" /><div className="mini-table"><div className="mini-table-heading"><span>RECENT SHIPMENTS</span><span>STATUS</span></div>{recent.map(s => <button onClick={() => nav(`/shipments?search=${s.id}`)} key={s.id}><span><strong>{s.id}</strong><small>{PARTS.find(p => p.id === s.partId)?.name}</small></span><Status value={s.status} /></button>)}</div></Panel><Panel title="Latest ledger activity" subtitle="Committed records and rejected attempts" action={<Link to="/shipments?tab=ledger" className="text-link">View ledger <ArrowUpRight size={15} /></Link>}><div className="activity-list">{tx.map(t => <button onClick={() => nav(`/shipments?tab=ledger&search=${t.id}`)} key={t.id}><span className={`activity-icon ${t.status === 'Rejected' ? 'danger' : ''}`}>{t.status === 'Committed' ? <CheckCircle2 size={17} /> : <AlertTriangle size={17} />}</span><span className="activity-body"><strong>{t.type.replace('_', ' ')} <code>{t.id}</code></strong><small>{t.org} · {date(t.timestamp)}</small></span><Status value={t.status} /></button>)}</div><div className="panel-notice"><Database size={15} /> Demonstration records; no live blockchain connection</div></Panel><Panel title="Active alerts" subtitle="Items requiring attention" action={<Link to="/inventory?tab=alerts" className="text-link">View alerts <ArrowUpRight size={15} /></Link>}><div className="alert-list">{active.slice(0, 6).map(a => <div className="alert-item" key={a.id}><span className={`alert-mark alert-${a.severity.toLowerCase()}`} /><div><strong>{a.title}</strong><p>{a.detail}</p><small>{date(a.at)}</small></div><button title="Acknowledge" className="icon-btn" aria-label={`Acknowledge ${a.title}`} onClick={() => ack(a.id)}><CheckCircle2 size={17} /></button></div>)}{!active.length && <p className="muted">All alerts acknowledged</p>}</div></Panel></div>
-    <div className="overview-trust"><div><ShieldCheck size={20} /><span><strong>Decision-support intelligence</strong> Wethaq presents synthetic forecasts and simulated ledger records. Human review is always required</span></div><Link to="/shipments">Explore supply traceability <ArrowRight size={16} /></Link></div></div>;
+  const { data, role, ack } = useStore();
+  const [part, setPart] = useState(PARTS[0].id);
+  const [horizon, setHorizon] = useState(6);
+  const inventory = useMemo(() => computeInventory(data.shipments), [data.shipments]);
+  const forecast = useMemo(() => getForecast(part, 'All locations', horizon), [part, horizon]);
+  const risk = inventory.filter(row => row.status !== 'Healthy').sort((a, b) => a.daysCover - b.daysCover).slice(0, 5);
+  const active = data.alerts.filter(alert => !alert.acknowledged);
+  const recent = [...data.shipments].sort((a, b) => b.requestedAt.localeCompare(a.requestedAt)).slice(0, 4);
+  const transactions = [...data.transactions].sort((a, b) => b.timestamp.localeCompare(a.timestamp)).slice(0, 5);
+  const groups = shipmentStages.map(name => ({
+    name,
+    value: data.shipments.filter(shipment => shipment.status === name).length,
+  }));
+  const inTransit = groups[2].value;
+  const canForecast = allowed(role, 'forecasts');
+  const stats = [
+    { label: 'Parts tracked', value: PARTS.length, icon: Boxes, note: 'Across 3 locations', path: '/inventory', tone: 'blue' },
+    { label: 'Active alerts', value: active.length, icon: Bell, note: 'Awaiting review', path: '/inventory?tab=alerts&alert=New', tone: 'amber' },
+    { label: 'In transit', value: inTransit, icon: Truck, note: 'Simulated shipments', path: '/shipments?status=In+Transit', tone: 'blue' },
+    { label: 'Pending receipt', value: inTransit + groups[1].value, icon: Clock3, note: 'Dispatched or in transit', path: '/shipments?status=Pending+receipt', tone: 'amber' },
+    { label: 'Ledger committed', value: data.transactions.filter(transaction => transaction.status === 'Committed').length, icon: ShieldCheck, note: 'Simulated transactions', path: '/shipments?tab=ledger&status=Committed', tone: 'olive' },
+  ];
+
+  return (
+    <div className="page overview-page">
+      <section className="overview-hero" aria-labelledby="overview-title">
+        <div className="overview-hero-art" aria-hidden="true">
+          <div className="hero-orbits" />
+          <div className="hero-beacon"><img src="/brand/wathaq-olive-icon-light.svg" alt="" /></div>
+        </div>
+        <div className="overview-hero-content">
+          <span className="overview-environment"><i /> Academic demo · Synthetic data</span>
+          <h1 id="overview-title">Operations <em>overview</em></h1>
+          <p>Monitor demand, check inventory readiness and follow recorded shipments in one workspace</p>
+          <div className="overview-hero-actions">
+            <Link className="overview-hero-link" to="/inventory?tab=alerts&alert=New">Review alerts <ArrowRight size={16} aria-hidden="true" /></Link>
+            <Link className="overview-hero-link overview-hero-link-secondary" to="/shipments">Track shipments <ArrowUpRight size={16} aria-hidden="true" /></Link>
+          </div>
+        </div>
+      </section>
+
+      <div className="kpi-grid">
+        {stats.map(({ icon: Icon, ...stat }) => (
+          <Link to={stat.path} className={`kpi-link kpi-${stat.tone}`} key={stat.label}>
+            <MiniStat label={stat.label} value={nf(stat.value)} icon={<Icon size={19} aria-hidden="true" />} note={stat.note} href={stat.path} />
+          </Link>
+        ))}
+      </div>
+
+      <div className="overview-primary">
+        <Panel className="forecast-panel" title="Demand forecast" subtitle="Historical demand and simulated projections">
+          <div className="overview-chart-controls">
+            <NiceSelect className="overview-part-select" value={part} onChange={event => setPart(event.target.value)} aria-label="Select forecast part">
+              {PARTS.map(item => <option key={item.id} value={item.id}>{item.id} · {item.name}</option>)}
+            </NiceSelect>
+            <div className="forecast-period" role="group" aria-label="Forecast horizon">
+              {[3, 6].map(months => (
+                <button key={months} type="button" aria-pressed={horizon === months} onClick={() => setHorizon(months)}>{months} mo</button>
+              ))}
+            </div>
+          </div>
+          <div className="chart-legend">
+            <span><i className="legend-line navy" /> Historical demand</span>
+            <span><i className="legend-line olive" /> Synthetic candidate</span>
+            <span><i className="legend-band" /> Uncertainty</span>
+          </div>
+          <ForecastChart data={forecast.points} compact />
+          <div className="chart-foot">
+            <span>Synthetic aviation spare parts · monthly units</span>
+            {canForecast && <Link className="text-link" to={`/forecasts?part=${part}&horizon=${horizon}`}>Open forecast <ArrowUpRight size={15} aria-hidden="true" /></Link>}
+          </div>
+        </Panel>
+
+        <Panel className="overview-risk" title="Inventory risk watch" subtitle="Lowest estimated days of stock remaining" action={<Link to="/inventory" className="text-link">Inventory <ArrowUpRight size={15} aria-hidden="true" /></Link>}>
+          <div className="risk-list">
+            {risk.map(row => (
+              <Link key={row.id} className="risk-row" to={`/inventory?${new URLSearchParams({ search: row.partId, location: row.location })}`}>
+                <span className="risk-body"><strong>{partsById.get(row.partId)?.name}</strong><small>{row.partId} · {row.location}</small></span>
+                <span className="risk-right"><Status value={row.status} /><small>{nf(row.daysCover)} days of stock</small></span>
+              </Link>
+            ))}
+            {!risk.length && <p className="muted">No inventory risks in this snapshot</p>}
+          </div>
+          <div className="panel-notice"><AlertTriangle size={16} aria-hidden="true" /> Based on simulated stock and lead times</div>
+        </Panel>
+      </div>
+
+      <div className="overview-bottom">
+        <Panel title="Shipment status" action={<Link to="/shipments" className="text-link">Shipments <ArrowUpRight size={15} aria-hidden="true" /></Link>}>
+          <div className="donut-layout">
+            <ShipmentDonut data={groups} />
+            <div className="status-legend">
+              {groups.map((group, index) => <div key={group.name}><span><i className={`status-dot dot-${index}`} />{group.name}</span><strong>{group.value}</strong></div>)}
+            </div>
+          </div>
+          <div className="mini-divider" />
+          <div className="mini-table">
+            <div className="mini-table-heading"><span>Recent shipments</span><span>Status</span></div>
+            {recent.map(shipment => (
+              <Link to={`/shipments?search=${shipment.id}`} key={shipment.id}>
+                <span><strong>{shipment.id}</strong><small>{partsById.get(shipment.partId)?.name}</small></span>
+                <Status value={shipment.status} />
+              </Link>
+            ))}
+          </div>
+        </Panel>
+
+        <Panel title="Latest ledger activity" subtitle="Committed records and rejected attempts" action={<Link to="/shipments?tab=ledger" className="text-link">Ledger <ArrowUpRight size={15} aria-hidden="true" /></Link>}>
+          <div className="activity-list">
+            {transactions.map(transaction => (
+              <Link to={`/shipments?tab=ledger&search=${transaction.id}`} key={transaction.id}>
+                <span className={`activity-icon ${transaction.status === 'Rejected' ? 'danger' : ''}`}>{transaction.status === 'Committed' ? <CheckCircle2 size={17} aria-hidden="true" /> : <AlertTriangle size={17} aria-hidden="true" />}</span>
+                <span className="activity-body"><strong>{transaction.type.toLowerCase().replace(/_/g, ' ')}</strong><small><code>{transaction.id}</code> · {date(transaction.timestamp)}</small></span>
+                <Status value={transaction.status} />
+              </Link>
+            ))}
+          </div>
+          <div className="panel-notice"><Database size={15} aria-hidden="true" /> Simulated ledger records</div>
+        </Panel>
+
+        <Panel className="overview-alerts" title="Active alerts" subtitle="Shortages and discrepancies awaiting review" action={<Link to="/inventory?tab=alerts&alert=New" className="text-link">Alerts <ArrowUpRight size={15} aria-hidden="true" /></Link>}>
+          <div className="alert-list">
+            {active.slice(0, 5).map(alert => (
+              <div className="alert-item" key={alert.id}>
+                <span className={`alert-mark alert-${alert.severity.toLowerCase()}`} aria-hidden="true" />
+                <div><strong>{alert.title}</strong><p>{alert.detail}</p></div>
+                <button type="button" title="Acknowledge" className="icon-btn" aria-label={`Acknowledge ${alert.title}`} onClick={() => ack(alert.id)}><CheckCircle2 size={17} aria-hidden="true" /></button>
+              </div>
+            ))}
+            {!active.length && <div className="overview-alert-empty"><CheckCircle2 size={22} aria-hidden="true" /> All alerts acknowledged</div>}
+          </div>
+        </Panel>
+      </div>
+    </div>
+  );
 }
