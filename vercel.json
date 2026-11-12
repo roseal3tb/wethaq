@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/:page(login|overview|forecasts|inventory|shipments|users)",
+      "destination": "/index.html"
+    }
+  ]
+}
