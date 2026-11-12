@@ -10,7 +10,7 @@ interface Store {
   createRequest: (p: { partId: string; location: Location; qty: number; month: string; note: string; }) => string;
   validate: (operation: Operation, ship: Shipment | undefined, qty: number, reference?: string) => CheckResult;
   perform: (operation: Operation, shipmentId: string, qty: number, note: string) => CheckResult;
-  invalidDemo: (scenario: string, shipmentId?: string) => CheckResult;
+  invalidDemo: (scenario: string, shipmentId?: string) => CheckResult & { transactionId: string };
   ack: (id: string) => void; addUser: (u: Omit<DemoUser, 'id' | 'lastSeen'>) => void; setUserRole: (id: string, r: Role) => void; toggleUser: (id: string) => void;
 }
 const Ctx = createContext<Store | null>(null);
@@ -77,7 +77,7 @@ export function Provider({ children }: { children: React.ReactNode; }) {
     const v = validateOperation(op, refTarget, qty, r, data.transactions, reference);
     const now = new Date().toISOString(); const id = uid('TX-REJ'); const entry: Transaction = { id, type: 'ATTEMPT', shipmentId: reference || 'SHP-UNKNOWN-9999', partId: refTarget?.partId || 'N/A', quantity: qty, org: identities[r].org, user: 'Demo validation tool', timestamp: now, status: 'Rejected', hash: hash(Date.now()), reason: v.failure || scenario, failedRule: v.rules.find(x => !x.passed)?.key };
     const al: Alert = { id: uid('ALT'), type: 'Rejected attempt', severity: 'Medium', title: `Rejected · ${scenario}`, detail: `${reference}: ${v.failure}`, shipmentId: refTarget?.id, at: now, acknowledged: false };
-    setData(prev => ({ ...prev, transactions: [entry, ...prev.transactions], alerts: [al, ...prev.alerts] })); notify(`Demo operation rejected: ${v.failure}`); return v;
+    setData(prev => ({ ...prev, transactions: [entry, ...prev.transactions], alerts: [al, ...prev.alerts] })); notify(`Demo operation rejected: ${v.failure}`); return { ...v, transactionId: id };
   };
   const resetDemo = () => { setData(initialData()); notify('Demonstration data restored'); };
   const ack = (id: string) => setData(prev => ({ ...prev, alerts: prev.alerts.map(a => a.id === id ? { ...a, acknowledged: true } : a) }));
