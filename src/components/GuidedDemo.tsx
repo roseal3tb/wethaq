@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, ArrowLeft, Compass, ExternalLink, ShieldCheck } from 'lucide-react';
 import { useStore } from '../context/Store';
 import type { Role } from '../types';
+import { LIVE } from '../api/live';
 import { Button, InfoBanner, Modal } from './UI';
 
 const steps: { label: string; title: string; body: string; route: string; role: Role; action: string }[] = [
@@ -11,7 +12,7 @@ const steps: { label: string; title: string; body: string; route: string; role: 
   { label: '03 / Inventory', title: 'Review replenishment recommendations', body: 'Select an at-risk part, inspect reorder assumptions, and optionally create a simulated shipment request with a review note — This does not place an order', route: '/inventory', role: 'Planner', action: 'Review inventory' },
   { label: '04 / Dispatch', title: 'Record a permitted dispatch', body: 'As Dispatcher, open a Requested shipment and record its quantity — The rule checklist verifies actor role, reference, quantity and valid transition', route: '/shipments', role: 'Dispatcher', action: 'Explore dispatch' },
   { label: '05 / Receipt', title: 'Validate the receiving event', body: 'As Receiver, open a Dispatched or In Transit shipment and confirm receipt — Duplicates and excessive quantities must be rejected', route: '/shipments', role: 'Receiver', action: 'Explore receipt' },
-  { label: '06 / Ledger evidence', title: 'Trace committed records and failures', body: 'Inspect the linked history and try a rejection scenario — The display simulates Fabric-style validation; it is not a connected permissioned ledger or independent physical proof of delivery', route: '/shipments?tab=ledger', role: 'Admin', action: 'Inspect ledger' }
+  { label: '06 / Ledger evidence', title: 'Trace committed records and failures', body: LIVE ? 'Inspect the linked history, verify a shipment against the ledger and try a rejection scenario — Rejections come from the Wethaq smart contract on Hyperledger Fabric; a ledger record is still not independent physical proof of delivery' : 'Inspect the linked history and try a rejection scenario — The display simulates Fabric-style validation; it is not a connected permissioned ledger or independent physical proof of delivery', route: '/shipments?tab=ledger', role: 'Admin', action: 'Inspect ledger' }
 ];
 
 export function GuidedDemo() {
