@@ -16,7 +16,7 @@ const shipmentStages = ['Requested', 'Dispatched', 'In Transit', 'Received'];
 const partsById = new Map(PARTS.map(part => [part.id, part]));
 
 export default function Overview() {
-  const { data, role, ack } = useStore();
+  const { data, role, ack, live } = useStore();
   const [part, setPart] = useState(PARTS[0].id);
   const [horizon, setHorizon] = useState(6);
   const inventory = useMemo(() => computeInventory(data.shipments), [data.shipments]);
@@ -34,9 +34,9 @@ export default function Overview() {
   const stats = [
     { label: 'Parts tracked', value: PARTS.length, icon: Boxes, note: 'Across 3 locations', path: '/inventory', tone: 'blue' },
     { label: 'Active alerts', value: active.length, icon: Bell, note: 'Awaiting review', path: '/inventory?tab=alerts&alert=New', tone: 'amber' },
-    { label: 'In transit', value: inTransit, icon: Truck, note: 'Simulated shipments', path: '/shipments?status=In+Transit', tone: 'blue' },
+    { label: 'In transit', value: inTransit, icon: Truck, note: live ? 'Shipments on Fabric' : 'Simulated shipments', path: '/shipments?status=In+Transit', tone: 'blue' },
     { label: 'Pending receipt', value: inTransit + groups[1].value, icon: Clock3, note: 'Dispatched or in transit', path: '/shipments?status=Pending+receipt', tone: 'amber' },
-    { label: 'Ledger committed', value: data.transactions.filter(transaction => transaction.status === 'Committed').length, icon: ShieldCheck, note: 'Simulated transactions', path: '/shipments?tab=ledger&status=Committed', tone: 'olive' },
+    { label: 'Ledger committed', value: data.transactions.filter(transaction => transaction.status === 'Committed').length, icon: ShieldCheck, note: live ? 'Fabric transactions' : 'Simulated transactions', path: '/shipments?tab=ledger&status=Committed', tone: 'olive' },
   ];
 
   return (
@@ -133,7 +133,7 @@ export default function Overview() {
               </Link>
             ))}
           </div>
-          <div className="panel-notice"><Database size={15} aria-hidden="true" /> Simulated ledger records</div>
+          <div className="panel-notice"><Database size={15} aria-hidden="true" /> {live ? 'Hyperledger Fabric ledger records' : 'Simulated ledger records'}</div>
         </Panel>
 
         <Panel className="overview-alerts" title="Active alerts" subtitle="Shortages and discrepancies awaiting review" action={<Link to="/inventory?tab=alerts&alert=New" className="text-link">Alerts <ArrowUpRight size={15} aria-hidden="true" /></Link>}>
@@ -142,7 +142,7 @@ export default function Overview() {
               <div className="alert-item" key={alert.id}>
                 <span className={`alert-mark alert-${alert.severity.toLowerCase()}`} aria-hidden="true" />
                 <div><strong>{alert.title}</strong><p>{alert.detail}</p></div>
-                <button type="button" title="Acknowledge" className="icon-btn" aria-label={`Acknowledge ${alert.title}`} onClick={() => ack(alert.id)}><CheckCircle2 size={17} aria-hidden="true" /></button>
+                {alert.type !== 'Discrepancy' && <button type="button" title="Acknowledge" className="icon-btn" aria-label={`Acknowledge ${alert.title}`} onClick={() => ack(alert.id)}><CheckCircle2 size={17} aria-hidden="true" /></button>}
               </div>
             ))}
             {!active.length && <div className="overview-alert-empty"><CheckCircle2 size={22} aria-hidden="true" /> All alerts acknowledged</div>}

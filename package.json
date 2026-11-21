@@ -9,7 +9,9 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
     "check": "tsc --noEmit",
-    "test:ui": "playwright test"
+    "test:ui": "playwright test",
+    "dev:live": "VITE_WETHAQ_LIVE=true vite --host 0.0.0.0",
+    "build:live": "VITE_WETHAQ_LIVE=true tsc -b && VITE_WETHAQ_LIVE=true vite build"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.6",
