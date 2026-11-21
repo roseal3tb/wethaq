@@ -71,3 +71,20 @@ html[data-theme="dark"] .grid-count strong{color:#E6EEF3}
 html[data-theme="dark"] .recommendation strong{color:#F1F5E8}
 html[data-theme="dark"] .w-select-menu,html[data-theme="dark"] .w-dropdown{opacity:1;backdrop-filter:none}
 .w-select-menu[data-state="open"],.w-dropdown[data-state="open"]{opacity:1}
+
+/* Sprint 6 pilot round 2 */
+/* Rule-check list readable in dark mode */
+html[data-theme="dark"] .validation-title{color:#B5C6D2;border-color:#32485A}
+html[data-theme="dark"] .validation-list{border-color:#3B5063}
+html[data-theme="dark"] .validation-item{border-color:#2E4356}
+html[data-theme="dark"] .validation-item strong{color:#E3ECF1}
+html[data-theme="dark"] .validation-item small{color:#AFC0CC}
+html[data-theme="dark"] .validation-item.failed strong{color:#F2ADA6}
+/* Keep dialog header and action buttons visible; only the body scrolls on short screens */
+.dialog{display:flex;flex-direction:column;overflow:hidden}
+.dialog>.dialog-head,.dialog>.dialog-footer{flex:none}
+.dialog>.dialog-body{flex:1 1 auto;min-height:0;overflow-y:auto}
+/* Partial receipt shown in the shipments table */
+.status-stack{display:inline-flex;flex-direction:column;align-items:flex-start;gap:4px}
+.short-receipt{font-size:10px;font-weight:750;color:#A0612A}
+html[data-theme="dark"] .short-receipt{color:#F0B77E}
