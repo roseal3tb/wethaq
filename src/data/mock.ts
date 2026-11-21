@@ -55,7 +55,8 @@ export function computeInventory(shipments: Shipment[]): Inventory[] {
     const inTransit = transit.get(`${row.partId}-${row.location}`) || 0;
     const onHand = Math.max(0, row.onHand + (adjustments.get(`${row.partId}-${row.location}`) || 0));
     const daysCover = row.monthlyDemand > 0 ? onHand / (row.monthlyDemand / 30.4) : 999;
-    const status: Inventory['status'] = onHand < row.reorderPoint * .48 ? 'Stockout risk' : onHand < row.reorderPoint ? 'Below reorder point' : onHand < row.reorderPoint * 1.08 ? 'Watch' : 'Healthy';
+    const position = onHand + inTransit; // reorder decisions use stock on hand plus stock on order (Sprint 4 rule)
+    const status: Inventory['status'] = onHand < row.reorderPoint * .48 ? 'Stockout risk' : position < row.reorderPoint ? 'Below reorder point' : position < row.reorderPoint * 1.08 ? 'Watch' : 'Healthy';
     return { ...row, inTransit, onHand, daysCover, status, recommended: Math.max(0, Math.ceil(row.reorderPoint + row.monthlyDemand * 2 - onHand - inTransit)) };
   });
 }
