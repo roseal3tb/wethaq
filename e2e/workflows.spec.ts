@@ -11,15 +11,15 @@ async function changeRole(page: Page, role: string) {
 }
 
 test('Direct links resume after sign-in and restricted pages retain role navigation', async ({ page }) => {
-  await page.goto('/forecasts?part=SP-002&location=unknown&horizon=invalid');
+  await page.goto('/forecasts?part=RAF0002');
   await expect(page).toHaveURL(/\/login$/);
   await signIn(page);
-  await expect(page).toHaveURL(/\/forecasts\?part=SP-002/);
-  await expect(page.getByRole('combobox', { name: 'Forecast horizon' })).toContainText('6 months');
-  await expect(page.getByRole('combobox', { name: 'Location', exact: true })).toContainText('All locations');
+  await expect(page).toHaveURL(/\/forecasts\?part=RAF0002/);
+  await expect(page.getByRole('combobox', { name: 'Part', exact: true })).toContainText('RAF0002');
+  await expect(page.getByRole('combobox', { name: 'Demand class' })).toContainText('All classes');
   const forecastDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download CSV' }).click();
-  expect((await forecastDownload).suggestedFilename()).toBe('wethaq-forecast-SP-002.csv');
+  expect((await forecastDownload).suggestedFilename()).toBe('wethaq-forecast-RAF0002.csv');
 
   await changeRole(page, 'Receiver');
   await expect(page.getByRole('heading', { name: 'Access restricted' })).toBeVisible();
