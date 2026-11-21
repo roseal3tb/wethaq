@@ -192,6 +192,10 @@ test('Theme switches animate on login and overview without changing the login la
   await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'no-preference' });
   await page.goto('/login');
   const hero = page.locator('.login-brand');
+  // Measure only after the web font and images have loaded; the fallback font gives a slightly different height
+  await page.waitForLoadState('networkidle');
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForFunction(() => Array.from(document.images).every(img => img.complete && img.naturalWidth > 0));
   const lightColor = await hero.evaluate(element => getComputedStyle(element).backgroundColor);
   const originalLayout = await hero.boundingBox();
   const heroTransition = hero.evaluate(element => new Promise<boolean>(resolve => {
