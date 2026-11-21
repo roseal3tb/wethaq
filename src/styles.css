@@ -63,3 +63,5 @@
 .filter-grid.raf-filters{grid-template-columns:1.3fr 1.7fr 1fr}
 @media(max-width:760px){.filter-grid.raf-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){.filter-grid.raf-filters{grid-template-columns:1fr}}
+/* Dark theme: navy legend and model dots set inline (gradient boosting) */
+html[data-theme="dark"] i[style*="rgb(15, 42, 68)"]{background:#DAE9F1!important}

@@ -140,11 +140,9 @@ test('Overview controls carry the selected records and forecast into their modul
   await login(page);
   const forecast = page.getByRole('combobox', { name: 'Select forecast part' });
   await forecast.click();
-  await page.getByRole('option', { name: /SP-002/ }).click();
-  await page.getByRole('button', { name: '3 mo' }).click();
-  await expect(page.getByRole('button', { name: '3 mo' })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('option', { name: /RAF0002/ }).click();
   await page.getByRole('link', { name: 'Open forecast' }).click();
-  await expect(page).toHaveURL(/part=SP-002&horizon=3/);
+  await expect(page).toHaveURL(/part=RAF0002/);
 
   await page.goto('/overview');
   await page.getByRole('link', { name: /Pending receipt/ }).click();

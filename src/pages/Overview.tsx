@@ -4,11 +4,12 @@ import {
   AlertTriangle, ArrowRight, ArrowUpRight, Bell, Boxes, CheckCircle2,
   Clock3, Database, ShieldCheck, Truck,
 } from 'lucide-react';
-import { ForecastChart, ShipmentDonut } from '../components/Charts';
+import { ShipmentDonut } from '../components/Charts';
+import { RafForecastChart } from '../components/RafChart';
+import { raf, rafPoints } from '../data/raf';
 import { NiceSelect } from '../components/NiceSelect';
 import { MiniStat, Panel, Status } from '../components/UI';
 import { useStore } from '../context/Store';
-import { getForecast } from '../data/forecast';
 import { computeInventory, PARTS } from '../data/mock';
 import { allowed, date, nf } from '../utils/core';
 
@@ -17,10 +18,10 @@ const partsById = new Map(PARTS.map(part => [part.id, part]));
 
 export default function Overview() {
   const { data, role, ack, live } = useStore();
-  const [part, setPart] = useState(PARTS[0].id);
-  const [horizon, setHorizon] = useState(6);
+  const [part, setPart] = useState(raf.parts[0].id);
   const inventory = useMemo(() => computeInventory(data.shipments), [data.shipments]);
-  const forecast = useMemo(() => getForecast(part, 'All locations', horizon), [part, horizon]);
+  const rafPart = raf.parts.find(p => p.id === part) ?? raf.parts[0];
+  const forecastPoints = useMemo(() => rafPoints(rafPart), [rafPart]);
   const risk = inventory.filter(row => row.status !== 'Healthy').sort((a, b) => a.daysCover - b.daysCover).slice(0, 5);
   const active = data.alerts.filter(alert => !alert.acknowledged);
   const recent = [...data.shipments].sort((a, b) => b.requestedAt.localeCompare(a.requestedAt)).slice(0, 4);
@@ -66,26 +67,21 @@ export default function Overview() {
       </div>
 
       <div className="overview-primary">
-        <Panel className="forecast-panel" title="Demand forecast" subtitle="Historical demand and simulated projections">
+        <Panel className="forecast-panel" title="Demand forecast" subtitle="Real RAF spare-parts demand with test-window forecasts">
           <div className="overview-chart-controls">
             <NiceSelect className="overview-part-select" value={part} onChange={event => setPart(event.target.value)} aria-label="Select forecast part">
-              {PARTS.map(item => <option key={item.id} value={item.id}>{item.id} · {item.name}</option>)}
+              {raf.parts.map(item => <option key={item.id} value={item.id}>{item.id} · {item.demandClass}</option>)}
             </NiceSelect>
-            <div className="forecast-period" role="group" aria-label="Forecast horizon">
-              {[3, 6].map(months => (
-                <button key={months} type="button" aria-pressed={horizon === months} onClick={() => setHorizon(months)}>{months} mo</button>
-              ))}
-            </div>
           </div>
           <div className="chart-legend">
-            <span><i className="legend-line navy" /> Historical demand</span>
-            <span><i className="legend-line olive" /> Synthetic candidate</span>
-            <span><i className="legend-band" /> Uncertainty</span>
+            <span><i className="legend-line navy" /> Actual demand</span>
+            <span><i className="legend-line olive" /> TSB</span>
+            <span><i className="legend-line" style={{ background: '#0F2A44' }} /> Gradient boosting</span>
           </div>
-          <ForecastChart key={`${part}-${horizon}`} data={forecast.points} compact />
+          <RafForecastChart key={part} data={forecastPoints} show={['tsb', 'gbm']} testStart={raf.meta.testMonths[0]} projectionStart={raf.futureMonths[0]} compact />
           <div className="chart-foot">
-            <span>Synthetic aviation spare parts · monthly units</span>
-            {canForecast && <Link className="text-link" to={`/forecasts?part=${part}&horizon=${horizon}`}>Open forecast <ArrowUpRight size={15} aria-hidden="true" /></Link>}
+            <span>RAF consumable parts · monthly units · test Jul–Dec 2002</span>
+            {canForecast && <Link className="text-link" to={`/forecasts?part=${part}`}>Open forecast <ArrowUpRight size={15} aria-hidden="true" /></Link>}
           </div>
         </Panel>
 
