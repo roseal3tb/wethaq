@@ -56,7 +56,7 @@ export const liveApi = {
   operate: (op: 'dispatch' | 'transit' | 'receive', shipmentId: string, qty: number, note: string) => request<LedgerResult>('POST', `/shipments/${encodeURIComponent(shipmentId)}/${op}`, { qty, note }),
   invalid: (scenario: string, shipmentId?: string) => request<LedgerResult>('POST', '/demo/invalid', { scenario, shipmentId }),
   verify: (shipmentId: string) => request<VerifyResult>('GET', `/shipments/${encodeURIComponent(shipmentId)}/verify`),
-  ack: (id: string) => request<{ ok: boolean }>('POST', `/alerts/${encodeURIComponent(id)}/ack`),
+  ack: (id: string, note?: string) => request<{ ok: boolean }>('POST', `/alerts/${encodeURIComponent(id)}/ack`, { note }),
   addUser: (u: Omit<DemoUser, 'id' | 'lastSeen' | 'active'>) => request<LiveUser>('POST', '/users', u),
   updateUser: (id: string, changes: { role?: Role; active?: boolean }) => request<LiveUser>('PATCH', `/users/${encodeURIComponent(id)}`, changes)
 };

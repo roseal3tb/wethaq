@@ -6,7 +6,7 @@ import { ApiError, LIVE, liveApi, session, type LedgerResult, type LiveUser, typ
 const load = <T,>(key: string, defaultValue: T, storage: 'session' | 'local' = 'session'): T => { try { const v = (storage === 'session' ? sessionStorage : localStorage).getItem(key); return v ? JSON.parse(v) as T : defaultValue; } catch { return defaultValue; } };
 interface Store {
   /** true when connected to the Wethaq API and Hyperledger Fabric (VITE_WETHAQ_LIVE=true) */
-  live: boolean; user: LiveUser | null; refresh: () => Promise<void>;
+  live: boolean; user: LiveUser | null; refresh: () => Promise<void>; roleSwitch: boolean; apiDown: boolean;
   role: Role; authenticated: boolean; setRole: (r: Role) => void; login: (email: string, password: string, role: Role) => Promise<string | null>; logout: () => void;
   data: AppData; toast: string; notify: (s: string) => void; dismiss: () => void;
   resetDemo: () => void;
@@ -15,7 +15,7 @@ interface Store {
   perform: (operation: Operation, shipmentId: string, qty: number, note: string) => Promise<CheckResult>;
   invalidDemo: (scenario: string, shipmentId?: string) => Promise<CheckResult & { transactionId: string }>;
   verifyShipment: (shipmentId: string) => Promise<VerifyResult>;
-  ack: (id: string) => void; addUser: (u: Omit<DemoUser, 'id' | 'lastSeen'>) => void; setUserRole: (id: string, r: Role) => void; toggleUser: (id: string) => void;
+  ack: (id: string, note?: string) => void; addUser: (u: Omit<DemoUser, 'id' | 'lastSeen'>) => void; setUserRole: (id: string, r: Role) => void; toggleUser: (id: string) => void;
 }
 const Ctx = createContext<Store | null>(null);
 const EMPTY: AppData = { shipments: [], transactions: [], alerts: [], users: [] };
@@ -33,6 +33,8 @@ export function Provider({ children }: { children: React.ReactNode; }) {
   const [role, setRoleInner] = useState<Role>(() => load('wethaq.role', 'Planner', 'local'));
   const [authenticated, setAuth] = useState(() => LIVE ? !!session.get() : load('wethaq.auth', false));
   const [user, setUser] = useState<LiveUser | null>(null);
+  const [roleSwitch, setRoleSwitch] = useState(true);
+  const [apiDown, setApiDown] = useState(false);
   const [data, setData] = useState<AppData>(() => {
     if (LIVE) return EMPTY;
     const restored = load('wethaq.data', initialData());
@@ -51,11 +53,11 @@ export function Provider({ children }: { children: React.ReactNode; }) {
   // ---------- live mode: session and data loading ----------
   const signOutLocal = useCallback(() => { session.clear(); setUser(null); setAuth(false); setData(EMPTY); }, []);
   const failure = useCallback((e: unknown) => { if (e instanceof ApiError && e.status === 401) signOutLocal(); setToast(e instanceof Error ? e.message : 'Request failed'); }, [signOutLocal]);
-  const refresh = useCallback(async () => { if (!LIVE) return; try { setData(await liveApi.state()); } catch (e) { failure(e); } }, [failure]);
+  const refresh = useCallback(async () => { if (!LIVE) return; try { setData(await liveApi.state()); setApiDown(false); } catch (e) { if (e instanceof ApiError && (e.status === 0 || e.status >= 500)) { setApiDown(true); return; } failure(e); } }, [failure]);
   const adopt = useCallback((u: LiveUser, token?: string) => { if (token) session.set(token); setUser(u); setRoleInner(u.role); setAuth(true); }, []);
   useEffect(() => {
     if (!LIVE || !session.get()) return;
-    liveApi.me().then(r => { adopt(r.user); return refresh(); }).catch(failure);
+    liveApi.me().then(r => { adopt(r.user); setRoleSwitch(r.demoRoleSwitch); return refresh(); }).catch(failure);
   }, []);
   // Keep the shared ledger view current while other roles act in other browser windows.
   useEffect(() => { if (!LIVE || !authenticated) return; const t = setInterval(() => { void refresh(); }, 15000); return () => clearInterval(t); }, [authenticated, refresh]);
@@ -67,7 +69,7 @@ export function Provider({ children }: { children: React.ReactNode; }) {
   };
   const login = async (email: string, password: string, r: Role): Promise<string | null> => {
     if (!LIVE) { if (!email.trim() || !password.trim() || password.toLowerCase() === 'wrong') return 'Invalid demo credentials — try another password (not “wrong”)'; setRoleInner(r); setAuth(true); notify('Welcome to Wethaq'); return null; }
-    try { const res = await liveApi.login(email, password); adopt(res.user, res.token); await refresh(); notify(`Welcome, ${res.user.name}`); return null; }
+    try { const res = await liveApi.login(email, password); adopt(res.user, res.token); setRoleSwitch(res.demoRoleSwitch); await refresh(); notify(`Welcome, ${res.user.name}`); return null; }
     catch (e) { return e instanceof Error ? e.message : 'Sign-in failed'; }
   };
   const logout = () => { if (LIVE) signOutLocal(); else setAuth(false); notify('Signed out'); };
@@ -139,11 +141,11 @@ export function Provider({ children }: { children: React.ReactNode; }) {
     return liveApi.verify(shipmentId);
   };
   const resetDemo = () => { if (LIVE) { void refresh(); notify('Live data reloaded — ledger records are permanent and cannot be reset'); return; } setData(initialData()); notify('Demonstration data restored'); };
-  const ack = (id: string) => { if (LIVE) { liveApi.ack(id).then(refresh).catch(failure); return; } setData(prev => ({ ...prev, alerts: prev.alerts.map(a => a.id === id ? { ...a, acknowledged: true } : a) })); };
+  const ack = (id: string, note?: string) => { if (LIVE) { liveApi.ack(id, note).then(refresh).catch(failure); return; } setData(prev => ({ ...prev, alerts: prev.alerts.map(a => a.id === id ? { ...a, acknowledged: true, resolutionNote: note } : a) })); };
   const addUser = (u: Omit<DemoUser, 'id' | 'lastSeen'>) => { if (role !== 'Admin') return; if (LIVE) { liveApi.addUser({ name: u.name, email: u.email, role: u.role, org: u.org }).then(() => { notify('User created — initial password is the demo password'); return refresh(); }).catch(failure); return; } setData(p => ({ ...p, users: [{ ...u, id: uid('USR'), lastSeen: new Date().toISOString() }, ...p.users] })); notify('Demo user created'); };
   const setUserRole = (id: string, r: Role) => { if (role !== 'Admin') return; if (LIVE) { liveApi.updateUser(id, { role: r }).then(() => { notify('Role updated'); return refresh(); }).catch(failure); return; } setData(p => ({ ...p, users: p.users.map(u => u.id === id ? { ...u, role: r } : u) })); notify('Role updated'); };
   const toggleUser = (id: string) => { if (role !== 'Admin') return; if (LIVE) { const current = data.users.find(u => u.id === id); liveApi.updateUser(id, { active: !current?.active }).then(() => { notify('User status updated'); return refresh(); }).catch(failure); return; } setData(p => ({ ...p, users: p.users.map(u => u.id === id ? { ...u, active: !u.active } : u) })); notify('User status updated'); };
-  const store = useMemo<Store>(() => ({ live: LIVE, user, refresh, role, authenticated, setRole, login, logout, data, toast, notify, dismiss: () => setToast(''), createRequest, validate, perform, invalidDemo, verifyShipment, ack, addUser, setUserRole, toggleUser, resetDemo }), [user, role, authenticated, data, toast]);
+  const store = useMemo<Store>(() => ({ live: LIVE, user, refresh, roleSwitch: !LIVE || roleSwitch, apiDown, role, authenticated, setRole, login, logout, data, toast, notify, dismiss: () => setToast(''), createRequest, validate, perform, invalidDemo, verifyShipment, ack, addUser, setUserRole, toggleUser, resetDemo }), [user, role, authenticated, data, toast, roleSwitch, apiDown]);
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>;
 }
 export function useStore() { const ctx = useContext(Ctx); if (!ctx) throw Error('Store is missing'); return ctx; }

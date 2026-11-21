@@ -142,7 +142,7 @@ export default function Overview() {
               <div className="alert-item" key={alert.id}>
                 <span className={`alert-mark alert-${alert.severity.toLowerCase()}`} aria-hidden="true" />
                 <div><strong>{alert.title}</strong><p>{alert.detail}</p></div>
-                <button type="button" title="Acknowledge" className="icon-btn" aria-label={`Acknowledge ${alert.title}`} onClick={() => ack(alert.id)}><CheckCircle2 size={17} aria-hidden="true" /></button>
+                {alert.type !== 'Discrepancy' && <button type="button" title="Acknowledge" className="icon-btn" aria-label={`Acknowledge ${alert.title}`} onClick={() => ack(alert.id)}><CheckCircle2 size={17} aria-hidden="true" /></button>}
               </div>
             ))}
             {!active.length && <div className="overview-alert-empty"><CheckCircle2 size={22} aria-hidden="true" /> All alerts acknowledged</div>}
