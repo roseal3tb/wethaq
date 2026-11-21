@@ -1,6 +1,7 @@
 import React from 'react';
 import * as SelectPrimitive from '@radix-ui/react-select';
 import { Check, ChevronDown } from 'lucide-react';
+import { FieldLabelContext } from './UI';
 
 /**
  * Native option markup as data, Radix as the keyboard-accessible presentation
@@ -14,7 +15,9 @@ export type NiceSelectProps = {
   disabled?: boolean;
   'aria-label'?: string;
 };
-export function NiceSelect({ value, onChange, children, className = '', disabled, 'aria-label': ariaLabel }: NiceSelectProps) {
+export function NiceSelect({ value, onChange, children, className = '', disabled, 'aria-label': ownLabel }: NiceSelectProps) {
+  const fieldLabel = React.useContext(FieldLabelContext);
+  const ariaLabel = ownLabel ?? fieldLabel;
   const options = React.Children.toArray(children).filter(React.isValidElement)
     .filter((c): c is React.ReactElement<React.OptionHTMLAttributes<HTMLOptionElement>> => React.isValidElement(c) && c.type === 'option')
     .map((option, index) => {

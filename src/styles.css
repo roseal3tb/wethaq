@@ -65,3 +65,9 @@
 @media(max-width:480px){.filter-grid.raf-filters{grid-template-columns:1fr}}
 /* Dark theme: navy legend and model dots set inline (gradient boosting) */
 html[data-theme="dark"] i[style*="rgb(15, 42, 68)"]{background:#DAE9F1!important}
+/* Dark theme contrast fixes found in the Sprint 6 pilot */
+html[data-theme="dark"] .record-name strong{color:#E6EEF3}
+html[data-theme="dark"] .grid-count strong{color:#E6EEF3}
+html[data-theme="dark"] .recommendation strong{color:#F1F5E8}
+html[data-theme="dark"] .w-select-menu,html[data-theme="dark"] .w-dropdown{opacity:1;backdrop-filter:none}
+.w-select-menu[data-state="open"],.w-dropdown[data-state="open"]{opacity:1}
