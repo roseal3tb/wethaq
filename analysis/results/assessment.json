@@ -1,0 +1,103 @@
+{
+ "RAF": {
+  "rows": 420000,
+  "series": 5000,
+  "months": 84,
+  "first_month": "1996-01",
+  "last_month": "2002-12",
+  "missing_values": 0,
+  "negative_values": 0,
+  "duplicate_keys": 0,
+  "all_series_full_length": true,
+  "zero_share_pct": 89.83,
+  "test_zero_share_pct": 91.97,
+  "series_with_test_demand_pct": 38.52,
+  "max_monthly_demand": 2062,
+  "total_demand": 605764,
+  "nonzero_months_min_median_max": [
+   3,
+   8,
+   20
+  ],
+  "ADI_median": 10.5,
+  "CV2_median": 0.4,
+  "class_counts": {
+   "Intermittent": 2905,
+   "Lumpy": 2095
+  },
+  "identical_series": [
+   "RAF0420",
+   "RAF0421"
+  ],
+  "series_zero_in_last_24_train_months": 131
+ },
+ "Synthetic": {
+  "rows": 12960,
+  "columns": 13,
+  "parts": 60,
+  "locations": 3,
+  "months": 72,
+  "first_month": "2018-01-01",
+  "last_month": "2023-12-01",
+  "missing_values": 0,
+  "duplicate_keys": 0,
+  "negative_inventory": 0,
+  "closing_eq_opening_minus_issues": true,
+  "issues_le_demand": true,
+  "stockout_flag_consistent": true,
+  "zero_share_pct": 41.15,
+  "stockout_rate_pct": 14.21,
+  "lead_time_values": [
+   15,
+   30,
+   45,
+   60
+  ],
+  "lead_time_changes_month_to_month_pct": 73.7,
+  "aircraft_type_constant_per_part": true,
+  "flight_cycles_same_across_locations": true,
+  "by_class": {
+   "fast_moving": {
+    "rows": 4320,
+    "mean_demand": 7.8,
+    "zero_pct": 3.08,
+    "stockout_pct": 38.15
+   },
+   "intermittent": {
+    "rows": 4320,
+    "mean_demand": 0.31,
+    "zero_pct": 84.44,
+    "stockout_pct": 0.0
+   },
+   "slow_moving": {
+    "rows": 4320,
+    "mean_demand": 1.87,
+    "zero_pct": 35.93,
+    "stockout_pct": 4.49
+   }
+  },
+  "SBC_by_part_class": {
+   "fast_moving": {
+    "Intermittent": 0,
+    "Lumpy": 0,
+    "Smooth": 60
+   },
+   "intermittent": {
+    "Intermittent": 56,
+    "Lumpy": 4,
+    "Smooth": 0
+   },
+   "slow_moving": {
+    "Intermittent": 60,
+    "Lumpy": 0,
+    "Smooth": 0
+   }
+  },
+  "median_lag1_autocorrelation": -0.013,
+  "corr_demand_vs_relative_flight_cycles": {
+   "fast_moving": 0.17,
+   "intermittent": 0.021,
+   "slow_moving": 0.054
+  }
+ }
+}
