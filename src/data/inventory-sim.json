@@ -1,73 +1,73 @@
 {
- "meta": {
-  "data": "Synthetic aviation panel (supervisor-supplied), 60 parts x 3 locations",
-  "period": "Jan-Dec 2023 (2022 warm-up)",
-  "target": "z = 1.645 (95% cycle service)",
-  "source": "inventory_sim.py, Wethaq Sprint 4"
- },
- "headline": [
-  {
-   "policy": "Current policy",
-   "fill": 82.57,
-   "stockoutMonths": 12.5,
-   "avgStock": 8.36,
-   "ordersPerYear": 3.18,
-   "lostUnits": 1241
+  "meta": {
+    "data": "Synthetic aviation panel (supervisor-supplied), 60 parts x 3 locations",
+    "period": "Jan-Dec 2023 (2022 warm-up)",
+    "target": "z = 1.645 (95% cycle service)",
+    "source": "inventory_sim.py, Wethaq Sprint 4"
   },
-  {
-   "policy": "Fixed threshold",
-   "fill": 99.87,
-   "stockoutMonths": 0.23,
-   "avgStock": 13.9,
-   "ordersPerYear": 4.49,
-   "lostUnits": 9
-  },
-  {
-   "policy": "Forecast: TSB",
-   "fill": 99.89,
-   "stockoutMonths": 0.23,
-   "avgStock": 14.16,
-   "ordersPerYear": 4.28,
-   "lostUnits": 8
-  },
-  {
-   "policy": "Forecast: GB",
-   "fill": 99.89,
-   "stockoutMonths": 0.23,
-   "avgStock": 13.93,
-   "ordersPerYear": 4.52,
-   "lostUnits": 8
-  },
-  {
-   "policy": "Oracle mean (reference)",
-   "fill": 99.87,
-   "stockoutMonths": 0.28,
-   "avgStock": 13.77,
-   "ordersPerYear": 4.57,
-   "lostUnits": 9
-  }
- ],
- "byClass": [
-  {
-   "name": "Fast-moving",
-   "Current policy fill": 78.5,
-   "Current policy stock": 3.1,
-   "Reorder point (GB forecast) fill": 100.0,
-   "Reorder point (GB forecast) stock": 22.54
-  },
-  {
-   "name": "Slow-moving",
-   "Current policy fill": 95.79,
-   "Current policy stock": 5.83,
-   "Reorder point (GB forecast) fill": 99.86,
-   "Reorder point (GB forecast) stock": 8.53
-  },
-  {
-   "name": "Intermittent",
-   "Current policy fill": 100.0,
-   "Current policy stock": 16.14,
-   "Reorder point (GB forecast) fill": 97.5,
-   "Reorder point (GB forecast) stock": 10.73
-  }
- ]
+  "headline": [
+    {
+      "policy": "Current policy",
+      "fill": 82.57,
+      "stockoutMonths": 12.5,
+      "avgStock": 8.36,
+      "ordersPerYear": 3.18,
+      "lostUnits": 1241.0
+    },
+    {
+      "policy": "Fixed threshold",
+      "fill": 99.87,
+      "stockoutMonths": 0.23,
+      "avgStock": 13.9,
+      "ordersPerYear": 4.49,
+      "lostUnits": 9.0
+    },
+    {
+      "policy": "Forecast: TSB",
+      "fill": 99.89,
+      "stockoutMonths": 0.23,
+      "avgStock": 14.16,
+      "ordersPerYear": 4.28,
+      "lostUnits": 8.0
+    },
+    {
+      "policy": "Forecast: GB",
+      "fill": 99.89,
+      "stockoutMonths": 0.23,
+      "avgStock": 13.93,
+      "ordersPerYear": 4.51,
+      "lostUnits": 8.0
+    },
+    {
+      "policy": "Oracle mean (reference)",
+      "fill": 99.87,
+      "stockoutMonths": 0.28,
+      "avgStock": 13.77,
+      "ordersPerYear": 4.57,
+      "lostUnits": 9.0
+    }
+  ],
+  "byClass": [
+    {
+      "name": "Fast-moving",
+      "Current policy fill": 78.5,
+      "Current policy stock": 3.1,
+      "Reorder point (GB forecast) fill": 100.0,
+      "Reorder point (GB forecast) stock": 22.49
+    },
+    {
+      "name": "Slow-moving",
+      "Current policy fill": 95.79,
+      "Current policy stock": 5.83,
+      "Reorder point (GB forecast) fill": 99.86,
+      "Reorder point (GB forecast) stock": 8.56
+    },
+    {
+      "name": "Intermittent",
+      "Current policy fill": 100.0,
+      "Current policy stock": 16.14,
+      "Reorder point (GB forecast) fill": 97.5,
+      "Reorder point (GB forecast) stock": 10.73
+    }
+  ]
 }
