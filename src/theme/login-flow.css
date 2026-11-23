@@ -1,0 +1,49 @@
+/* Decorative Wethaq workflow cards. This is a presentation layer, not live data. */
+.login-flow{position:absolute;z-index:2;right:clamp(18px,4.5vw,72px);top:clamp(135px,21vh,220px);width:min(370px,62%);pointer-events:none;color:#EDF5F8}
+.login-flow-eyebrow{font-size:9px;letter-spacing:.12em;display:flex;align-items:center;gap:7px;margin:0 0 12px;color:#BDCF97;font-weight:800}
+.login-flow-eyebrow span{font-weight:500;letter-spacing:.05em;opacity:.8}
+.login-flow-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+.login-flow-card{--depth:0px;min-width:0;min-height:144px;display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden;background:linear-gradient(140deg,rgba(35,71,98,.97),rgba(14,40,62,.96));border:1px solid rgba(203,225,224,.2);border-radius:17px;padding:14px 14px 12px;box-shadow:0 18px 34px rgba(7,20,33,.26),inset 0 1px 0 rgba(255,255,255,.11);animation:flow-in 900ms cubic-bezier(.17,.78,.24,1) both,flow-float calc(5.4s + var(--card-index)*.8s) ease-in-out infinite;animation-delay:calc(var(--card-index)*130ms),calc(900ms + var(--card-index)*130ms)}
+.login-flow-card:nth-child(2){margin-top:23px}
+.login-flow-card:nth-child(3){margin-top:-18px}
+.login-flow-card:nth-child(4){margin-top:6px}
+.login-flow-card:after{content:"";position:absolute;width:115px;height:115px;border:1px solid #ffffff0b;border-radius:50%;right:-47px;top:-55px}
+.login-flow-card-top{display:flex;justify-content:space-between;align-items:center}
+.login-flow-icon{width:32px;height:32px;display:grid;place-items:center;border-radius:10px;background:rgba(166,193,120,.13);color:#C9DEA7}
+.login-flow-number{font-size:10px;font-family:ui-monospace,monospace;color:#97AEBD}
+.login-flow-card strong{font-size:12px;font-weight:770;letter-spacing:-.01em;color:#F4F8FB}
+.login-flow-card small{font-size:10px;color:#BBCCD8;white-space:normal;line-height:1.35}
+.login-flow-card-bottom{margin-top:auto;padding-top:7px;border-top:1px solid rgba(211,227,230,.13);display:flex;align-items:center;gap:6px;font-size:9px;color:#CFDBE0}
+.login-flow-card-bottom svg{margin-left:auto;color:#BDD396}
+.login-flow-pulse{width:7px;height:7px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:50%;background:#A9BD82;box-shadow:0 0 0 3px rgba(169,189,130,.12)}
+.login-flow-pulse i{width:3px;height:3px;border-radius:50%;background:#EBF5CE}
+.login-flow-caption{margin-top:10px;text-align:right;font-size:10px;letter-spacing:.1em;color:#A7B8C2}
+.login-flow-caption span{color:#BCD294;margin:0 6px}
+html[data-theme='light'] .login-flow-eyebrow{color:#35573C}
+html[data-theme='light'] .login-flow-card{box-shadow:0 14px 28px rgba(9,37,56,.22)}
+html[data-theme='light'] .login-flow-caption{color:#466073}
+@keyframes flow-in{from{opacity:0;transform:translateY(15px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes flow-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@media(max-width:1190px) and (min-width:761px){.login-flow{right:20px;top:140px;width:min(305px,67%)}.login-flow-card{padding:10px;min-height:128px}.login-flow-card strong{font-size:11px}.login-flow-card small{font-size:9px}.login-flow-card-bottom{font-size:8px}.login-flow-eyebrow{font-size:8px}}
+@media(max-width:760px){.login-flow{position:relative;top:auto;right:auto;width:100%;margin-top:20px;max-width:490px}.login-flow-grid{gap:9px}.login-flow-card{min-height:118px;padding:11px}.login-flow-card:nth-child(n){margin-top:0}.login-flow-card strong{font-size:11px}.login-flow-card small,.login-flow-card-bottom{font-size:9px}.login-flow-caption{margin-top:8px}}
+@media(max-width:480px){.login-flow{margin-top:14px}.login-flow-card{min-height:107px;gap:6px}.login-flow-icon{width:27px;height:27px}.login-flow-card-bottom{font-size:8px}.login-flow-card-bottom svg{display:none}}
+@media(prefers-reduced-motion:reduce){.login-flow-card{animation:none!important}}
+/* On wide desktops, four slim cards form a right-side operational rail, leaving the headline unobscured. */
+@media(min-width:1200px){
+  .login-flow{right:clamp(16px,2vw,28px);top:clamp(125px,18vh,205px);width:218px}
+  .login-flow-grid{display:flex;flex-direction:column;gap:8px}
+  .login-flow-card{width:100%;min-height:86px;padding:9px 12px;gap:5px}
+  .login-flow-card:nth-child(n){margin-top:0}
+  .login-flow-card-top{position:absolute;right:12px;top:10px}
+  .login-flow-icon{width:25px;height:25px}
+  .login-flow-icon svg{width:14px;height:14px}
+  .login-flow-number{display:none}
+  .login-flow-card strong{max-width:155px;font-size:11px}
+  .login-flow-card small{max-width:155px;font-size:9px}
+  .login-flow-card-bottom{font-size:8px;margin-top:1px}
+  .login-flow-caption{text-align:center}
+  .login-message{max-width:400px}
+}
+@media(min-width:761px) and (max-width:1199px){
+  .login>.login-brand,.login>.login-right{min-height:max(1010px,100dvh)}
+}

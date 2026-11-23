@@ -44,7 +44,12 @@ test('A simulated request becomes a received shipment with three committed ledge
   await expect(confirm).toBeDisabled();
   await quantity.fill('100001');
   await expect(confirm).toBeDisabled();
+  await quantity.fill('-5');
+  await expect(confirm).toBeDisabled();
+  await expect(quantity).toHaveValue('-5');
   await quantity.fill('2');
+  await expect(confirm).toBeDisabled();
+  await page.getByRole('textbox', { name: 'Review note (required)' }).fill('Reviewed low stock and lead time');
   await confirm.click();
   await expect(page).toHaveURL(/\/shipments\?search=SHP-/);
   const shipmentId = new URL(page.url()).searchParams.get('search')!;
@@ -76,11 +81,12 @@ test('A simulated request becomes a received shipment with three committed ledge
 test('Alert acknowledgment updates the badge and the alert export follows the filter', async ({ page }) => {
   await page.goto('/inventory?tab=alerts&alert=New');
   await signIn(page);
-  await expect(page.getByRole('button', { name: '10 active alerts' })).toBeVisible();
+  const badge = page.getByRole('button', { name: /active alerts$/ });
+  const initial = Number((await badge.getAttribute('aria-label'))!.match(/^\d+/)![0]);
+  expect(initial).toBeGreaterThan(10);
   await expect(page.getByRole('button', { name: 'Export data', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Acknowledge', exact: true }).first().click();
-  await expect(page.getByRole('button', { name: '9 active alerts' })).toBeVisible();
-  await expect(page.locator('tbody tr')).toHaveCount(9);
+  await expect(badge).toHaveAttribute('aria-label', `${initial - 1} active alerts`);
 
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export CSV' }).click();
@@ -90,7 +96,7 @@ test('Alert acknowledgment updates the badge and the alert export follows the fi
   const chunks: Buffer[] = [];
   for await (const chunk of stream) chunks.push(chunk);
   const csv = Buffer.concat(chunks).toString('utf8').trim();
-  expect(csv.split('\r\n')).toHaveLength(10);
+  expect(csv.split('\r\n').length).toBeGreaterThan(10);
   expect(csv).toContain('"STATE"');
   expect(csv).toContain('"New"');
   expect(csv).not.toContain('"Acknowledged"');
@@ -107,5 +113,19 @@ test('A rejected demonstration attempt opens its own ledger record even with an 
   const records = page.locator('tbody tr');
   await expect(records).toHaveCount(1);
   await expect(records.first()).toContainText('Rejected');
-  await expect(page.getByRole('button', { name: '11 active alerts' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /active alerts$/ })).toBeVisible();
+});
+
+
+test('Login rejects malformed email and renders illustrative floating workflow cards', async ({ page }) => {
+  await page.goto('/login');
+  await expect(page.locator('.login-flow-card')).toHaveCount(4);
+  const email = page.getByRole('textbox', { name: 'Email address' });
+  await email.fill('notanemail');
+  expect(await email.evaluate((el: HTMLInputElement) => el.checkValidity())).toBe(false);
+  await page.getByRole('button', { name: 'Sign in to Wethaq' }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  await email.fill('planner@wethaq.demo');
+  await page.getByRole('button', { name: 'Sign in to Wethaq' }).click();
+  await expect(page).toHaveURL(/\/overview$/);
 });

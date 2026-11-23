@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { PARTS, BASE_INVENTORY, allDemandRecords, initialData, computeInventory, series } from '../src/data/mock';
+import { PARTS, BASE_INVENTORY, allDemandRecords, initialData, computeInventory, reconcileShortageAlerts, series } from '../src/data/mock';
 import { getForecast, calculateMetrics, policyMetrics } from '../src/data/forecast';
 describe('Synthetic data consistency', () => {
   it('contains expected inventory and demand coverage', () => {
@@ -11,7 +11,23 @@ describe('Synthetic data consistency', () => {
     expect(d.shipments.length).toBeGreaterThanOrEqual(40);
     expect(d.transactions.filter(t => t.status === 'Rejected')).toHaveLength(10); expect(d.transactions.filter(t => t.status === 'Rejected').every(t => t.type === 'ATTEMPT')).toBe(true);
     for (const s of d.shipments) expect(partIds.has(s.partId)).toBe(true);
-    for (const t of d.transactions) { expect(t.hash).toMatch(/^[0-9a-f]{64}$/); if (t.status === 'Committed') expect(shipmentIds.has(t.shipmentId)).toBe(true); else expect(t.block).toBeUndefined(); }
+    for (const t of d.transactions) { expect(t.hash).toBe(''); if (t.status === 'Committed') expect(shipmentIds.has(t.shipmentId)).toBe(true); else expect(t.block).toBeUndefined(); }
+  });
+  it('reconciles shortage alerts with inventory status without inventing blockchain evidence', () => {
+    const d = initialData();
+    const alerts = reconcileShortageAlerts(d);
+    const risk = computeInventory(d.shipments).filter(row => row.status === 'Stockout risk' || row.status === 'Below reorder point');
+    expect(alerts.filter(a => a.type === 'Shortage')).toHaveLength(risk.length);
+    for (const row of risk) {
+      const matched = alerts.filter(a => a.id === `ALT-STOCK-${row.id}`);
+      expect(matched).toHaveLength(1);
+      expect(matched[0].detail).toContain(`${row.onHand} on hand`);
+      expect(matched[0].detail).toContain(`${row.inTransit} inbound`);
+    }
+    const acknowledged = alerts.find(a => a.type === 'Shortage')!;
+    const after = reconcileShortageAlerts({ ...d, alerts: [...d.alerts, { ...acknowledged, acknowledged: true }] });
+    expect(after.find(a => a.id === acknowledged.id)?.acknowledged).toBe(true);
+    expect(d.transactions.every(t => t.hash === '')).toBe(true);
   });
   it('updates in-transit and on-hand positions for user-created transfers', () => {
     const d = initialData(); const x = d.shipments[0]; const s = { ...x, id: 'SHP-2026-9999', partId: 'SP-001', quantity: 10, dispatchedQty: 10, receivedQty: undefined, from: 'Central Warehouse' as const, to: 'Distribution Center' as const, status: 'In Transit' as const, createdInSession: true };

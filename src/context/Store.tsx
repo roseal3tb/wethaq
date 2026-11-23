@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { Role, AppData, Alert, DemoUser, Shipment, Transaction, Operation, CheckResult, Location } from '../types';
-import { initialData, hash } from '../data/mock';
+import { initialData, reconcileShortageAlerts } from '../data/mock';
 import { identities, uid, validateOperation } from '../utils/core';
 const load = <T,>(key: string, defaultValue: T, storage: 'session' | 'local' = 'session'): T => { try { const v = (storage === 'session' ? sessionStorage : localStorage).getItem(key); return v ? JSON.parse(v) as T : defaultValue; } catch { return defaultValue; } };
 interface Store {
@@ -20,9 +20,9 @@ export function Provider({ children }: { children: React.ReactNode; }) {
   const [data, setData] = useState<AppData>(() => {
     const restored = load('wethaq.data', initialData());
     // Repair previous demo-session records when moving to the clearer ATTEMPT terminology
-    return { ...restored, transactions: restored.transactions.map(t =>
-      t.status === 'Rejected' && t.type !== 'ATTEMPT' ? { ...t, type: 'ATTEMPT' as const } : t
-    ) };
+    return { ...restored, transactions: restored.transactions.map(t => ({
+      ...t, hash: '', ...(t.status === 'Rejected' ? { type: 'ATTEMPT' as const } : {})
+    })) };
   });
   const [toast, setToast] = useState('');
   useEffect(() => { try { localStorage.setItem('wethaq.role', JSON.stringify(role)); } catch { } }, [role]);
@@ -30,7 +30,7 @@ export function Provider({ children }: { children: React.ReactNode; }) {
   useEffect(() => { try { sessionStorage.setItem('wethaq.data', JSON.stringify(data)); } catch { } }, [data]);
   const notify = (s: string) => setToast(s);
   const setRole = (r: Role) => { setRoleInner(r); notify(`Viewing as ${r}`); };
-  const login = (email: string, password: string, r: Role) => { if (!email.trim() || !password.trim() || password.toLowerCase() === 'wrong') return false; setRoleInner(r); setAuth(true); notify('Welcome to Wethaq'); return true; };
+  const login = (email: string, password: string, r: Role) => { if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) || password !== 'demo') return false; setRoleInner(r); setAuth(true); notify('Welcome to Wethaq'); return true; };
   const logout = () => { setAuth(false); notify('Signed out'); };
   const createRequest = ({ partId, location, qty, month, note }: { partId: string; location: Location; qty: number; month: string; note: string; }) => {
     if (role !== 'Planner') throw new Error('Only a Planner can create a shipment request');
@@ -48,7 +48,7 @@ export function Provider({ children }: { children: React.ReactNode; }) {
       const attempt: Transaction = {
         id: uid('TX-REJ'), type: 'ATTEMPT', shipmentId, partId: s?.partId || 'N/A',
         quantity: qty, org: actor.org, user: actor.name, timestamp: when,
-        status: 'Rejected', hash: hash(Date.now()), reason: v.failure || 'Validation failed',
+        status: 'Rejected', hash: '', reason: v.failure || 'Validation failed',
         failedRule: v.rules.find(rule => !rule.passed)?.key, fromStatus: s?.status
       };
       const alert: Alert = { id: uid('ALT'), severity: 'Medium', type: 'Rejected attempt',
@@ -59,8 +59,8 @@ export function Provider({ children }: { children: React.ReactNode; }) {
       return v;
     }
     if (!s) return v;
-    const after = operation === 'dispatch' ? 'Dispatched' : operation === 'transit' ? 'In Transit' : 'Received'; const type = operation === 'dispatch' ? 'DISPATCH' : operation === 'transit' ? 'STATUS_CHANGE' : 'RECEIPT'; const now = new Date().toISOString(); const identity = identities[role]; const id = uid('TX'); const nextBlock = Math.max(10000, ...data.transactions.map(t => t.block || 0)) + 1;
-    const t: Transaction = { id, type, shipmentId: s.id, partId: s.partId, quantity: operation === 'transit' ? (s.dispatchedQty || s.quantity) : qty, org: identity.org, user: identity.name, timestamp: now, block: nextBlock, hash: hash(nextBlock), status: 'Committed', fromStatus: s.status, toStatus: after };
+    const after = operation === 'dispatch' ? 'Dispatched' : operation === 'transit' ? 'In Transit' : 'Received'; const type = operation === 'dispatch' ? 'DISPATCH' : operation === 'transit' ? 'STATUS_CHANGE' : 'RECEIPT'; const now = new Date().toISOString(); const identity = identities[role]; const id = uid('TX'); const nextBlock = Math.max(0, ...data.transactions.map(t => t.block || 0)) + 1;
+    const t: Transaction = { id, type, shipmentId: s.id, partId: s.partId, quantity: operation === 'transit' ? (s.dispatchedQty || s.quantity) : qty, org: identity.org, user: identity.name, timestamp: now, block: nextBlock, hash: '', status: 'Committed', fromStatus: s.status, toStatus: after };
     const updated: Shipment = { ...s, status: after, dispatchedQty: operation === 'dispatch' ? qty : s.dispatchedQty, receivedQty: operation === 'receive' ? qty : s.receivedQty, events: [...s.events, { status: after, time: now, actor: identity.name, org: identity.org, txId: id, note }] };
     const mismatch = operation === 'receive' && qty !== (s.dispatchedQty || 0);
     setData(prev => ({ ...prev, shipments: prev.shipments.map(x => x.id === s.id ? updated : x), transactions: [t, ...prev.transactions], alerts: mismatch ? [{ id: uid('ALT'), severity: 'High', type: 'Discrepancy', title: 'Receipt quantity mismatch', detail: `${s.id}: dispatched ${s.dispatchedQty}, received ${qty}`, shipmentId: s.id, at: now, acknowledged: false }, ...prev.alerts] : prev.alerts }));
@@ -75,16 +75,22 @@ export function Provider({ children }: { children: React.ReactNode; }) {
     if (scenario === 'Unknown shipment reference') { refTarget = undefined; reference = 'SHP-UNKNOWN-9999'; }
     if (scenario === 'Duplicate receipt') { refTarget = data.shipments.find(s => s.status === 'Received') || target; reference = refTarget?.id; }
     const v = validateOperation(op, refTarget, qty, r, data.transactions, reference);
-    const now = new Date().toISOString(); const id = uid('TX-REJ'); const entry: Transaction = { id, type: 'ATTEMPT', shipmentId: reference || 'SHP-UNKNOWN-9999', partId: refTarget?.partId || 'N/A', quantity: qty, org: identities[r].org, user: 'Demo validation tool', timestamp: now, status: 'Rejected', hash: hash(Date.now()), reason: v.failure || scenario, failedRule: v.rules.find(x => !x.passed)?.key };
+    const now = new Date().toISOString(); const id = uid('TX-REJ'); const entry: Transaction = { id, type: 'ATTEMPT', shipmentId: reference || 'SHP-UNKNOWN-9999', partId: refTarget?.partId || 'N/A', quantity: qty, org: identities[r].org, user: 'Demo validation tool', timestamp: now, status: 'Rejected', hash: '', reason: v.failure || scenario, failedRule: v.rules.find(x => !x.passed)?.key };
     const al: Alert = { id: uid('ALT'), type: 'Rejected attempt', severity: 'Medium', title: `Rejected · ${scenario}`, detail: `${reference}: ${v.failure}`, shipmentId: refTarget?.id, at: now, acknowledged: false };
     setData(prev => ({ ...prev, transactions: [entry, ...prev.transactions], alerts: [al, ...prev.alerts] })); notify(`Demo operation rejected: ${v.failure}`); return { ...v, transactionId: id };
   };
   const resetDemo = () => { setData(initialData()); notify('Demonstration data restored'); };
-  const ack = (id: string) => setData(prev => ({ ...prev, alerts: prev.alerts.map(a => a.id === id ? { ...a, acknowledged: true } : a) }));
+  const ack = (id: string) => setData(prev => {
+    const visible = reconcileShortageAlerts(prev).find(a => a.id === id);
+    return { ...prev, alerts: prev.alerts.some(a => a.id === id)
+      ? prev.alerts.map(a => a.id === id ? { ...a, acknowledged: true } : a)
+      : visible ? [...prev.alerts, { ...visible, acknowledged: true }] : prev.alerts };
+  });
   const addUser = (user: Omit<DemoUser, 'id' | 'lastSeen'>) => { if (role !== 'Admin') return; setData(p => ({ ...p, users: [{ ...user, id: uid('USR'), lastSeen: new Date().toISOString() }, ...p.users] })); notify('Demo user created'); };
   const setUserRole = (id: string, r: Role) => { if (role !== 'Admin') return; setData(p => ({ ...p, users: p.users.map(u => u.id === id ? { ...u, role: r } : u) })); notify('Role updated'); };
   const toggleUser = (id: string) => { if (role !== 'Admin') return; setData(p => ({ ...p, users: p.users.map(u => u.id === id ? { ...u, active: !u.active } : u) })); notify('User status updated'); };
-  const store = useMemo<Store>(() => ({ role, authenticated, setRole, login, logout, data, toast, notify, dismiss: () => setToast(''), createRequest, validate, perform, invalidDemo, ack, addUser, setUserRole, toggleUser, resetDemo }), [role, authenticated, data, toast]);
+  const visibleData = useMemo<AppData>(() => ({ ...data, alerts: reconcileShortageAlerts(data) }), [data]);
+  const store = useMemo<Store>(() => ({ role, authenticated, setRole, login, logout, data: visibleData, toast, notify, dismiss: () => setToast(''), createRequest, validate, perform, invalidDemo, ack, addUser, setUserRole, toggleUser, resetDemo }), [role, authenticated, visibleData, toast]);
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>;
 }
 export function useStore() { const ctx = useContext(Ctx); if (!ctx) throw Error('Store is missing'); return ctx; }

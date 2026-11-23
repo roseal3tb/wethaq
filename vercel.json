@@ -4,6 +4,10 @@
     {
       "source": "/:page(login|overview|forecasts|inventory|shipments|users)",
       "destination": "/index.html"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/index.html"
     }
   ]
 }

@@ -15,8 +15,8 @@ const average = (arr: number[]) => arr.reduce((a, b) => a + b, 0) / (arr.length 
 export const BASE_INVENTORY: Inventory[] = PARTS.flatMap((p, i) => locations.map((loc, j) => { const s = series(p.id, loc); const avg = average(s.slice(-24)); const r = mulberry(4401 + i * 11 + j); const leadDays = 20 + Math.floor(r() * 100); const leadDemand = avg * leadDays / 30.4; const safetyStock = Math.ceil(Math.max(3, avg * .65)); const reorderPoint = Math.ceil(leadDemand + safetyStock); const rate = i * 3 + j; const multiplier = rate % 17 === 0 ? .2 : rate % 13 === 0 ? .7 : rate % 11 === 0 ? .96 : 1.3 + r() * 1.25; const onHand = Math.round(reorderPoint * multiplier); const daysCover = avg ? onHand / (avg / 30.4) : 999; const status: Inventory['status'] = onHand < reorderPoint * .48 ? 'Stockout risk' : onHand < reorderPoint ? 'Below reorder point' : onHand < reorderPoint * 1.08 ? 'Watch' : 'Healthy'; return { id: `${p.id}-${j}`, partId: p.id, location: loc as Location, onHand, inTransit: 0, monthlyDemand: avg, leadDays, safetyStock, reorderPoint, leadDemand, daysCover, status, recommended: Math.max(0, Math.ceil(reorderPoint + avg * 2 - onHand)) }; }));
 const names = ['Planner A. Harbi', 'Dispatcher M. Qahtani', 'Receiver S. Otaibi', 'Admin R. Dossary', 'Planner L. Anazi', 'Dispatcher N. Salem', 'Receiver T. Fahad', 'Planner H. Saud'];
 export const INITIAL_USERS: DemoUser[] = names.map((name, i) => ({ id: `USR-${String(i + 1).padStart(3, '0')}`, name, email: name.toLowerCase().replace(/[^a-z ]/g, '').replace(/ /g, '.') + '@wethaq.demo', role: i === 0 || i > 6 ? 'Planner' : i === 1 || i === 5 ? 'Dispatcher' : i === 2 || i === 6 ? 'Receiver' : i === 3 ? 'Admin' : 'Planner', org: i === 1 || i === 5 ? 'Org1 (Issuing)' : i === 2 || i === 6 ? 'Org2 (Receiving)' : i === 3 ? 'System Administration' : 'Logistics Command', active: i !== 7, lastSeen: new Date(Date.UTC(2026, 10, 10 - i, 9, 25)).toISOString() }));
-export const hash = (n: number) => Array.from({ length: 64 }, (_, i) => ((n * 37 + i * 17 + i * i * 3) % 16).toString(16)).join('');
-export const makeTx = (id: string, type: TxType, ship: Shipment, quantity: number, actor: string, org: string, timestamp: string, block?: number, status: 'Committed' | 'Rejected' = 'Committed', reason?: string): Transaction => ({ id, type, shipmentId: ship.id, partId: ship.partId, quantity, org, user: actor, timestamp, block, hash: hash(block || id.length * 17), status, reason });
+// No fabricated Fabric hashes: the archive contains demonstration data only.
+export const makeTx = (id: string, type: TxType, ship: Shipment, quantity: number, actor: string, org: string, timestamp: string, block?: number, status: 'Committed' | 'Rejected' = 'Committed', reason?: string): Transaction => ({ id, type, shipmentId: ship.id, partId: ship.partId, quantity, org, user: actor, timestamp, block, hash: '', status, reason });
 export function initialData(): AppData {
   const shipments: Shipment[] = []; const transactions: Transaction[] = []; let b = 1701;
   const progress: ShipmentStatus[] = ['Requested', 'Dispatched', 'In Transit', 'Received'];
@@ -58,4 +58,33 @@ export function computeInventory(shipments: Shipment[]): Inventory[] {
     const status: Inventory['status'] = onHand < row.reorderPoint * .48 ? 'Stockout risk' : onHand < row.reorderPoint ? 'Below reorder point' : onHand < row.reorderPoint * 1.08 ? 'Watch' : 'Healthy';
     return { ...row, inTransit, onHand, daysCover, status, recommended: Math.max(0, Math.ceil(row.reorderPoint + row.monthlyDemand * 2 - onHand - inTransit)) };
   });
+}
+
+/** One stable, position-specific shortage alert for every currently at-risk row.
+ * This selector reads computed on-hand stock (the same basis as the inventory table).
+ * Inbound shipments are shown separately and never silently treated as on-hand.
+ * The selector never writes to the backend and creates no external notifications.
+ */
+export function reconcileShortageAlerts(data: AppData): Alert[] {
+  const known = new Map(data.alerts.filter(a => a.type === 'Shortage').map(a => [a.id, a]));
+  const legacy = data.alerts.filter(a => a.type === 'Shortage');
+  const current = computeInventory(data.shipments)
+    .filter(row => row.status === 'Stockout risk' || row.status === 'Below reorder point')
+    .map(row => {
+      const id = `ALT-STOCK-${row.id}`;
+      const previous = known.get(id) ?? legacy.find(a =>
+        a.partId === row.partId && a.detail.includes(row.location));
+      const critical = row.status === 'Stockout risk';
+      return {
+        id,
+        severity: critical ? 'Critical' as const : 'High' as const,
+        type: 'Shortage' as const,
+        title: critical ? 'Stockout risk identified' : 'Below reorder point',
+        detail: `${row.partId} · ${row.location} · ${row.onHand} on hand · ${row.inTransit} inbound · ROP ${row.reorderPoint}`,
+        partId: row.partId,
+        at: previous?.at || '2026-11-10T12:00:00Z',
+        acknowledged: previous?.acknowledged ?? false,
+      };
+    });
+  return [...current, ...data.alerts.filter(a => a.type !== 'Shortage')];
 }

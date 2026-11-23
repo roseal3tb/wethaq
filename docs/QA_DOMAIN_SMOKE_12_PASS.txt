@@ -1,0 +1,13 @@
+PASS: 60 part records / 180 locations / 12,960 demand observations
+PASS: Original 48 shipment examples and 82 transactions preserved
+PASS: No fabricated transaction hashes in new seeded demo data
+PASS: Rejected attempts have no committed block
+PASS: 28 risk positions have matching unique derived shortage alerts
+PASS: Previously missing SP-035 Central Warehouse now has consistent shortage alert
+PASS: Acknowledgement preserved after derived alert reconciliation
+PASS: Status and alerts agree for SP-005 and SP-006
+PASS: Simulated transfer updates inbound and on-hand at relevant positions
+PASS: Role and shipment-rule engine intact
+PASS: Forecast evaluation remains 60/12 monthly split
+PASS: Inventory policy results still have four demand groups
+DOMAIN SMOKE RESULT: 12 / 12 PASS

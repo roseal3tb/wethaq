@@ -46,4 +46,4 @@ export function policyMetrics() {
   });
 }
 
-export const methodology = 'Synthetic monthly aviation-style demand series are split chronologically: 60 training months followed by a 12-month holdout. MAE is mean absolute error, MASE scales error by the in-sample one-step naive error, and Bias is mean (forecast − actual). The XGBoost-labeled series is an illustrative synthetic candidate surrogate, not a trained XGBoost model. These demonstration outputs are not measured operational results.';
+export const methodology = 'Interactive SP examples are synthetic monthly aviation-style demand series are split chronologically: 60 training months followed by a 12-month holdout. MAE is mean absolute error, MASE scales error by the in-sample one-step naive error, and Bias is mean (forecast − actual). The XGBoost-labeled series is an illustrative synthetic candidate surrogate, not a trained XGBoost model. The separate offline study trains HistGradientBoostingRegressor on public RAF data; its measured scores are NOT predictions in this interface. These demonstration outputs are not measured operational results.';
