@@ -9,7 +9,7 @@ function LoginLogo({ variant, label }: { variant: 'lockup' | 'icon'; label?: str
   </span>;
 }
 export default function Login() {
-  const { login } = useStore(); const nav = useNavigate();
+  const { login, live } = useStore(); const nav = useNavigate();
   const { state } = useLocation();
   const target = state?.returnTo;
   const returnTo = typeof target === 'string' && /^\/(overview|forecasts|inventory|shipments|users)(?:\?|$)/.test(target) ? target : '/overview';

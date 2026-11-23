@@ -2,22 +2,41 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import type { Role, AppData, Alert, DemoUser, Shipment, Transaction, Operation, CheckResult, Location } from '../types';
 import { initialData, reconcileShortageAlerts } from '../data/mock';
 import { identities, uid, validateOperation } from '../utils/core';
+import { ApiError, LIVE, liveApi, session, type LedgerResult, type LiveUser, type VerifyResult } from '../api/live';
 const load = <T,>(key: string, defaultValue: T, storage: 'session' | 'local' = 'session'): T => { try { const v = (storage === 'session' ? sessionStorage : localStorage).getItem(key); return v ? JSON.parse(v) as T : defaultValue; } catch { return defaultValue; } };
 interface Store {
-  role: Role; authenticated: boolean; setRole: (r: Role) => void; login: (email: string, password: string, role: Role) => boolean; logout: () => void;
+  /** true when connected to the Wethaq API and Hyperledger Fabric (VITE_WETHAQ_LIVE=true) */
+  live: boolean; user: LiveUser | null; refresh: () => Promise<void>; roleSwitch: boolean; apiDown: boolean;
+  role: Role; authenticated: boolean; setRole: (r: Role) => void; login: (email: string, password: string, role: Role) => Promise<string | null>; logout: () => void;
   data: AppData; toast: string; notify: (s: string) => void; dismiss: () => void;
   resetDemo: () => void;
-  createRequest: (p: { partId: string; location: Location; qty: number; month: string; note: string; }) => string;
+  createRequest: (p: { partId: string; location: Location; qty: number; month: string; note: string; }) => Promise<string>;
   validate: (operation: Operation, ship: Shipment | undefined, qty: number, reference?: string) => CheckResult;
-  perform: (operation: Operation, shipmentId: string, qty: number, note: string) => CheckResult;
-  invalidDemo: (scenario: string, shipmentId?: string) => CheckResult & { transactionId: string };
-  ack: (id: string) => void; addUser: (u: Omit<DemoUser, 'id' | 'lastSeen'>) => void; setUserRole: (id: string, r: Role) => void; toggleUser: (id: string) => void;
+  perform: (operation: Operation, shipmentId: string, qty: number, note: string) => Promise<CheckResult>;
+  invalidDemo: (scenario: string, shipmentId?: string) => Promise<CheckResult & { transactionId: string }>;
+  verifyShipment: (shipmentId: string) => Promise<VerifyResult>;
+  ack: (id: string, note?: string) => void; addUser: (u: Omit<DemoUser, 'id' | 'lastSeen'>) => void; setUserRole: (id: string, r: Role) => void; toggleUser: (id: string) => void;
 }
 const Ctx = createContext<Store | null>(null);
+const EMPTY: AppData = { shipments: [], transactions: [], alerts: [], users: [] };
+const RULES: [string, string][] = [['authorizedOrg', 'Authorized organization'], ['validReference', 'Valid shipment reference'], ['validQuantity', 'Valid quantity'], ['validTransition', 'Valid status transition'], ['noDuplicate', 'No duplicate receipt']];
+/** Converts an API ledger result into the dashboard's rule checklist format. */
+function ledgerCheck(result: LedgerResult, base?: CheckResult): CheckResult {
+  const rules: Rule[] = base?.rules.map(r => ({ ...r })) ?? RULES.map(([key, label]) => ({ key, label, passed: true, detail: 'Accepted' }));
+  if (result.passed) return { passed: true, rules };
+  const key = result.failedRule || 'validTransition'; const origin = result.source === 'application' ? 'Application' : 'Smart contract';
+  const existing = rules.find(r => r.key === key);
+  if (existing) { existing.passed = false; existing.detail = `${origin}: ${result.reason}`; } else rules.push({ key, label: key, passed: false, detail: `${origin}: ${result.reason}` });
+  return { passed: false, rules, failure: `${result.failure || 'Rejected'} — ${result.reason}` };
+}
 export function Provider({ children }: { children: React.ReactNode; }) {
   const [role, setRoleInner] = useState<Role>(() => load('wethaq.role', 'Planner', 'local'));
-  const [authenticated, setAuth] = useState(() => load('wethaq.auth', false));
+  const [authenticated, setAuth] = useState(() => LIVE ? !!session.get() : load('wethaq.auth', false));
+  const [user, setUser] = useState<LiveUser | null>(null);
+  const [roleSwitch, setRoleSwitch] = useState(true);
+  const [apiDown, setApiDown] = useState(false);
   const [data, setData] = useState<AppData>(() => {
+    if (LIVE) return EMPTY;
     const restored = load('wethaq.data', initialData());
     // Repair previous demo-session records when moving to the clearer ATTEMPT terminology
     return { ...restored, transactions: restored.transactions.map(t => ({
@@ -25,9 +44,10 @@ export function Provider({ children }: { children: React.ReactNode; }) {
     })) };
   });
   const [toast, setToast] = useState('');
+  const roleRef = useRef(role); roleRef.current = role;
   useEffect(() => { try { localStorage.setItem('wethaq.role', JSON.stringify(role)); } catch { } }, [role]);
-  useEffect(() => { try { sessionStorage.setItem('wethaq.auth', JSON.stringify(authenticated)); } catch { } }, [authenticated]);
-  useEffect(() => { try { sessionStorage.setItem('wethaq.data', JSON.stringify(data)); } catch { } }, [data]);
+  useEffect(() => { if (!LIVE) { try { sessionStorage.setItem('wethaq.auth', JSON.stringify(authenticated)); } catch { } } }, [authenticated]);
+  useEffect(() => { if (!LIVE) { try { sessionStorage.setItem('wethaq.data', JSON.stringify(data)); } catch { } } }, [data]);
   const notify = (s: string) => setToast(s);
   const setRole = (r: Role) => { setRoleInner(r); notify(`Viewing as ${r}`); };
   const login = (email: string, password: string, r: Role) => { if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) || password !== 'demo') return false; setRoleInner(r); setAuth(true); notify('Welcome to Wethaq'); return true; };
@@ -38,12 +58,21 @@ export function Provider({ children }: { children: React.ReactNode; }) {
     if (!['Central Warehouse', 'Distribution Center', 'Deployment Site'].includes(location)) throw new Error('Invalid destination');
     if (!/^SP-\d{3}$/.test(partId)) throw new Error('Invalid part reference');
     const id = `SHP-2026-${String(Math.max(48, ...data.shipments.map(s => Number(s.id.split('-').slice(-1)[0]) || 0)) + 1).padStart(4, '0')}`; const now = new Date().toISOString(); const actor = identities.Planner;
-    const shipment: Shipment = { id, partId, quantity: qty, from: 'Central Warehouse', to: location, status: 'Requested', requestedBy: actor.name, requestedAt: now, forecastMonth: month, note, expectedAt: new Date(Date.now() + 14 * 86400000).toISOString(), recommendationId: `REC-${partId}-${location.replace(/\s+/g, '').slice(0, 2).toUpperCase()}`, createdInSession: true, events: [{ status: 'Requested', time: now, actor: actor.name, org: actor.org, note }] };
+    const shipment: Shipment = { id, partId, quantity: qty, from: location === 'Central Warehouse' ? 'Supplier' : 'Central Warehouse', to: location, status: 'Requested', requestedBy: actor.name, requestedAt: now, forecastMonth: month, note, expectedAt: new Date(Date.now() + 14 * 86400000).toISOString(), recommendationId: `REC-${partId}-${location.replace(/\s+/g, '').slice(0, 2).toUpperCase()}`, createdInSession: true, events: [{ status: 'Requested', time: now, actor: actor.name, org: actor.org, note }] };
     setData(prev => ({ ...prev, shipments: [shipment, ...prev.shipments] })); notify(`${id} — simulated request created`); return id;
   };
   const validate = (op: Operation, s: Shipment | undefined, qty: number, reference?: string) => validateOperation(op, s, qty, role, data.transactions, reference);
-  const perform = (operation: Operation, shipmentId: string, qty: number, note: string) => {
-    const s = data.shipments.find(x => x.id === shipmentId); const v = validate(operation, s, qty); if (!v.passed) {
+  const perform = async (operation: Operation, shipmentId: string, qty: number, note: string): Promise<CheckResult> => {
+    const s = data.shipments.find(x => x.id === shipmentId); const v = validate(operation, s, qty);
+    if (LIVE) {
+      try {
+        const result = await liveApi.operate(operation, shipmentId, qty, note); await refresh();
+        const label = operation === 'dispatch' ? 'Dispatch' : operation === 'transit' ? 'In-transit update' : 'Receipt';
+        notify(result.passed ? `${label} committed on Fabric · block ${result.block}` : `Rejected by ${result.source === 'application' ? 'the application' : 'the smart contract'}: ${result.reason}`);
+        return ledgerCheck(result, v);
+      } catch (e) { failure(e); return { passed: false, rules: v.rules, failure: e instanceof Error ? e.message : 'Request failed' }; }
+    }
+    if (!v.passed) {
       const when = new Date().toISOString(); const actor = identities[role];
       const attempt: Transaction = {
         id: uid('TX-REJ'), type: 'ATTEMPT', shipmentId, partId: s?.partId || 'N/A',
@@ -66,7 +95,12 @@ export function Provider({ children }: { children: React.ReactNode; }) {
     setData(prev => ({ ...prev, shipments: prev.shipments.map(x => x.id === s.id ? updated : x), transactions: [t, ...prev.transactions], alerts: mismatch ? [{ id: uid('ALT'), severity: 'High', type: 'Discrepancy', title: 'Receipt quantity mismatch', detail: `${s.id}: dispatched ${s.dispatchedQty}, received ${qty}`, shipmentId: s.id, at: now, acknowledged: false }, ...prev.alerts] : prev.alerts }));
     notify(`${type.replace('_', ' ')} committed (synthetic)`); return v;
   };
-  const invalidDemo = (scenario: string, shipmentId?: string) => {
+  const invalidDemo = async (scenario: string, shipmentId?: string): Promise<CheckResult & { transactionId: string }> => {
+    if (LIVE) {
+      const result = await liveApi.invalid(scenario, shipmentId); await refresh();
+      notify(result.passed ? 'Unexpected: the operation was accepted by the smart contract' : `Smart contract rejected the operation: ${result.reason}`);
+      return { ...ledgerCheck(result), transactionId: result.transactionId };
+    }
     const fallback = data.shipments.find(s => s.status === 'Received') || data.shipments[0]; const target = data.shipments.find(s => s.id === shipmentId) || fallback;
     let op: Operation = 'receive'; let r: Role = 'Receiver'; let reference = target?.id; let qty = target?.dispatchedQty || target?.quantity || 1; let refTarget: Shipment | undefined = target;
     if (scenario === 'Unauthorized organization') { r = 'Planner'; op = 'dispatch'; }

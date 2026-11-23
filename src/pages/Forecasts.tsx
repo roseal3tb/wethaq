@@ -1,7 +1,18 @@
 import { NiceSelect } from '../components/NiceSelect';
-import { useMemo, useState } from 'react'; import { useNavigate, useSearchParams } from 'react-router-dom'; import { ArrowRight, BarChart3, ChevronDown, Download, Info, LineChart as LineIcon, RefreshCw } from 'lucide-react'; import { PARTS } from '../data/mock'; import { classes, downloadCSV, locations, nf } from '../utils/core'; import { classMetrics, getForecast, models, methodology, type Model } from '../data/forecast'; import { ForecastChart, SmallBarChart } from '../components/Charts'; import { Badge, Button, Field, InfoBanner, Panel } from '../components/UI';
-const forecastHorizons = [3, 6, 12];
-const modelColor: Record<Model, string> = { Naive: '#A2ADBA', Croston: '#8A9A4B', XGBoost: '#0F2A44' };
+import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { BarChart3, ChevronDown, Download, Info } from 'lucide-react';
+import { downloadCSV, nf } from '../utils/core';
+import { raf, rafMethodology, rafModelColor, rafModelLabel, rafModels, rafPoints, type RafModel } from '../data/raf';
+import { RafForecastChart } from '../components/RafChart';
+import { SmallBarChart } from '../components/Charts';
+import { Badge, Button, Field, Panel } from '../components/UI';
+
+const demandClasses = ['Intermittent', 'Lumpy'];
+const tableMethods = ['Zero (always 0)', 'Naive', 'Croston', 'SBA', 'TSB', 'Gradient boosting'];
+const methodColor: Record<string, string> = { Naive: rafModelColor.naive, Croston: rafModelColor.croston, TSB: rafModelColor.tsb, 'Gradient boosting': rafModelColor.gbm };
+const pct = (v: number) => `${nf(v, 1)}%`;
+
 export default function Forecasts() {
   const [params, setParams] = useSearchParams(); const nav = useNavigate(); const [classFilter, setClass] = useState('All classes'); const [partSearch, setPartSearch] = useState(''); const [methodOpen, setMethodOpen] = useState(false); const [show, setShow] = useState<Model[]>(['Croston', 'XGBoost']); const [asTable, setAsTable] = useState(false); const part = params.get('part') || 'SP-001'; const loc = locations.find(location => location === params.get('location')) ?? 'All locations'; const horizon = forecastHorizons.find(months => String(months) === params.get('horizon')) ?? 6; const selected = PARTS.find(p => p.id === part) || PARTS[0]; const eligible = PARTS.filter(p => (classFilter === 'All classes' || p.demandClass === classFilter) && (p.name + ' ' + p.id).toLowerCase().includes(partSearch.toLowerCase())); const forecast = useMemo(() => getForecast(selected.id, loc, horizon), [selected.id, loc, horizon]); const classData = useMemo(() => classMetrics(), []); const set = (key: string, value: string) => setParams(prev => { const out = new URLSearchParams(prev); if (value === 'All locations') out.delete(key); else out.set(key, value); return out; });
   function flip(m: Model) { setShow(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]); }

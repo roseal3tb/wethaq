@@ -1,0 +1,396 @@
+{
+ "RAF": {
+  "gbm_val_RMSSE_per_setting": [
+   0.5520230003461711,
+   0.5501585577086359
+  ],
+  "gbm_chosen": {
+   "max_iter": 400,
+   "learning_rate": 0.03,
+   "max_leaf_nodes": 31,
+   "min_samples_leaf": 100,
+   "l2_regularization": 1.0
+  },
+  "test": [
+   {
+    "method": "Zero (always 0)",
+    "MAE": 1.2748,
+    "RMSE": 16.7866,
+    "MASE": 0.5783,
+    "RMSSE": 0.4524,
+    "Bias (ME)": -1.2748,
+    "Forecast/Actual total": 0.0,
+    "Coverage % (sum fcst >= sum demand)": 61.48
+   },
+   {
+    "method": "Naive (last month)",
+    "MAE": 2.5359,
+    "RMSE": 24.2924,
+    "MASE": 0.9253,
+    "RMSSE": 0.5598,
+    "Bias (ME)": 0.0494,
+    "Forecast/Actual total": 1.0387,
+    "Coverage % (sum fcst >= sum demand)": 63.98
+   },
+   {
+    "method": "Moving average 12m",
+    "MAE": 2.2836,
+    "RMSE": 16.9742,
+    "MASE": 0.9788,
+    "RMSSE": 0.5522,
+    "Bias (ME)": -0.0985,
+    "Forecast/Actual total": 0.9227,
+    "Coverage % (sum fcst >= sum demand)": 68.88
+   },
+   {
+    "method": "SES",
+    "MAE": 2.2845,
+    "RMSE": 16.8172,
+    "MASE": 0.9746,
+    "RMSSE": 0.5467,
+    "Bias (ME)": -0.0843,
+    "Forecast/Actual total": 0.9339,
+    "Coverage % (sum fcst >= sum demand)": 70.46
+   },
+   {
+    "method": "Croston",
+    "MAE": 2.7899,
+    "RMSE": 16.6166,
+    "MASE": 1.1687,
+    "RMSSE": 0.5864,
+    "Bias (ME)": 0.549,
+    "Forecast/Actual total": 1.4306,
+    "Coverage % (sum fcst >= sum demand)": 77.44
+   },
+   {
+    "method": "SBA",
+    "MAE": 2.7125,
+    "RMSE": 16.5896,
+    "MASE": 1.1388,
+    "RMSSE": 0.5786,
+    "Bias (ME)": 0.4578,
+    "Forecast/Actual total": 1.3591,
+    "Coverage % (sum fcst >= sum demand)": 76.64
+   },
+   {
+    "method": "TSB",
+    "MAE": 2.3173,
+    "RMSE": 16.6409,
+    "MASE": 0.9817,
+    "RMSSE": 0.5472,
+    "Bias (ME)": -0.0331,
+    "Forecast/Actual total": 0.974,
+    "Coverage % (sum fcst >= sum demand)": 72.12
+   },
+   {
+    "method": "Gradient boosting (Poisson)",
+    "MAE": 2.4073,
+    "RMSE": 16.7044,
+    "MASE": 1.2867,
+    "RMSSE": 0.6108,
+    "Bias (ME)": 0.0894,
+    "Forecast/Actual total": 1.0701,
+    "Coverage % (sum fcst >= sum demand)": 80.92
+   }
+  ],
+  "validation": [
+   {
+    "method": "Zero (always 0)",
+    "MAE": 1.0686,
+    "RMSE": 12.1582,
+    "MASE": 0.4987,
+    "RMSSE": 0.3955,
+    "Bias (ME)": -1.0686,
+    "Forecast/Actual total": 0.0,
+    "Coverage % (sum fcst >= sum demand)": 60.02
+   },
+   {
+    "method": "Naive (last month)",
+    "MAE": 1.7349,
+    "RMSE": 13.8827,
+    "MASE": 0.8951,
+    "RMSSE": 0.517,
+    "Bias (ME)": -0.3374,
+    "Forecast/Actual total": 0.6843,
+    "Coverage % (sum fcst >= sum demand)": 62.34
+   },
+   {
+    "method": "Moving average 12m",
+    "MAE": 2.1952,
+    "RMSE": 12.3133,
+    "MASE": 0.946,
+    "RMSSE": 0.5073,
+    "Bias (ME)": 0.2468,
+    "Forecast/Actual total": 1.231,
+    "Coverage % (sum fcst >= sum demand)": 68.5
+   },
+   {
+    "method": "SES",
+    "MAE": 2.1703,
+    "RMSE": 12.0653,
+    "MASE": 0.9358,
+    "RMSSE": 0.4967,
+    "Bias (ME)": 0.2404,
+    "Forecast/Actual total": 1.225,
+    "Coverage % (sum fcst >= sum demand)": 70.32
+   },
+   {
+    "method": "Croston",
+    "MAE": 2.6378,
+    "RMSE": 12.3361,
+    "MASE": 1.0901,
+    "RMSSE": 0.5282,
+    "Bias (ME)": 0.7959,
+    "Forecast/Actual total": 1.7448,
+    "Coverage % (sum fcst >= sum demand)": 76.94
+   },
+   {
+    "method": "SBA",
+    "MAE": 2.5581,
+    "RMSE": 12.2762,
+    "MASE": 1.0603,
+    "RMSSE": 0.5205,
+    "Bias (ME)": 0.7027,
+    "Forecast/Actual total": 1.6576,
+    "Coverage % (sum fcst >= sum demand)": 75.94
+   },
+   {
+    "method": "TSB",
+    "MAE": 2.1987,
+    "RMSE": 11.9611,
+    "MASE": 0.9433,
+    "RMSSE": 0.4975,
+    "Bias (ME)": 0.2848,
+    "Forecast/Actual total": 1.2665,
+    "Coverage % (sum fcst >= sum demand)": 71.92
+   },
+   {
+    "method": "Gradient boosting (Poisson)",
+    "MAE": 2.2011,
+    "RMSE": 11.9644,
+    "MASE": 1.1982,
+    "RMSSE": 0.5502,
+    "Bias (ME)": 0.291,
+    "Forecast/Actual total": 1.2723,
+    "Coverage % (sum fcst >= sum demand)": 80.94
+   }
+  ]
+ },
+ "SYN": {
+  "gbm_val_RMSSE_per_setting": [
+   0.7119718123571803,
+   0.722875890961269
+  ],
+  "gbm_chosen": {
+   "max_iter": 150,
+   "learning_rate": 0.05,
+   "max_leaf_nodes": 15,
+   "min_samples_leaf": 200,
+   "l2_regularization": 1.0
+  },
+  "test": [
+   {
+    "method": "Zero (always 0)",
+    "MAE": 3.2963,
+    "RMSE": 5.0555,
+    "MASE": 1.3094,
+    "RMSSE": 1.2157,
+    "Bias (ME)": -3.2963,
+    "Forecast/Actual total": 0.0,
+    "Coverage % (sum fcst >= sum demand)": 6.1111
+   },
+   {
+    "method": "Naive (last month)",
+    "MAE": 2.1657,
+    "RMSE": 3.2308,
+    "MASE": 1.206,
+    "RMSSE": 1.0062,
+    "Bias (ME)": 0.6037,
+    "Forecast/Actual total": 1.1831,
+    "Coverage % (sum fcst >= sum demand)": 49.4444
+   },
+   {
+    "method": "Moving average 12m",
+    "MAE": 1.5789,
+    "RMSE": 2.2481,
+    "MASE": 0.8864,
+    "RMSSE": 0.7459,
+    "Bias (ME)": 0.0731,
+    "Forecast/Actual total": 1.0222,
+    "Coverage % (sum fcst >= sum demand)": 52.2222
+   },
+   {
+    "method": "SES",
+    "MAE": 1.5696,
+    "RMSE": 2.233,
+    "MASE": 0.8907,
+    "RMSSE": 0.7419,
+    "Bias (ME)": 0.1085,
+    "Forecast/Actual total": 1.0329,
+    "Coverage % (sum fcst >= sum demand)": 52.2222
+   },
+   {
+    "method": "Croston",
+    "MAE": 1.5764,
+    "RMSE": 2.2276,
+    "MASE": 0.9122,
+    "RMSSE": 0.7386,
+    "Bias (ME)": 0.1306,
+    "Forecast/Actual total": 1.0396,
+    "Coverage % (sum fcst >= sum demand)": 53.8889
+   },
+   {
+    "method": "SBA",
+    "MAE": 1.5654,
+    "RMSE": 2.2139,
+    "MASE": 0.9028,
+    "RMSSE": 0.7354,
+    "Bias (ME)": -0.0407,
+    "Forecast/Actual total": 0.9876,
+    "Coverage % (sum fcst >= sum demand)": 45.0
+   },
+   {
+    "method": "TSB",
+    "MAE": 1.5654,
+    "RMSE": 2.2289,
+    "MASE": 0.8874,
+    "RMSSE": 0.738,
+    "Bias (ME)": 0.1057,
+    "Forecast/Actual total": 1.0321,
+    "Coverage % (sum fcst >= sum demand)": 51.1111
+   },
+   {
+    "method": "Seasonal naive (12m)",
+    "MAE": 2.0231,
+    "RMSE": 3.049,
+    "MASE": 1.0575,
+    "RMSSE": 1.0134,
+    "Bias (ME)": 0.0731,
+    "Forecast/Actual total": 1.0222,
+    "Coverage % (sum fcst >= sum demand)": 52.2222
+   },
+   {
+    "method": "Gradient boosting (Poisson)",
+    "MAE": 1.5382,
+    "RMSE": 2.1823,
+    "MASE": 0.8996,
+    "RMSSE": 0.7276,
+    "Bias (ME)": 0.0302,
+    "Forecast/Actual total": 1.0092,
+    "Coverage % (sum fcst >= sum demand)": 53.3333
+   },
+   {
+    "method": "Oracle (true generator mean; reference only)",
+    "MAE": 1.5361,
+    "RMSE": 2.1774,
+    "MASE": 0.9,
+    "RMSSE": 0.7234,
+    "Bias (ME)": -0.0076,
+    "Forecast/Actual total": 0.9977,
+    "Coverage % (sum fcst >= sum demand)": 49.4444
+   }
+  ],
+  "validation": [
+   {
+    "method": "Zero (always 0)",
+    "MAE": 3.3694,
+    "RMSE": 5.1826,
+    "MASE": 1.2793,
+    "RMSSE": 1.2017,
+    "Bias (ME)": -3.3694,
+    "Forecast/Actual total": 0.0,
+    "Coverage % (sum fcst >= sum demand)": 6.6667
+   },
+   {
+    "method": "Naive (last month)",
+    "MAE": 2.0306,
+    "RMSE": 3.0603,
+    "MASE": 1.0414,
+    "RMSSE": 0.925,
+    "Bias (ME)": 0.3639,
+    "Forecast/Actual total": 1.108,
+    "Coverage % (sum fcst >= sum demand)": 50.0
+   },
+   {
+    "method": "Moving average 12m",
+    "MAE": 1.5302,
+    "RMSE": 2.2122,
+    "MASE": 0.841,
+    "RMSSE": 0.7147,
+    "Bias (ME)": -0.0273,
+    "Forecast/Actual total": 0.9919,
+    "Coverage % (sum fcst >= sum demand)": 49.4444
+   },
+   {
+    "method": "SES",
+    "MAE": 1.5194,
+    "RMSE": 2.187,
+    "MASE": 0.841,
+    "RMSSE": 0.7087,
+    "Bias (ME)": -0.0036,
+    "Forecast/Actual total": 0.9989,
+    "Coverage % (sum fcst >= sum demand)": 50.0
+   },
+   {
+    "method": "Croston",
+    "MAE": 1.5358,
+    "RMSE": 2.1831,
+    "MASE": 0.8688,
+    "RMSSE": 0.7172,
+    "Bias (ME)": 0.0267,
+    "Forecast/Actual total": 1.0079,
+    "Coverage % (sum fcst >= sum demand)": 51.1111
+   },
+   {
+    "method": "SBA",
+    "MAE": 1.532,
+    "RMSE": 2.1915,
+    "MASE": 0.8598,
+    "RMSSE": 0.7166,
+    "Bias (ME)": -0.1431,
+    "Forecast/Actual total": 0.9575,
+    "Coverage % (sum fcst >= sum demand)": 47.2222
+   },
+   {
+    "method": "TSB",
+    "MAE": 1.5178,
+    "RMSE": 2.1856,
+    "MASE": 0.841,
+    "RMSSE": 0.7098,
+    "Bias (ME)": -0.0048,
+    "Forecast/Actual total": 0.9986,
+    "Coverage % (sum fcst >= sum demand)": 48.3333
+   },
+   {
+    "method": "Seasonal naive (12m)",
+    "MAE": 2.0282,
+    "RMSE": 3.0615,
+    "MASE": 1.0442,
+    "RMSSE": 0.9828,
+    "Bias (ME)": -0.0273,
+    "Forecast/Actual total": 0.9919,
+    "Coverage % (sum fcst >= sum demand)": 50.0
+   },
+   {
+    "method": "Gradient boosting (Poisson)",
+    "MAE": 1.4935,
+    "RMSE": 2.1267,
+    "MASE": 0.8618,
+    "RMSSE": 0.712,
+    "Bias (ME)": -0.0835,
+    "Forecast/Actual total": 0.9752,
+    "Coverage % (sum fcst >= sum demand)": 48.8889
+   },
+   {
+    "method": "Oracle (true generator mean; reference only)",
+    "MAE": 1.4721,
+    "RMSE": 2.0978,
+    "MASE": 0.8515,
+    "RMSSE": 0.6982,
+    "Bias (ME)": -0.0731,
+    "Forecast/Actual total": 0.9783,
+    "Coverage % (sum fcst >= sum demand)": 43.8889
+   }
+  ]
+ }
+}

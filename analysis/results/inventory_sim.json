@@ -1,0 +1,437 @@
+{
+ "headline": [
+  {
+   "policy": "Current policy",
+   "fill_rate_pct": 82.57,
+   "stockout_months_pct": 12.5,
+   "avg_stock_units": 8.355,
+   "orders_per_series_year": 3.183,
+   "lost_units": 1241.0
+  },
+  {
+   "policy": "Fixed threshold",
+   "fill_rate_pct": 99.874,
+   "stockout_months_pct": 0.231,
+   "avg_stock_units": 13.904,
+   "orders_per_series_year": 4.494,
+   "lost_units": 9.0
+  },
+  {
+   "policy": "Forecast: TSB",
+   "fill_rate_pct": 99.888,
+   "stockout_months_pct": 0.231,
+   "avg_stock_units": 14.158,
+   "orders_per_series_year": 4.278,
+   "lost_units": 8.0
+  },
+  {
+   "policy": "Forecast: GB",
+   "fill_rate_pct": 99.888,
+   "stockout_months_pct": 0.231,
+   "avg_stock_units": 13.932,
+   "orders_per_series_year": 4.522,
+   "lost_units": 8.0
+  },
+  {
+   "policy": "Oracle mean (reference)",
+   "fill_rate_pct": 99.874,
+   "stockout_months_pct": 0.278,
+   "avg_stock_units": 13.768,
+   "orders_per_series_year": 4.567,
+   "lost_units": 9.0
+  }
+ ],
+ "by_class": [
+  {
+   "policy": "Current policy",
+   "class": "fast_moving",
+   "fill_rate_pct": 78.503,
+   "stockout_months_pct": 33.333,
+   "avg_stock_units": 3.096,
+   "orders_per_series_year": 7.167,
+   "lost_units": 1183.0
+  },
+  {
+   "policy": "Current policy",
+   "class": "slow_moving",
+   "fill_rate_pct": 95.788,
+   "stockout_months_pct": 4.167,
+   "avg_stock_units": 5.826,
+   "orders_per_series_year": 2.15,
+   "lost_units": 58.0
+  },
+  {
+   "policy": "Current policy",
+   "class": "intermittent",
+   "fill_rate_pct": 100.0,
+   "stockout_months_pct": 0.0,
+   "avg_stock_units": 16.142,
+   "orders_per_series_year": 0.233,
+   "lost_units": 0.0
+  },
+  {
+   "policy": "Fixed threshold",
+   "class": "fast_moving",
+   "fill_rate_pct": 100.0,
+   "stockout_months_pct": 0.0,
+   "avg_stock_units": 22.443,
+   "orders_per_series_year": 7.25,
+   "lost_units": 0.0
+  },
+  {
+   "policy": "Fixed threshold",
+   "class": "slow_moving",
+   "fill_rate_pct": 99.855,
+   "stockout_months_pct": 0.139,
+   "avg_stock_units": 8.558,
+   "orders_per_series_year": 5.533,
+   "lost_units": 2.0
+  },
+  {
+   "policy": "Fixed threshold",
+   "class": "intermittent",
+   "fill_rate_pct": 97.083,
+   "stockout_months_pct": 0.556,
+   "avg_stock_units": 10.711,
+   "orders_per_series_year": 0.7,
+   "lost_units": 7.0
+  },
+  {
+   "policy": "Forecast: TSB",
+   "class": "fast_moving",
+   "fill_rate_pct": 100.0,
+   "stockout_months_pct": 0.0,
+   "avg_stock_units": 22.729,
+   "orders_per_series_year": 7.117,
+   "lost_units": 0.0
+  },
+  {
+   "policy": "Forecast: TSB",
+   "class": "slow_moving",
+   "fill_rate_pct": 99.927,
+   "stockout_months_pct": 0.139,
+   "avg_stock_units": 8.847,
+   "orders_per_series_year": 5.117,
+   "lost_units": 1.0
+  },
+  {
+   "policy": "Forecast: TSB",
+   "class": "intermittent",
+   "fill_rate_pct": 97.083,
+   "stockout_months_pct": 0.556,
+   "avg_stock_units": 10.899,
+   "orders_per_series_year": 0.6,
+   "lost_units": 7.0
+  },
+  {
+   "policy": "Forecast: GB",
+   "class": "fast_moving",
+   "fill_rate_pct": 100.0,
+   "stockout_months_pct": 0.0,
+   "avg_stock_units": 22.535,
+   "orders_per_series_year": 7.217,
+   "lost_units": 0.0
+  },
+  {
+   "policy": "Forecast: GB",
+   "class": "slow_moving",
+   "fill_rate_pct": 99.855,
+   "stockout_months_pct": 0.139,
+   "avg_stock_units": 8.532,
+   "orders_per_series_year": 5.65,
+   "lost_units": 2.0
+  },
+  {
+   "policy": "Forecast: GB",
+   "class": "intermittent",
+   "fill_rate_pct": 97.5,
+   "stockout_months_pct": 0.556,
+   "avg_stock_units": 10.731,
+   "orders_per_series_year": 0.7,
+   "lost_units": 6.0
+  },
+  {
+   "policy": "Oracle mean (reference)",
+   "class": "fast_moving",
+   "fill_rate_pct": 99.982,
+   "stockout_months_pct": 0.139,
+   "avg_stock_units": 22.158,
+   "orders_per_series_year": 7.25,
+   "lost_units": 1.0
+  },
+  {
+   "policy": "Oracle mean (reference)",
+   "class": "slow_moving",
+   "fill_rate_pct": 99.927,
+   "stockout_months_pct": 0.139,
+   "avg_stock_units": 8.442,
+   "orders_per_series_year": 5.767,
+   "lost_units": 1.0
+  },
+  {
+   "policy": "Oracle mean (reference)",
+   "class": "intermittent",
+   "fill_rate_pct": 97.083,
+   "stockout_months_pct": 0.556,
+   "avg_stock_units": 10.704,
+   "orders_per_series_year": 0.683,
+   "lost_units": 7.0
+  }
+ ],
+ "curve": [
+  {
+   "policy": "Fixed threshold",
+   "z": 0.0,
+   "fill_rate_pct": 98.23,
+   "stockout_months_pct": 3.056,
+   "avg_stock_units": 9.473,
+   "orders_per_series_year": 4.278,
+   "lost_units": 126.0
+  },
+  {
+   "policy": "Fixed threshold",
+   "z": 0.5,
+   "fill_rate_pct": 99.157,
+   "stockout_months_pct": 1.574,
+   "avg_stock_units": 10.788,
+   "orders_per_series_year": 4.5,
+   "lost_units": 60.0
+  },
+  {
+   "policy": "Fixed threshold",
+   "z": 1.0,
+   "fill_rate_pct": 99.537,
+   "stockout_months_pct": 0.88,
+   "avg_stock_units": 12.139,
+   "orders_per_series_year": 4.444,
+   "lost_units": 33.0
+  },
+  {
+   "policy": "Fixed threshold",
+   "z": 1.28,
+   "fill_rate_pct": 99.803,
+   "stockout_months_pct": 0.417,
+   "avg_stock_units": 12.946,
+   "orders_per_series_year": 4.494,
+   "lost_units": 14.0
+  },
+  {
+   "policy": "Fixed threshold",
+   "z": 1.645,
+   "fill_rate_pct": 99.874,
+   "stockout_months_pct": 0.231,
+   "avg_stock_units": 13.904,
+   "orders_per_series_year": 4.494,
+   "lost_units": 9.0
+  },
+  {
+   "policy": "Fixed threshold",
+   "z": 2.0,
+   "fill_rate_pct": 99.874,
+   "stockout_months_pct": 0.231,
+   "avg_stock_units": 14.863,
+   "orders_per_series_year": 4.461,
+   "lost_units": 9.0
+  },
+  {
+   "policy": "Fixed threshold",
+   "z": 2.5,
+   "fill_rate_pct": 99.944,
+   "stockout_months_pct": 0.093,
+   "avg_stock_units": 16.255,
+   "orders_per_series_year": 4.55,
+   "lost_units": 4.0
+  },
+  {
+   "policy": "Forecast: TSB",
+   "z": 0.0,
+   "fill_rate_pct": 98.118,
+   "stockout_months_pct": 3.287,
+   "avg_stock_units": 9.65,
+   "orders_per_series_year": 4.067,
+   "lost_units": 134.0
+  },
+  {
+   "policy": "Forecast: TSB",
+   "z": 0.5,
+   "fill_rate_pct": 99.284,
+   "stockout_months_pct": 1.435,
+   "avg_stock_units": 11.018,
+   "orders_per_series_year": 4.167,
+   "lost_units": 51.0
+  },
+  {
+   "policy": "Forecast: TSB",
+   "z": 1.0,
+   "fill_rate_pct": 99.677,
+   "stockout_months_pct": 0.833,
+   "avg_stock_units": 12.378,
+   "orders_per_series_year": 4.233,
+   "lost_units": 23.0
+  },
+  {
+   "policy": "Forecast: TSB",
+   "z": 1.28,
+   "fill_rate_pct": 99.803,
+   "stockout_months_pct": 0.463,
+   "avg_stock_units": 13.129,
+   "orders_per_series_year": 4.233,
+   "lost_units": 14.0
+  },
+  {
+   "policy": "Forecast: TSB",
+   "z": 1.645,
+   "fill_rate_pct": 99.888,
+   "stockout_months_pct": 0.231,
+   "avg_stock_units": 14.158,
+   "orders_per_series_year": 4.278,
+   "lost_units": 8.0
+  },
+  {
+   "policy": "Forecast: TSB",
+   "z": 2.0,
+   "fill_rate_pct": 99.916,
+   "stockout_months_pct": 0.139,
+   "avg_stock_units": 15.111,
+   "orders_per_series_year": 4.283,
+   "lost_units": 6.0
+  },
+  {
+   "policy": "Forecast: TSB",
+   "z": 2.5,
+   "fill_rate_pct": 99.958,
+   "stockout_months_pct": 0.093,
+   "avg_stock_units": 16.574,
+   "orders_per_series_year": 4.283,
+   "lost_units": 3.0
+  },
+  {
+   "policy": "Forecast: GB",
+   "z": 0.0,
+   "fill_rate_pct": 98.287,
+   "stockout_months_pct": 2.87,
+   "avg_stock_units": 9.495,
+   "orders_per_series_year": 4.367,
+   "lost_units": 122.0
+  },
+  {
+   "policy": "Forecast: GB",
+   "z": 0.5,
+   "fill_rate_pct": 99.129,
+   "stockout_months_pct": 1.62,
+   "avg_stock_units": 10.825,
+   "orders_per_series_year": 4.433,
+   "lost_units": 62.0
+  },
+  {
+   "policy": "Forecast: GB",
+   "z": 1.0,
+   "fill_rate_pct": 99.663,
+   "stockout_months_pct": 0.694,
+   "avg_stock_units": 12.192,
+   "orders_per_series_year": 4.472,
+   "lost_units": 24.0
+  },
+  {
+   "policy": "Forecast: GB",
+   "z": 1.28,
+   "fill_rate_pct": 99.761,
+   "stockout_months_pct": 0.509,
+   "avg_stock_units": 12.928,
+   "orders_per_series_year": 4.483,
+   "lost_units": 17.0
+  },
+  {
+   "policy": "Forecast: GB",
+   "z": 1.645,
+   "fill_rate_pct": 99.888,
+   "stockout_months_pct": 0.231,
+   "avg_stock_units": 13.932,
+   "orders_per_series_year": 4.522,
+   "lost_units": 8.0
+  },
+  {
+   "policy": "Forecast: GB",
+   "z": 2.0,
+   "fill_rate_pct": 99.916,
+   "stockout_months_pct": 0.231,
+   "avg_stock_units": 14.914,
+   "orders_per_series_year": 4.589,
+   "lost_units": 6.0
+  },
+  {
+   "policy": "Forecast: GB",
+   "z": 2.5,
+   "fill_rate_pct": 99.972,
+   "stockout_months_pct": 0.046,
+   "avg_stock_units": 16.301,
+   "orders_per_series_year": 4.539,
+   "lost_units": 2.0
+  },
+  {
+   "policy": "Oracle mean (reference)",
+   "z": 0.0,
+   "fill_rate_pct": 98.258,
+   "stockout_months_pct": 3.009,
+   "avg_stock_units": 9.421,
+   "orders_per_series_year": 4.361,
+   "lost_units": 124.0
+  },
+  {
+   "policy": "Oracle mean (reference)",
+   "z": 0.5,
+   "fill_rate_pct": 99.157,
+   "stockout_months_pct": 1.389,
+   "avg_stock_units": 10.635,
+   "orders_per_series_year": 4.461,
+   "lost_units": 60.0
+  },
+  {
+   "policy": "Oracle mean (reference)",
+   "z": 1.0,
+   "fill_rate_pct": 99.649,
+   "stockout_months_pct": 0.694,
+   "avg_stock_units": 12.003,
+   "orders_per_series_year": 4.55,
+   "lost_units": 25.0
+  },
+  {
+   "policy": "Oracle mean (reference)",
+   "z": 1.28,
+   "fill_rate_pct": 99.761,
+   "stockout_months_pct": 0.509,
+   "avg_stock_units": 12.756,
+   "orders_per_series_year": 4.578,
+   "lost_units": 17.0
+  },
+  {
+   "policy": "Oracle mean (reference)",
+   "z": 1.645,
+   "fill_rate_pct": 99.874,
+   "stockout_months_pct": 0.278,
+   "avg_stock_units": 13.768,
+   "orders_per_series_year": 4.567,
+   "lost_units": 9.0
+  },
+  {
+   "policy": "Oracle mean (reference)",
+   "z": 2.0,
+   "fill_rate_pct": 99.944,
+   "stockout_months_pct": 0.139,
+   "avg_stock_units": 14.782,
+   "orders_per_series_year": 4.572,
+   "lost_units": 4.0
+  },
+  {
+   "policy": "Oracle mean (reference)",
+   "z": 2.5,
+   "fill_rate_pct": 99.972,
+   "stockout_months_pct": 0.046,
+   "avg_stock_units": 16.109,
+   "orders_per_series_year": 4.617,
+   "lost_units": 2.0
+  }
+ ],
+ "recorded_2023_stockout_pct": 14.17,
+ "mean_protection_period_months": 2.497
+}

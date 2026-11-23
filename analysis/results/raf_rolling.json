@@ -1,0 +1,394 @@
+{
+ "best_alpha": {
+  "Croston": 0.3,
+  "SBA": 0.3,
+  "SES": 0.05,
+  "TSB": 0.05
+ },
+ "origins": [
+  60,
+  66,
+  72,
+  78
+ ],
+ "summary_mean": {
+  "Croston": {
+   "MAE": 2.8355,
+   "RMSE": 14.4581,
+   "MASE": 1.2304,
+   "RMSSE": 0.6271,
+   "Bias (ME)": 0.6744,
+   "Forecast/Actual total": 1.5511,
+   "Coverage % (sum fcst >= sum demand)": 73.94
+  },
+  "Gradient boosting": {
+   "MAE": 2.3779,
+   "RMSE": 14.1434,
+   "MASE": 1.3348,
+   "RMSSE": 0.6424,
+   "Bias (ME)": 0.1437,
+   "Forecast/Actual total": 1.1226,
+   "Coverage % (sum fcst >= sum demand)": 78.71
+  },
+  "Moving average 12m": {
+   "MAE": 2.3267,
+   "RMSE": 14.4529,
+   "MASE": 1.0539,
+   "RMSSE": 0.6015,
+   "Bias (ME)": 0.0362,
+   "Forecast/Actual total": 1.0379,
+   "Coverage % (sum fcst >= sum demand)": 64.525
+  },
+  "Naive": {
+   "MAE": 2.2496,
+   "RMSE": 18.6328,
+   "MASE": 1.0239,
+   "RMSSE": 0.6257,
+   "Bias (ME)": -0.1541,
+   "Forecast/Actual total": 0.8722,
+   "Coverage % (sum fcst >= sum demand)": 58.11
+  },
+  "SBA": {
+   "MAE": 2.7541,
+   "RMSE": 14.3996,
+   "MASE": 1.2003,
+   "RMSSE": 0.6196,
+   "Bias (ME)": 0.5785,
+   "Forecast/Actual total": 1.4735,
+   "Coverage % (sum fcst >= sum demand)": 72.97
+  },
+  "SES": {
+   "MAE": 2.333,
+   "RMSE": 14.2774,
+   "MASE": 1.0522,
+   "RMSSE": 0.5943,
+   "Bias (ME)": 0.058,
+   "Forecast/Actual total": 1.0543,
+   "Coverage % (sum fcst >= sum demand)": 66.61
+  },
+  "TSB": {
+   "MAE": 2.3654,
+   "RMSE": 14.193,
+   "MASE": 1.0592,
+   "RMSSE": 0.5951,
+   "Bias (ME)": 0.1033,
+   "Forecast/Actual total": 1.0911,
+   "Coverage % (sum fcst >= sum demand)": 68.13
+  },
+  "Zero (always 0)": {
+   "MAE": 1.2436,
+   "RMSE": 14.2837,
+   "MASE": 0.6367,
+   "RMSSE": 0.5042,
+   "Bias (ME)": -1.2436,
+   "Forecast/Actual total": 0.0,
+   "Coverage % (sum fcst >= sum demand)": 55.19
+  }
+ },
+ "summary_min": {
+  "Croston": {
+   "MAE": 2.6378,
+   "RMSE": 12.3361,
+   "MASE": 1.0901,
+   "RMSSE": 0.5282,
+   "Bias (ME)": 0.549,
+   "Forecast/Actual total": 1.4306,
+   "Coverage % (sum fcst >= sum demand)": 70.1
+  },
+  "Gradient boosting": {
+   "MAE": 2.2011,
+   "RMSE": 11.9644,
+   "MASE": 1.1982,
+   "RMSSE": 0.5502,
+   "Bias (ME)": 0.0894,
+   "Forecast/Actual total": 1.0701,
+   "Coverage % (sum fcst >= sum demand)": 75.38
+  },
+  "Moving average 12m": {
+   "MAE": 2.1952,
+   "RMSE": 12.3133,
+   "MASE": 0.946,
+   "RMSSE": 0.5073,
+   "Bias (ME)": -0.0985,
+   "Forecast/Actual total": 0.9227,
+   "Coverage % (sum fcst >= sum demand)": 60.36
+  },
+  "Naive": {
+   "MAE": 1.7349,
+   "RMSE": 13.8827,
+   "MASE": 0.8951,
+   "RMSSE": 0.517,
+   "Bias (ME)": -0.5985,
+   "Forecast/Actual total": 0.5556,
+   "Coverage % (sum fcst >= sum demand)": 51.84
+  },
+  "SBA": {
+   "MAE": 2.5581,
+   "RMSE": 12.2762,
+   "MASE": 1.0603,
+   "RMSSE": 0.5205,
+   "Bias (ME)": 0.4578,
+   "Forecast/Actual total": 1.3591,
+   "Coverage % (sum fcst >= sum demand)": 69.2
+  },
+  "SES": {
+   "MAE": 2.1703,
+   "RMSE": 12.0653,
+   "MASE": 0.9358,
+   "RMSSE": 0.4967,
+   "Bias (ME)": -0.0843,
+   "Forecast/Actual total": 0.9339,
+   "Coverage % (sum fcst >= sum demand)": 62.58
+  },
+  "TSB": {
+   "MAE": 2.1987,
+   "RMSE": 11.9611,
+   "MASE": 0.9433,
+   "RMSSE": 0.4975,
+   "Bias (ME)": -0.0331,
+   "Forecast/Actual total": 0.974,
+   "Coverage % (sum fcst >= sum demand)": 63.98
+  },
+  "Zero (always 0)": {
+   "MAE": 1.0686,
+   "RMSE": 12.1582,
+   "MASE": 0.4987,
+   "RMSSE": 0.3955,
+   "Bias (ME)": -1.3467,
+   "Forecast/Actual total": 0.0,
+   "Coverage % (sum fcst >= sum demand)": 48.68
+  }
+ },
+ "summary_max": {
+  "Croston": {
+   "MAE": 3.0124,
+   "RMSE": 16.6166,
+   "MASE": 1.3518,
+   "RMSSE": 0.7153,
+   "Bias (ME)": 0.7959,
+   "Forecast/Actual total": 1.7448,
+   "Coverage % (sum fcst >= sum demand)": 77.44
+  },
+  "Gradient boosting": {
+   "MAE": 2.5089,
+   "RMSE": 16.7044,
+   "MASE": 1.4512,
+   "RMSSE": 0.7225,
+   "Bias (ME)": 0.291,
+   "Forecast/Actual total": 1.2723,
+   "Coverage % (sum fcst >= sum demand)": 80.94
+  },
+  "Moving average 12m": {
+   "MAE": 2.4377,
+   "RMSE": 16.9742,
+   "MASE": 1.1855,
+   "RMSSE": 0.7034,
+   "Bias (ME)": 0.2469,
+   "Forecast/Actual total": 1.231,
+   "Coverage % (sum fcst >= sum demand)": 68.88
+  },
+  "Naive": {
+   "MAE": 2.7097,
+   "RMSE": 24.2924,
+   "MASE": 1.2643,
+   "RMSSE": 0.7713,
+   "Bias (ME)": 0.2701,
+   "Forecast/Actual total": 1.2103,
+   "Coverage % (sum fcst >= sum demand)": 63.98
+  },
+  "SBA": {
+   "MAE": 2.9272,
+   "RMSE": 16.5896,
+   "MASE": 1.3219,
+   "RMSSE": 0.7083,
+   "Bias (ME)": 0.7027,
+   "Forecast/Actual total": 1.6576,
+   "Coverage % (sum fcst >= sum demand)": 76.64
+  },
+  "SES": {
+   "MAE": 2.4528,
+   "RMSE": 16.8172,
+   "MASE": 1.188,
+   "RMSSE": 0.697,
+   "Bias (ME)": 0.2404,
+   "Forecast/Actual total": 1.225,
+   "Coverage % (sum fcst >= sum demand)": 70.46
+  },
+  "TSB": {
+   "MAE": 2.4844,
+   "RMSE": 16.6409,
+   "MASE": 1.1974,
+   "RMSSE": 0.6984,
+   "Bias (ME)": 0.2848,
+   "Forecast/Actual total": 1.2665,
+   "Coverage % (sum fcst >= sum demand)": 72.12
+  },
+  "Zero (always 0)": {
+   "MAE": 1.3467,
+   "RMSE": 16.7866,
+   "MASE": 0.7634,
+   "RMSSE": 0.6056,
+   "Bias (ME)": -1.0686,
+   "Forecast/Actual total": 0.0,
+   "Coverage % (sum fcst >= sum demand)": 61.48
+  }
+ },
+ "final_tuned": [
+  {
+   "method": "SES",
+   "setting": "alpha 0.1",
+   "alpha": 0.1,
+   "MAE": 2.2845,
+   "RMSSE": 0.5467,
+   "Bias (ME)": -0.0843,
+   "Forecast/Actual total": 0.9339,
+   "Coverage % (sum fcst >= sum demand)": 70.46
+  },
+  {
+   "method": "SES",
+   "setting": "tuned",
+   "alpha": 0.05,
+   "MAE": 2.3676,
+   "RMSSE": 0.5496,
+   "Bias (ME)": 0.0289,
+   "Forecast/Actual total": 1.0227,
+   "Coverage % (sum fcst >= sum demand)": 72.42
+  },
+  {
+   "method": "Croston",
+   "setting": "alpha 0.1",
+   "alpha": 0.1,
+   "MAE": 2.7899,
+   "RMSSE": 0.5864,
+   "Bias (ME)": 0.549,
+   "Forecast/Actual total": 1.4306,
+   "Coverage % (sum fcst >= sum demand)": 77.44
+  },
+  {
+   "method": "Croston",
+   "setting": "tuned",
+   "alpha": 0.3,
+   "MAE": 2.6161,
+   "RMSSE": 0.5679,
+   "Bias (ME)": 0.337,
+   "Forecast/Actual total": 1.2644,
+   "Coverage % (sum fcst >= sum demand)": 75.82
+  },
+  {
+   "method": "SBA",
+   "setting": "alpha 0.1",
+   "alpha": 0.1,
+   "MAE": 2.7125,
+   "RMSSE": 0.5786,
+   "Bias (ME)": 0.4578,
+   "Forecast/Actual total": 1.3591,
+   "Coverage % (sum fcst >= sum demand)": 76.64
+  },
+  {
+   "method": "SBA",
+   "setting": "tuned",
+   "alpha": 0.3,
+   "MAE": 2.4118,
+   "RMSSE": 0.5483,
+   "Bias (ME)": 0.0953,
+   "Forecast/Actual total": 1.0747,
+   "Coverage % (sum fcst >= sum demand)": 73.46
+  },
+  {
+   "method": "TSB",
+   "setting": "alpha 0.1",
+   "alpha": 0.1,
+   "MAE": 2.3173,
+   "RMSSE": 0.5472,
+   "Bias (ME)": -0.0331,
+   "Forecast/Actual total": 0.974,
+   "Coverage % (sum fcst >= sum demand)": 72.12
+  },
+  {
+   "method": "TSB",
+   "setting": "tuned",
+   "alpha": 0.05,
+   "MAE": 2.3837,
+   "RMSSE": 0.5499,
+   "Bias (ME)": 0.0559,
+   "Forecast/Actual total": 1.0438,
+   "Coverage % (sum fcst >= sum demand)": 73.06
+  }
+ ],
+ "rmsse_rank_per_window": {
+  "60": {
+   "Croston": 6.0,
+   "Gradient boosting": 7.0,
+   "Moving average 12m": 3.0,
+   "Naive": 4.0,
+   "SBA": 5.0,
+   "SES": 1.0,
+   "TSB": 2.0
+  },
+  "66": {
+   "Croston": 5.0,
+   "Gradient boosting": 6.0,
+   "Moving average 12m": 3.0,
+   "Naive": 7.0,
+   "SBA": 4.0,
+   "SES": 1.0,
+   "TSB": 2.0
+  },
+  "72": {
+   "Croston": 6.0,
+   "Gradient boosting": 7.0,
+   "Moving average 12m": 3.0,
+   "Naive": 4.0,
+   "SBA": 5.0,
+   "SES": 1.0,
+   "TSB": 2.0
+  },
+  "78": {
+   "Croston": 6.0,
+   "Gradient boosting": 7.0,
+   "Moving average 12m": 3.0,
+   "Naive": 4.0,
+   "SBA": 5.0,
+   "SES": 1.0,
+   "TSB": 2.0
+  }
+ },
+ "coverage_rank_per_window": {
+  "60": {
+   "Croston": 2.0,
+   "Gradient boosting": 1.0,
+   "Moving average 12m": 6.0,
+   "Naive": 7.0,
+   "SBA": 3.0,
+   "SES": 5.0,
+   "TSB": 4.0
+  },
+  "66": {
+   "Croston": 2.0,
+   "Gradient boosting": 1.0,
+   "Moving average 12m": 6.0,
+   "Naive": 7.0,
+   "SBA": 3.0,
+   "SES": 5.0,
+   "TSB": 4.0
+  },
+  "72": {
+   "Croston": 2.0,
+   "Gradient boosting": 1.0,
+   "Moving average 12m": 6.0,
+   "Naive": 7.0,
+   "SBA": 3.0,
+   "SES": 5.0,
+   "TSB": 4.0
+  },
+  "78": {
+   "Croston": 2.0,
+   "Gradient boosting": 1.0,
+   "Moving average 12m": 6.0,
+   "Naive": 7.0,
+   "SBA": 3.0,
+   "SES": 5.0,
+   "TSB": 4.0
+  }
+ }
+}
