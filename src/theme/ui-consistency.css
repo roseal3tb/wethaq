@@ -251,3 +251,119 @@ html[data-theme='dark'] .app-shell {
   .w-orbit-track--outer {transform:rotate(31deg);}
   .w-orbit-track--inner {transform:rotate(225deg);}
 }
+
+/* ---------------------------------------------------------------------------
+   Theme geometry lock — identical DOM, typography and component measurements.
+   Only painting tokens (ink, canvas, fills, border colours and shadows) may vary
+   when switching themes. Applied LAST after polish/workspace/qa rules.
+   --------------------------------------------------------------------------- */
+
+/* The former dark-only heading letter-spacing rule changed line wrapping.
+   Establish one typography system in both schemes, including inherited h1–h4. */
+html[data-theme] .app-shell :is(h1, h2, h3, h4) {
+  font-family: var(--display);
+  letter-spacing: -.018em;
+}
+html[data-theme] .app-shell .overview-hero h1 {
+  letter-spacing: -.045em;
+  font-size: clamp(37px, 4.45vw, 68px);
+  line-height: .99;
+}
+
+/* Same exact navy hero in BOTH modes — the surrounding page changes palette.
+   No theme-specific gradient stops, padding or alignment. */
+html[data-theme] .app-shell .overview-hero {
+  min-height: 266px;
+  display: grid;
+  align-items: center;
+  padding: clamp(25px, 3.1vw, 49px);
+  border: 1px solid #315266;
+  border-radius: 27px;
+  background: radial-gradient(ellipse at 78% 6%, #274f62, transparent 65%),
+    linear-gradient(122deg, #142f49, #0e2338 72%);
+}
+html[data-theme] .app-shell .overview-hero h1 { color: #fff; }
+html[data-theme] .app-shell .overview-hero h1 em { color: #d5e5a6; }
+html[data-theme] .app-shell .overview-hero p { color: #d1dee7; }
+html[data-theme] .app-shell .overview-hero-content { max-width: 54%; }
+html[data-theme] .app-shell .overview-hero-art { inset: 0 0 0 52%; opacity: 1; }
+
+/* Explicitly set border *thickness* on BOTH modes; only border colours differ.
+   The previous dark mode introduced a border the light tabs did not have. */
+html[data-theme] .app-shell :is(.tabs, .grid-wrap, .shipments-workspace .tabs) {
+  box-sizing: border-box;
+  border-style: solid !important;
+  border-width: 1px !important;
+  border-color: var(--ui-line) !important;
+}
+html[data-theme] .app-shell .tabs .tab {
+  box-sizing: border-box;
+  border-width: 1px !important;
+  min-height: 43px;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+/* Keep visible sections the same size and placement irrespective of palette. */
+html[data-theme] .overview-page .kpi-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--workspace-gap);
+  align-items: stretch;
+}
+html[data-theme] .overview-page .kpi {
+  height: 100%;
+  min-height: 142px;
+  display: flex;
+  flex-direction: column;
+  padding: 15px 16px 14px;
+  box-sizing: border-box;
+}
+html[data-theme] .overview-page .overview-primary {
+  grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+  gap: var(--workspace-gap);
+}
+html[data-theme] .overview-page .overview-bottom {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--workspace-gap);
+}
+html[data-theme] .overview-page .panel-heading h3 {
+  line-height: 1.2;
+  font-size: 21px;
+}
+
+/* The chart plot may extend labels beyond its SVG in either scheme, not only
+   in dark, so this setting cannot change effective visual layout on toggle. */
+html[data-theme] .chart-box .recharts-surface { overflow: visible; }
+
+@media(max-width:1260px) {
+  html[data-theme] .overview-page .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  html[data-theme] .overview-page .overview-bottom { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media(max-width:980px) {
+  html[data-theme] .app-shell .overview-hero-art { inset-inline-start: 48%; }
+  html[data-theme] .app-shell .overview-hero-content { max-width: 61%; }
+  html[data-theme] .overview-page .overview-primary { grid-template-columns: minmax(0, 1fr); }
+}
+@media(max-width:760px) {
+  html[data-theme] .app-shell .overview-hero {
+    min-height: 280px;
+    padding: 22px 17px;
+    border-radius: 21px;
+  }
+  html[data-theme] .app-shell .overview-hero h1 { font-size: clamp(37px, 7.1vw, 54px); }
+  html[data-theme] .app-shell .overview-hero-content { max-width: 100%; }
+  html[data-theme] .app-shell .overview-hero-art { inset-inline-start: 47%; opacity: .44; }
+  html[data-theme] .overview-page .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html[data-theme] .overview-page .overview-bottom { grid-template-columns: minmax(0, 1fr); }
+  html[data-theme] .overview-page .kpi-link:last-child .kpi {
+    min-height: 135px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px 15px 14px;
+  }
+}
+@media(max-width:490px) {
+  html[data-theme] .app-shell .overview-hero h1 { font-size: clamp(36px, 9vw, 45px); }
+  html[data-theme] .overview-page .kpi { min-height: 163px; padding: 14px 12px; }
+}
