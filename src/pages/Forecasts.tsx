@@ -1,26 +1,111 @@
-import { NiceSelect } from '../components/NiceSelect';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { BarChart3, ChevronDown, Download, Info } from 'lucide-react';
+import { Download, Info, ChevronDown } from 'lucide-react';
+import { NiceSelect } from '../components/NiceSelect';
 import { downloadCSV, nf } from '../utils/core';
 import { raf, rafMethodology, rafModelColor, rafModelLabel, rafModels, rafPoints, type RafModel } from '../data/raf';
 import { RafForecastChart } from '../components/RafChart';
 import { SmallBarChart } from '../components/Charts';
-import { Badge, Button, Field, Panel } from '../components/UI';
+import { Badge, Button, Field, InfoBanner, Panel } from '../components/UI';
+import ForecastsSynthetic from './ForecastsSynthetic';
 
-const demandClasses = ['Intermittent', 'Lumpy'];
-const tableMethods = ['Zero (always 0)', 'Naive', 'Croston', 'SBA', 'TSB', 'Gradient boosting'];
-const methodColor: Record<string, string> = { Naive: rafModelColor.naive, Croston: rafModelColor.croston, TSB: rafModelColor.tsb, 'Gradient boosting': rafModelColor.gbm };
-const pct = (v: number) => `${nf(v, 1)}%`;
+const demandClasses = ['Intermittent', 'Lumpy'] as const;
+const classMethods = [
+  { key: 'Naive', label: 'Naive', color: rafModelColor.naive },
+  { key: 'Croston', label: 'Croston', color: rafModelColor.croston },
+  { key: 'TSB', label: 'TSB', color: rafModelColor.tsb },
+  { key: 'Gradient boosting', label: 'Gradient boosting', color: rafModelColor.gbm }
+];
 
 export default function Forecasts() {
-  const [params, setParams] = useSearchParams(); const nav = useNavigate(); const [classFilter, setClass] = useState('All classes'); const [partSearch, setPartSearch] = useState(''); const [methodOpen, setMethodOpen] = useState(false); const [show, setShow] = useState<Model[]>(['Croston', 'XGBoost']); const [asTable, setAsTable] = useState(false); const part = params.get('part') || 'SP-001'; const loc = locations.find(location => location === params.get('location')) ?? 'All locations'; const horizon = forecastHorizons.find(months => String(months) === params.get('horizon')) ?? 6; const selected = PARTS.find(p => p.id === part) || PARTS[0]; const eligible = PARTS.filter(p => (classFilter === 'All classes' || p.demandClass === classFilter) && (p.name + ' ' + p.id).toLowerCase().includes(partSearch.toLowerCase())); const forecast = useMemo(() => getForecast(selected.id, loc, horizon), [selected.id, loc, horizon]); const classData = useMemo(() => classMetrics(), []); const set = (key: string, value: string) => setParams(prev => { const out = new URLSearchParams(prev); if (value === 'All locations') out.delete(key); else out.set(key, value); return out; });
-  function flip(m: Model) { setShow(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]); }
-  function exportData() { downloadCSV(`wethaq-forecast-${selected.id}`, forecast.points.map(p => ({ month: p.month, phase: p.zone, actual: p.actual, naive: p.naive, croston: p.croston, syntheticCandidate: p.xgboost, lower: p.lower, upper: p.upper }))); }
-  const best = Object.fromEntries(['mae', 'mase', 'bias'].map(k => [k, Math.min(...models.map(m => Math.abs(Number(forecast.metrics[m][k as 'mae' | 'mase' | 'bias'] ?? Infinity))))]));
-  return <div className="page"><div className="page-title-row"><div><span className="eyebrow">PLANNING INTELLIGENCE / 01</span><h1>Demand <em>forecasting</em></h1><p>Explore synthetic SP-series demand; the separate RAF benchmark is reported in offline analysis</p></div><div className="page-title-side"><Badge tone="olive">Synthetic UI demonstration</Badge><Button variant="secondary" onClick={exportData}><Download size={16} /> Download CSV</Button></div></div>
-    <Panel className="filters-panel"><div className="filter-heading"><span>ANALYSIS SCOPE</span><span>Choose an item, location and horizon</span></div><div className="filter-grid"><Field label="Find part"><input value={partSearch} placeholder="Search SP-013 or part name" aria-label="Find demo part" onChange={e => setPartSearch(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && eligible.length === 1) { e.preventDefault(); set('part', eligible[0].id); } else if (e.key === 'Enter') { const exact = eligible.find(p => p.id.toLowerCase() === partSearch.trim().toLowerCase()); if (exact) { e.preventDefault(); set('part', exact.id); } } }} /></Field>{partSearch && !eligible.length && <div className="filter-help" role="status">{/^RAF\d+/i.test(partSearch.trim()) ? 'RAF IDs are from the separate offline benchmark and are not selectable as synthetic SP demo parts.' : 'No matching demo parts.'}</div>}<Field label="Part"><NiceSelect value={selected.id} onChange={e => set('part', e.target.value)}>{eligible.map(p => <option key={p.id} value={p.id}>{p.id} · {p.name}</option>)}{!eligible.some(x => x.id === selected.id) && <option value={selected.id}>{selected.id} · {selected.name}</option>}</NiceSelect></Field><Field label="Location"><NiceSelect value={loc} onChange={e => set('location', e.target.value)}><option>All locations</option><option>Central Warehouse</option><option>Distribution Center</option><option>Deployment Site</option></NiceSelect></Field><Field label="Demand class"><NiceSelect value={classFilter} onChange={e => { setClass(e.target.value); const matched = PARTS.find(p => e.target.value === 'All classes' || p.demandClass === e.target.value); if (matched) set('part', matched.id); }}><option>All classes</option>{classes.map(x => <option key={x}>{x}</option>)}</NiceSelect></Field><Field label="Forecast horizon"><NiceSelect value={horizon} onChange={e => set('horizon', e.target.value)}>{forecastHorizons.map(n => <option key={n} value={n}>{n} months</option>)}</NiceSelect></Field></div></Panel>
-    <Panel title="Demand history & projected requirements" subtitle={`${selected.id} · ${selected.name}  /  ${loc}`} action={<Badge tone="info">{selected.demandClass} demand</Badge>}><div className="chart-toolbar"><span className="chart-toolbar-label">MODEL OVERLAYS</span>{models.map(m => <label className={`model-toggle ${show.includes(m) ? 'on' : ''}`} key={m}><input type="checkbox" checked={show.includes(m)} aria-label={`Show ${m === 'XGBoost' ? 'illustrative ML surrogate' : m} overlay`} onChange={() => flip(m)} /><i style={{ background: modelColor[m] }} />{m === 'XGBoost' ? 'Synthetic ML candidate' : m}</label>)}<button className="table-toggle" onClick={() => setAsTable(v => !v)}>{asTable ? 'View chart' : 'View as table'}</button></div>{asTable ? <div className="table-scroller chart-data-table"><table><thead><tr><th>Month</th><th>Phase</th><th>Actual</th><th>Naive</th><th>Croston</th><th>Candidate</th></tr></thead><tbody>{forecast.points.slice(-24).map(p => <tr key={p.month}><td>{p.month}</td><td>{p.zone}</td><td>{p.actual ?? '—'}</td><td>{p.naive === undefined ? '—' : nf(p.naive, 1)}</td><td>{p.croston === undefined ? '—' : nf(p.croston, 1)}</td><td>{p.xgboost === undefined ? '—' : nf(p.xgboost, 1)}</td></tr>)}</tbody></table></div> : <ForecastChart data={forecast.points} show={show} />}<div className="chart-foot"><span>60 training months · 12 chronological holdout months · {horizon} projection months</span><span>Uncertainty band: illustrative, not a calibrated interval</span></div><div className="chart-action"><Info size={16} /><span>Illustrative forecasts: these SP part IDs are not connected to real RAF benchmark series or physical inventory demand</span><Button size="sm" onClick={() => nav(`/inventory?search=${selected.id}&location=${encodeURIComponent(loc)}`)}>Send to replenishment view <ArrowRight size={15} /></Button></div></Panel>
-    <div className="two-col"><Panel title="Model comparison" subtitle="Chronological holdout performance · synthetic series"><div className="table-scroller"><table className="metric-table"><thead><tr><th>MODEL</th><th title="Mean absolute error — lower is better">MAE ↓</th><th title="Mean absolute scaled error — lower is better">MASE ↓</th><th title="Average signed forecast error">BIAS</th></tr></thead><tbody>{models.map(m => <tr key={m}><td><span className="model-name"><i style={{ background: modelColor[m] }} />{m === 'XGBoost' ? 'ML surrogate' : m}</span></td>{(['mae', 'mase', 'bias'] as const).map(k => { const value = forecast.metrics[m][k]; const win = value !== null && Math.abs(value) === best[k]; return <td key={k}><span className={win ? 'metric-best' : ''}>{value === null ? 'n/a' : nf(value, 2)}{win && <span title="Best in column"> ★</span>}</span></td>; })}</tr>)}</tbody></table></div><div className="panel-notice"><Info size={15} /> MASE is not defined if the training series has no one-step naive error</div></Panel><Panel title="Results by demand class" subtitle="Mean absolute error across selected synthetic series"><SmallBarChart data={classData} keys={[{ key: 'Naive', color: '#B5BFC7', label: 'Naive' }, { key: 'Croston', color: '#8A9A4B', label: 'Croston' }, { key: 'XGBoost', color: '#0F2A44', label: 'ML surrogate' }]} /></Panel></div>
-    <Panel className="method-panel"><button className="method-head" aria-expanded={methodOpen} onClick={() => setMethodOpen(v => !v)}><span className="method-icon"><BarChart3 size={19} /></span><span><strong>Methodology & data provenance</strong><small>Evaluation definitions, assumptions, and limitations</small></span><ChevronDown className={methodOpen ? 'rotate' : ''} size={18} /></button>{methodOpen && <div className="method-content"><p>{methodology}</p><p><strong>Terminology:</strong> ADI is average demand interval; CV² is squared variation of nonzero demand; MAE is mean absolute error; RMSE is root mean squared error; MASE and RMSSE scale the corresponding error using training-series naive errors. The RAF study uses its own categories and 1996–2002 history, separate from these synthetic SP demos (2020–2026).</p><p>The reported comparisons here describe this interactive demonstration only. They must not be interpreted as measured operational model effectiveness.</p></div>}</Panel></div>;
+  const [params, setParams] = useSearchParams();
+  const synthetic = params.get('view') === 'synthetic' || (params.get('part') || '').startsWith('SP-');
+  const openRaf = () => setParams({ part: raf.parts[0].id });
+  const openSynthetic = () => setParams({ view: 'synthetic', part: 'SP-001' });
+  return <>
+    <div className="forecast-mode-switch" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }} aria-label="Select forecasting dataset">
+      <Button size="sm" variant={!synthetic ? 'primary' : 'secondary'} onClick={openRaf}>RAF benchmark · actual historical data</Button>
+      <Button size="sm" variant={synthetic ? 'primary' : 'secondary'} onClick={openSynthetic}>Synthetic planning demo · SP parts</Button>
+    </div>
+    {synthetic ? <ForecastsSynthetic /> : <RafForecasts />}
+  </>;
+}
+
+function RafForecasts() {
+  const [params, setParams] = useSearchParams();
+  const [query, setQuery] = useState('');
+  const [classFilter, setClassFilter] = useState('All classes');
+  const [show, setShow] = useState<RafModel[]>(['tsb', 'gbm']);
+  const [asTable, setAsTable] = useState(false);
+  const [methodOpen, setMethodOpen] = useState(false);
+  const selected = raf.parts.find(part => part.id === params.get('part')) ?? raf.parts[0];
+  const eligible = useMemo(() => raf.parts.filter(part =>
+    (classFilter === 'All classes' || part.demandClass === classFilter) &&
+    (part.id.toLowerCase().includes(query.trim().toLowerCase()) || part.demandClass.toLowerCase().includes(query.trim().toLowerCase()))
+  ), [classFilter, query]);
+  const points = useMemo(() => rafPoints(selected), [selected]);
+  const setPart = (id: string) => setParams({ part: id });
+  const toggle = (model: RafModel) => setShow(prev => prev.includes(model) ? prev.filter(m => m !== model) : [...prev, model]);
+  const selectSearch = () => {
+    const exact = eligible.find(part => part.id.toLowerCase() === query.trim().toLowerCase());
+    if (exact || eligible.length === 1) setPart((exact ?? eligible[0]).id);
+  };
+  const exportData = () => downloadCSV(`wethaq-raf-${selected.id}`, points.map(point => ({
+    month: point.month, phase: point.zone, actual: point.actual ?? '', naive: point.naive ?? '',
+    croston: point.croston ?? '', tsb: point.tsb ?? '', gradientBoosting: point.gbm ?? ''
+  })));
+  return <div className="page">
+    <div className="page-title-row"><div><span className="eyebrow">PLANNING INTELLIGENCE / RAF</span>
+      <h1>Demand <em>forecasting</em></h1>
+      <p>Public RAF spare-parts demand · offline forecasting analysis · historical 1996–2002</p></div>
+      <div className="page-title-side"><Badge tone="olive">5,000-series benchmark</Badge>
+        <Button variant="secondary" onClick={exportData}><Download size={16}/> Download CSV</Button></div>
+    </div>
+    <InfoBanner>Published RAF benchmark results are precomputed from the offline analysis. The 40-part interactive sample is not linked to synthetic SP-series inventory, replenishment, or shipments. Projection dates are illustrative future periods relative to the historical 2002 dataset.</InfoBanner>
+    <Panel className="filters-panel"><div className="filter-heading"><span>RAF DATASET / SAMPLE</span><span>Choose a part in the 40-series sample</span></div>
+      <div className="filter-grid">
+        <Field label="Find RAF part"><input type="search" value={query} placeholder="Search RAF0013" aria-label="Find RAF part" onChange={event => setQuery(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); selectSearch(); } }} /></Field>
+        <Field label="Part"><NiceSelect value={selected.id} onChange={event => setPart(event.target.value)}>
+          {eligible.map(part => <option key={part.id} value={part.id}>{part.id} · {part.demandClass}</option>)}
+          {!eligible.some(part => part.id === selected.id) && <option value={selected.id}>{selected.id} · {selected.demandClass}</option>}
+        </NiceSelect></Field>
+        <Field label="Demand class"><NiceSelect value={classFilter} onChange={event => setClassFilter(event.target.value)}>
+          <option value="All classes">All classes</option>{demandClasses.map(cls => <option key={cls} value={cls}>{cls}</option>)}
+        </NiceSelect></Field>
+      </div>
+      {!!query && eligible.length === 0 && <p className="filter-help" role="status">No matching RAF part in the 40-series sample. The full dataset contains 5,000 series.</p>}
+    </Panel>
+    <Panel title="Demand history & forecast" subtitle={`${selected.id} · ${selected.demandClass} · 78-month training / 6-month test`} action={<Badge tone="info">Actual RAF demand</Badge>}>
+      <div className="chart-toolbar"><span className="chart-toolbar-label">MODEL OVERLAYS</span>
+        {rafModels.map(model => <label className={`model-toggle ${show.includes(model) ? 'on' : ''}`} key={model}>
+          <input type="checkbox" aria-label={`Show ${rafModelLabel[model]} overlay`} checked={show.includes(model)} onChange={() => toggle(model)} />
+          <i style={{background:rafModelColor[model]}} />{rafModelLabel[model]}
+        </label>)}
+        <button className="table-toggle" onClick={() => setAsTable(value => !value)} aria-pressed={asTable}>{asTable ? 'View chart' : 'View as table'}</button>
+      </div>
+      {asTable ? <div className="table-scroller"><table><thead><tr><th>MONTH</th><th>PHASE</th><th>ACTUAL</th>{rafModels.filter(model => show.includes(model)).map(model => <th key={model}>{rafModelLabel[model]}</th>)}</tr></thead><tbody>
+        {points.map(point => <tr key={`${point.month}-${point.zone}`}><td>{point.month}</td><td>{point.zone}</td><td>{point.actual === undefined ? '—' : nf(point.actual, 2)}</td>{rafModels.filter(model => show.includes(model)).map(model => <td key={model}>{point[model] === undefined ? '—' : nf(point[model]!, 2)}</td>)}</tr>)}
+      </tbody></table></div> : <RafForecastChart data={points} show={show} testStart={raf.meta.testMonths[0]} projectionStart={raf.futureMonths[0]} />}
+      <div className="detail-grid" style={{ marginTop: 16 }}>
+        <div><span>Average interval (ADI)</span><strong>{nf(selected.adi, 2)}</strong></div>
+        <div><span>Squared variation (CV²)</span><strong>{nf(selected.cv2, 2)}</strong></div>
+        <div><span>Nonzero months</span><strong>{selected.monthsWithDemand}</strong></div>
+        <div><span>Test demand (6m)</span><strong>{nf(selected.testActualTotal)}</strong></div>
+      </div>
+    </Panel>
+    <Panel title="Model comparison" subtitle="RAF test evaluation · 5,000 parts · Jul–Dec 2002">
+      <div className="table-scroller"><table><thead><tr><th>METHOD</th><th>MAE</th><th>RMSE</th><th>MASE</th><th>BIAS (ME)</th><th>FORECAST / ACTUAL</th><th>COVERAGE¹</th></tr></thead><tbody>
+        {raf.overall.map(row => <tr key={row.method}><td>{row.method}</td><td>{nf(row.mae, 3)}</td><td>{nf(row.rmse, 3)}</td><td>{nf(row.mase, 3)}</td><td>{nf(row.bias, 3)}</td><td>{nf(row.forecastActual, 2)}</td><td>{nf(row.coverage, 1)}%</td></tr>)}
+      </tbody></table></div>
+      <p className="subtle">¹ Coverage here means the percentage of parts whose total forecast demand is at least their observed 6-month demand; it does not measure prediction-interval calibration.</p>
+    </Panel>
+    <Panel title="Results by demand class" subtitle="Historical RAF benchmark · per-class mean absolute error (MAE)">
+      <SmallBarChart data={raf.byClass.map(row => ({ name: String(row.name), ...Object.fromEntries(classMethods.map(method => [method.key, Number(row[method.key] ?? 0)])) }))} keys={classMethods.map(method => ({ key: method.key, label: method.label, color: method.color }))} />
+      <p className="subtle">Class-specific metrics and the aggregate comparison answer different questions. No single method is best across all metrics.</p>
+    </Panel>
+    <Panel className="method-panel"><button type="button" className="method-head" onClick={() => setMethodOpen(open => !open)} aria-expanded={methodOpen}>
+      <Info size={18}/><strong>Methodology & data provenance</strong><ChevronDown size={18} className={methodOpen ? 'rotate' : ''}/></button>
+      {methodOpen && <div className="method-content"><p>{rafMethodology}</p><p>The interactive sample contains {raf.parts.length} parts. Inventory policies and shipment simulations use separate synthetic SP-series data; there is no artificial cross-dataset part mapping.</p></div>}
+    </Panel>
+  </div>;
 }

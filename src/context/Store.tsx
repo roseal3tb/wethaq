@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import type { Role, AppData, Alert, DemoUser, Shipment, Transaction, Operation, CheckResult, Location } from '../types';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import type { Role, AppData, Alert, DemoUser, Shipment, Transaction, Operation, CheckResult, Rule, Location } from '../types';
 import { initialData, reconcileShortageAlerts } from '../data/mock';
 import { identities, uid, validateOperation } from '../utils/core';
 import { ApiError, LIVE, liveApi, session, type LedgerResult, type LiveUser, type VerifyResult } from '../api/live';
@@ -49,14 +49,76 @@ export function Provider({ children }: { children: React.ReactNode; }) {
   useEffect(() => { if (!LIVE) { try { sessionStorage.setItem('wethaq.auth', JSON.stringify(authenticated)); } catch { } } }, [authenticated]);
   useEffect(() => { if (!LIVE) { try { sessionStorage.setItem('wethaq.data', JSON.stringify(data)); } catch { } } }, [data]);
   const notify = (s: string) => setToast(s);
-  const setRole = (r: Role) => { setRoleInner(r); notify(`Viewing as ${r}`); };
-  const login = (email: string, password: string, r: Role) => { if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) || password !== 'demo') return false; setRoleInner(r); setAuth(true); notify('Welcome to Wethaq'); return true; };
-  const logout = () => { setAuth(false); notify('Signed out'); };
-  const createRequest = ({ partId, location, qty, month, note }: { partId: string; location: Location; qty: number; month: string; note: string; }) => {
+  const failure = (err: unknown) => {
+    const message = err instanceof Error ? err.message : 'Unexpected request failure';
+    if (LIVE) setApiDown(err instanceof ApiError && (err.status === 0 || err.status >= 500));
+    notify(message);
+  };
+  const refresh = async (): Promise<void> => {
+    if (!LIVE) return;
+    try {
+      const [identity, state] = await Promise.all([liveApi.me(), liveApi.state()]);
+      setUser(identity.user);
+      setRoleInner(identity.user.role);
+      setRoleSwitch(identity.demoRoleSwitch);
+      setData(state);
+      setAuth(true);
+      setApiDown(false);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        session.clear(); setAuth(false); setUser(null);
+      }
+      setApiDown(true);
+      throw err;
+    }
+  };
+  useEffect(() => {
+    if (LIVE && session.get()) { void refresh().catch(failure); }
+  }, []);
+  const setRole = (r: Role) => {
+    if (!LIVE) { setRoleInner(r); notify(`Viewing as ${r}`); return; }
+    if (!roleSwitch) { notify('Role switching is unavailable for this account'); return; }
+    void liveApi.switchRole(r).then(async response => {
+      session.set(response.token); setRoleInner(response.user.role);
+      setUser(response.user); setRoleSwitch(response.demoRoleSwitch);
+      await refresh(); notify(`Viewing as ${response.user.role}`);
+    }).catch(failure);
+  };
+  const login = async (email: string, password: string, r: Role): Promise<string | null> => {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return 'Enter a valid email address';
+    if (LIVE) {
+      try {
+        const response = await liveApi.login(email.trim(), password);
+        session.set(response.token);
+        setUser(response.user); setRoleInner(response.user.role);
+        setRoleSwitch(response.demoRoleSwitch);
+        await refresh();
+        notify('Welcome to Wethaq');
+        return null;
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) { session.clear(); setAuth(false); }
+        return err instanceof Error ? err.message : 'Sign-in failed';
+      }
+    }
+    if (password !== 'demo') return 'Invalid demonstration credentials — use the demo password';
+    setRoleInner(r); setAuth(true); notify('Welcome to Wethaq');
+    return null;
+  };
+  const logout = () => {
+    if (LIVE) { session.clear(); setUser(null); setData(EMPTY); }
+    setAuth(false); notify('Signed out');
+  };
+  const createRequest = async ({ partId, location, qty, month, note }: { partId: string; location: Location; qty: number; month: string; note: string; }): Promise<string> => {
     if (role !== 'Planner') throw new Error('Only a Planner can create a shipment request');
     if (!Number.isInteger(qty) || qty < 1 || qty > 100000 || !note.trim()) throw new Error('Request requires a valid quantity and review note');
     if (!['Central Warehouse', 'Distribution Center', 'Deployment Site'].includes(location)) throw new Error('Invalid destination');
     if (!/^SP-\d{3}$/.test(partId)) throw new Error('Invalid part reference');
+    if (LIVE) {
+      const result = await liveApi.createShipment({ partId, location, qty, month, note });
+      await refresh();
+      notify(`${result.id} — shipment request created`);
+      return result.id;
+    }
     const id = `SHP-2026-${String(Math.max(48, ...data.shipments.map(s => Number(s.id.split('-').slice(-1)[0]) || 0)) + 1).padStart(4, '0')}`; const now = new Date().toISOString(); const actor = identities.Planner;
     const shipment: Shipment = { id, partId, quantity: qty, from: location === 'Central Warehouse' ? 'Supplier' : 'Central Warehouse', to: location, status: 'Requested', requestedBy: actor.name, requestedAt: now, forecastMonth: month, note, expectedAt: new Date(Date.now() + 14 * 86400000).toISOString(), recommendationId: `REC-${partId}-${location.replace(/\s+/g, '').slice(0, 2).toUpperCase()}`, createdInSession: true, events: [{ status: 'Requested', time: now, actor: actor.name, org: actor.org, note }] };
     setData(prev => ({ ...prev, shipments: [shipment, ...prev.shipments] })); notify(`${id} — simulated request created`); return id;
@@ -113,18 +175,52 @@ export function Provider({ children }: { children: React.ReactNode; }) {
     const al: Alert = { id: uid('ALT'), type: 'Rejected attempt', severity: 'Medium', title: `Rejected · ${scenario}`, detail: `${reference}: ${v.failure}`, shipmentId: refTarget?.id, at: now, acknowledged: false };
     setData(prev => ({ ...prev, transactions: [entry, ...prev.transactions], alerts: [al, ...prev.alerts] })); notify(`Demo operation rejected: ${v.failure}`); return { ...v, transactionId: id };
   };
-  const resetDemo = () => { setData(initialData()); notify('Demonstration data restored'); };
-  const ack = (id: string) => setData(prev => {
-    const visible = reconcileShortageAlerts(prev).find(a => a.id === id);
-    return { ...prev, alerts: prev.alerts.some(a => a.id === id)
-      ? prev.alerts.map(a => a.id === id ? { ...a, acknowledged: true } : a)
-      : visible ? [...prev.alerts, { ...visible, acknowledged: true }] : prev.alerts };
-  });
-  const addUser = (user: Omit<DemoUser, 'id' | 'lastSeen'>) => { if (role !== 'Admin') return; setData(p => ({ ...p, users: [{ ...user, id: uid('USR'), lastSeen: new Date().toISOString() }, ...p.users] })); notify('Demo user created'); };
-  const setUserRole = (id: string, r: Role) => { if (role !== 'Admin') return; setData(p => ({ ...p, users: p.users.map(u => u.id === id ? { ...u, role: r } : u) })); notify('Role updated'); };
-  const toggleUser = (id: string) => { if (role !== 'Admin') return; setData(p => ({ ...p, users: p.users.map(u => u.id === id ? { ...u, active: !u.active } : u) })); notify('User status updated'); };
-  const visibleData = useMemo<AppData>(() => ({ ...data, alerts: reconcileShortageAlerts(data) }), [data]);
-  const store = useMemo<Store>(() => ({ role, authenticated, setRole, login, logout, data: visibleData, toast, notify, dismiss: () => setToast(''), createRequest, validate, perform, invalidDemo, ack, addUser, setUserRole, toggleUser, resetDemo }), [role, authenticated, visibleData, toast]);
+  const resetDemo = () => { if (LIVE) { notify('Live records cannot be reset from the demo controls'); return; } setData(initialData()); notify('Demonstration data restored'); };
+  const verifyShipment = async (shipmentId: string): Promise<VerifyResult> => {
+    if (LIVE) return liveApi.verify(shipmentId);
+    return { shipmentId, onLedger: false, match: false, differences: [], note: 'Demonstration records are not written to Fabric. Verification is available only in Live Mode.' };
+  };
+  const ack = (id: string, note?: string) => {
+    if (LIVE) { void liveApi.ack(id, note).then(refresh).catch(failure); return; }
+    setData(prev => {
+      const visible = reconcileShortageAlerts(prev).find(a => a.id === id);
+      return { ...prev, alerts: prev.alerts.some(a => a.id === id)
+        ? prev.alerts.map(a => a.id === id ? { ...a, acknowledged: true } : a)
+        : visible ? [...prev.alerts, { ...visible, acknowledged: true }] : prev.alerts };
+    });
+  };
+  const addUser = (nextUser: Omit<DemoUser, 'id' | 'lastSeen'>) => {
+    if (role !== 'Admin') return;
+    if (LIVE) {
+      const { active: _active, ...payload } = nextUser;
+      void liveApi.addUser(payload).then(refresh).catch(failure); return;
+    }
+    setData(prev => ({ ...prev, users: [{ ...nextUser, id: uid('USR'), lastSeen: new Date().toISOString() }, ...prev.users] }));
+    notify('Demo user created');
+  };
+  const setUserRole = (id: string, nextRole: Role) => {
+    if (role !== 'Admin') return;
+    if (LIVE) { void liveApi.updateUser(id, { role: nextRole }).then(refresh).catch(failure); return; }
+    setData(prev => ({ ...prev, users: prev.users.map(user => user.id === id ? { ...user, role: nextRole } : user) }));
+    notify('Role updated');
+  };
+  const toggleUser = (id: string) => {
+    if (role !== 'Admin') return;
+    if (LIVE) {
+      const target = data.users.find(user => user.id === id);
+      if (target) void liveApi.updateUser(id, { active: !target.active }).then(refresh).catch(failure);
+      return;
+    }
+    setData(prev => ({ ...prev, users: prev.users.map(user => user.id === id ? { ...user, active: !user.active } : user) }));
+    notify('User status updated');
+  };
+  const visibleData = useMemo<AppData>(() => LIVE ? data : ({ ...data, alerts: reconcileShortageAlerts(data) }), [data]);
+  const store = useMemo<Store>(() => ({
+    live: LIVE, user, refresh, roleSwitch, apiDown,
+    role, authenticated, setRole, login, logout, data: visibleData, toast, notify,
+    dismiss: () => setToast(''), createRequest, validate, perform, invalidDemo, verifyShipment,
+    ack, addUser, setUserRole, toggleUser, resetDemo
+  }), [role, authenticated, visibleData, toast, user, roleSwitch, apiDown]);
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>;
 }
 export function useStore() { const ctx = useContext(Ctx); if (!ctx) throw Error('Store is missing'); return ctx; }
