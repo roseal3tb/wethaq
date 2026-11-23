@@ -1,0 +1,253 @@
+/* Wethaq UI consistency pass — geometry shared by light/dark; only surface tokens change. */
+.app-shell {
+  --ui-surface: #fff;
+  --ui-surface-subtle: #f4f7f8;
+  --ui-heading: #20374b;
+  --ui-muted: #62798a;
+  --ui-line: #e0e9ed;
+  --ui-table-head: #edf3f6;
+  --ui-on-table-head: #324a5d;
+}
+html[data-theme='dark'] .app-shell {
+  --ui-surface: #1a2c3d;
+  --ui-surface-subtle: #22394d;
+  --ui-heading: #edf5f8;
+  --ui-muted: #b9ccda;
+  --ui-line: #3a5164;
+  --ui-table-head: #2b465b;
+  --ui-on-table-head: #edf5f8;
+}
+
+/* Hero: the two small cargo boxes are satellites of the central softly floating Qaf.
+   The artwork deliberately contains NO text/metrics and is never a ledger proof. */
+.overview-hero { min-height: 266px; }
+.overview-hero-art {
+  inset: 0 0 0 52%; background: none; mask-image: none;
+  -webkit-mask-image: none; opacity: 1; overflow: hidden;
+}
+.overview-hero-content { max-width: 54%; }
+.w-orbit {
+  --orbit-cargo-size: 33px;
+  position: relative; width: min(348px, 94%); aspect-ratio: 1;
+  display: grid; place-items: center; isolation: isolate;
+  pointer-events: none; transform: translateZ(0);
+}
+.w-orbit-grid {
+  position: absolute; inset: -13%; border-radius: 50%;
+  background: linear-gradient(#c6dce91a 1px, transparent 1px), linear-gradient(90deg,#c6dce91a 1px, transparent 1px);
+  background-size: 25px 25px; mask-image: radial-gradient(circle, #0004 28%, transparent 71%);
+}
+.w-orbit-ring {position:absolute; border:1px solid rgba(213,231,188,.35); border-radius:50%; pointer-events:none;}
+.w-orbit-ring--outer {inset:4%; transform: rotateX(15deg) rotate(-18deg);}
+.w-orbit-ring--inner {inset:16%; border-color:rgba(213,231,188,.19); transform: rotateX(15deg) rotate(19deg);}
+.w-orbit-ring--core {inset:32%; border-color:rgba(213,231,188,.11);}
+/* Separate luminous star markers travel beside (not on top of) the miniature cargo cubes. */
+.w-orbit-beacon {
+  position:absolute; z-index:3; width:11px; height:11px; border-radius:50%;
+  background:#e6f49b; border:1px solid rgba(255,255,226,.8);
+  box-shadow:0 0 0 5px rgba(226,240,128,.13), 0 0 14px 5px rgba(229,243,144,.45);
+  transform:translate(-50%,-50%);
+  animation:wethaq-beacon-breathe 11s ease-in-out infinite;
+}
+.w-orbit-beacon--upper {left:78%; top:9%;}
+.w-orbit-beacon--lower {left:21%; top:9%; animation-delay:-5.5s;}
+@keyframes wethaq-beacon-breathe {
+  0%,100% {opacity:.82; filter:brightness(.96);}
+  50% {opacity:1; filter:brightness(1.12);}
+}
+.w-orbit-track {
+  position:absolute; inset:4%; border-radius:50%;
+  animation: wethaq-orbit-clockwise 116s linear infinite -10s;
+  transform-origin: center center;
+  transform-style:preserve-3d; will-change:transform;
+}
+.w-orbit-track--inner {inset:16%; animation-duration:142s; animation-delay:-53s; animation-direction:reverse;}
+.w-orbit-satellite {
+  position:absolute; top:0; left:50%; width:var(--orbit-cargo-size); height:var(--orbit-cargo-size);
+  transform:translate(-50%,-50%); transform-style:preserve-3d;
+}
+.w-orbit-track--outer .w-orbit-satellite {animation:wethaq-cargo-counter-spin 116s linear infinite -10s;}
+.w-orbit-track--inner .w-orbit-satellite {animation:wethaq-cargo-forward-spin 142s linear infinite -53s;}
+.w-cargo-cube {
+  position:relative; width:100%; height:100%; transform-style:preserve-3d;
+  transform:rotateX(-22deg) rotateY(-29deg);
+  filter: drop-shadow(0 6px 8px rgba(0,14,27,.38));
+}
+.w-cargo-face {
+  position:absolute; inset:0; display:grid; place-items:center;
+  border-radius:4px; border:1px solid rgba(241,251,255,.48); backface-visibility:hidden;
+}
+.w-cargo-face--front {transform:translateZ(calc(var(--orbit-cargo-size) / 2)); z-index:3; background:linear-gradient(145deg,#5f99b7,#234f70);color:#f6fcff;box-shadow:inset 0 2px 9px #ffffff25;}
+.w-cargo-face--top {transform:rotateX(90deg) translateZ(calc(var(--orbit-cargo-size) / 2)); background:linear-gradient(120deg,#aacfe0,#5b8ba3);}
+.w-cargo-face--right {transform:rotateY(90deg) translateZ(calc(var(--orbit-cargo-size) / 2)); background:linear-gradient(145deg,#244d66,#173c56);}
+.w-cargo-cube--olive .w-cargo-face--front {background:linear-gradient(145deg,#bbcb7e,#6c853b);color:#163626;}
+.w-cargo-cube--olive .w-cargo-face--top {background:linear-gradient(135deg,#e4eabd,#9cba62);}
+.w-cargo-cube--olive .w-cargo-face--right {background:linear-gradient(145deg,#67813c,#415e33);}
+.w-orbit-center-float {
+  position:relative; z-index:5; animation:wethaq-qaf-float 9s ease-in-out infinite;
+  perspective:650px;
+}
+.w-orbit-center-box {
+  width:88px; aspect-ratio:1; border-radius:21px; display:grid;place-items:center;
+  border:1px solid rgba(222,246,245,.58);
+  background:linear-gradient(145deg,#4e7892,#173852);
+  transform:rotateX(11deg) rotateY(-15deg);
+  box-shadow:12px 13px 0 -7px #122c43, 0 21px 36px #06172b77, inset 2px 2px 9px #e1f2ff55;
+}
+.w-orbit-center-box img {width:62%;height:74%;object-fit:contain; filter:drop-shadow(0 2px 1px #09263b55);}
+@keyframes wethaq-orbit-clockwise {from {transform:rotate(0deg)} to {transform:rotate(360deg)}}
+@keyframes wethaq-cargo-counter-spin {from {transform:translate(-50%,-50%) rotate(0deg)} to {transform:translate(-50%,-50%) rotate(-360deg)}}
+@keyframes wethaq-cargo-forward-spin {from {transform:translate(-50%,-50%) rotate(0deg)} to {transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes wethaq-qaf-float {0%,100% {transform:translateY(0)} 50% {transform:translateY(-6px)}}
+
+/* KPI cards: uniform geometry and enough room for all text. */
+.overview-page .kpi-grid {align-items:stretch;}
+.overview-page .kpi-link {height:100%;}
+.overview-page .kpi {
+  display:flex; flex-direction:column; align-items:flex-start; gap:0;
+  height:100%; min-height:157px; padding:16px 15px 14px;
+  overflow:hidden; background:var(--ui-surface);
+}
+.overview-page .kpi-icon {flex:none; margin:0 0 10px;}
+.overview-page .kpi-label {display:block; padding-right:18px; width:100%; line-height:1.3; min-height:1.3em; overflow-wrap:break-word;}
+.overview-page .kpi-value {flex:none; margin:7px 0 5px; line-height:1.05;}
+.overview-page .kpi-note {display:block; margin-top:auto; padding-top:1px; width:100%; line-height:1.4; overflow-wrap:break-word;}
+.overview-page .kpi-arrow {top:16px; right:13px;}
+
+/* Keep overview section surfaces and the same grid across both color themes. */
+.overview-page .panel {background:var(--ui-surface); min-width:0;}
+.overview-page .panel-heading {align-items:flex-start;}
+.overview-page .panel-heading h3 {line-height:1.25;}
+.overview-page .panel-heading p {line-height:1.5;}
+.overview-page .overview-primary > .panel {min-width:0; align-self:stretch;}
+.overview-page .chart-box.compact {height:246px;}
+.overview-page .overview-chart-controls {flex-wrap:wrap;}
+.overview-page .forecast-panel {min-height:0;}
+.overview-page .forecast-panel .chart-legend {padding:5px 0 9px; gap:8px 15px;}
+.overview-page .risk-row {min-width:0;}
+.overview-page .risk-right {max-width:44%; text-align:right;}
+.overview-context-note {
+  display:flex; align-items:center; gap:7px; padding:11px 0 0; margin:8px 0 0;
+  border-top:1px solid var(--ui-line); color:var(--ui-muted); line-height:1.45;
+  font-size:11px; font-weight:500; min-height:0;
+}
+.overview-context-note svg {flex:none; color:var(--olive);}
+.overview-page .overview-bottom > .panel {min-width:0;}
+
+/* Shipment donut: never superimpose a tooltip on top of the center metric. */
+.overview-page .donut-layout {display:grid;grid-template-columns:minmax(122px, .95fr) minmax(115px, 1fr);gap:13px;min-height:178px;align-items:center;}
+.overview-page .donut-wrap {width:100%;height:163px;min-width:0;max-width:175px;position:relative;}
+.overview-page .donut-center {display:flex;flex-direction:column;gap:3px;text-align:center;justify-content:center;align-items:center;z-index:1;}
+.overview-page .donut-center strong {font-size:28px;line-height:1.05;color:var(--ui-heading);}
+.overview-page .donut-center span {font-size:10px;line-height:1.25;color:var(--ui-muted);max-width:94px;}
+.overview-page .status-legend {gap:9px;min-width:0;}
+.overview-page .status-legend > div {font-size:11px;gap:7px;min-width:0;}
+.overview-page .status-legend > div span {min-width:0;line-height:1.3;color:var(--ui-muted);}
+.overview-page .status-legend strong {font-size:12px;flex:none;color:var(--ui-heading);}
+.overview-page .status-dot {flex:none;}
+
+/* Forecasting page: full-width alignment shared with all other pages. */
+.forecast-mode-switch {display:flex!important;flex-wrap:wrap;gap:10px;margin:0!important;}
+.forecast-dataset-picker {padding-top:clamp(17px,2vw,26px)!important;padding-bottom:0!important;}
+.forecast-dataset-picker .forecast-mode-switch {padding:12px;border-radius:15px;background:var(--ui-surface);border:1px solid var(--ui-line);}
+.forecast-dataset-picker .btn {min-height:39px;white-space:normal;text-align:center;line-height:1.35;}
+.forecast-dataset-picker + .page {padding-top:clamp(19px,2vw,31px)!important;}
+.raf-model-comparison {overflow:hidden;}
+.raf-model-comparison .table-scroller {max-width:100%;overflow:auto;border:1px solid var(--ui-line);border-radius:12px;}
+.raf-model-comparison table {min-width:735px;width:100%;border-collapse:separate;border-spacing:0;}
+.raf-model-comparison th, .raf-model-comparison td {padding:13px 14px!important;line-height:1.45;white-space:nowrap;vertical-align:middle;}
+.raf-model-comparison th {background:var(--ui-table-head)!important;color:var(--ui-on-table-head)!important;font-size:10px;letter-spacing:.04em;}
+.raf-model-comparison td {background:var(--ui-surface)!important;color:var(--ui-heading)!important;font-size:12px;}
+.raf-model-comparison tbody tr:nth-child(even) td {background:var(--ui-surface-subtle)!important;}
+.raf-model-comparison th:first-child, .raf-model-comparison td:first-child {position:sticky;left:0;z-index:1;min-width:165px;}
+.raf-model-comparison th:first-child {z-index:3;}
+.raf-model-comparison .subtle {margin:12px 0 0;color:var(--ui-muted);max-width:90ch;line-height:1.5;}
+/* A short methodology disclosure should never occupy an oversized panel. */
+.method-panel {min-height:0!important; padding:12px 15px!important;}
+.method-panel .method-head {min-height:51px;height:auto;width:100%;display:flex;align-items:center;gap:12px;border:1px solid var(--ui-line)!important;border-radius:12px;padding:12px 14px!important;background:var(--ui-surface-subtle)!important;color:var(--ui-heading)!important;}
+.method-panel .method-head strong {flex:1;min-width:0;font-size:13px;line-height:1.45;text-align:left;color:var(--ui-heading)!important;}
+.method-panel .method-head svg {flex:none;}
+.method-panel .method-content {max-width:85ch;margin:12px 3px 2px;line-height:1.6;color:var(--ui-muted);}
+.method-panel .method-content p {margin:0 0 8px;}
+
+/* Shipments and Ledger: exact same space, navigation, filter, context and grid structure. */
+.shipments-workspace .tabs {display:flex;align-items:stretch;gap:4px;width:max-content;max-width:100%;margin:0 0 16px;padding:4px;border:1px solid var(--ui-line);border-radius:15px;background:var(--ui-surface-subtle);overflow-x:auto;}
+.shipments-workspace .tabs .tab {min-height:43px;padding:9px 17px;border:1px solid transparent;border-radius:11px;color:var(--ui-muted);white-space:nowrap;line-height:1.25;}
+.shipments-workspace .tabs .tab.active {background:var(--olive);border-color:var(--olive);color:#fff;box-shadow:0 3px 10px #0e291c1e;}
+.shipments-workspace .tabs .tab-count {border-radius:20px;}
+.shipments-workspace .tabs .tab.active .tab-count {background:#eff8d23b;color:inherit;}
+.shipments-workspace .filters-panel {padding:18px 20px;margin-bottom:15px;background:var(--ui-surface);}
+.shipments-workspace .shipment-filters {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:13px;align-items:end;}
+.shipments-workspace .shipment-filters > :first-child {grid-column:span 2;}
+.shipments-workspace .shipment-context-panel {padding:0!important;margin-bottom:15px;min-height:75px;background:var(--ui-surface)!important;}
+.shipments-workspace .shipment-context-button,.shipments-workspace .shipment-context-info {display:flex;align-items:center;gap:15px;width:100%;min-height:75px;padding:13px 20px;text-align:left;color:var(--ui-heading);}
+.shipments-workspace .shipment-context-button {border:0;background:transparent;cursor:pointer;}
+.shipments-workspace .shipment-context-button:hover {background:var(--ui-surface-subtle);border-radius:19px;}
+.shipments-workspace .shipment-context-icon {display:grid;place-items:center;flex:none;width:39px;height:39px;border-radius:12px;background:var(--ui-surface-subtle);color:var(--olive);}
+.shipments-workspace .shipment-context-copy {display:grid;gap:4px;min-width:0;flex:1;}
+.shipments-workspace .shipment-context-copy strong {font-size:13px;line-height:1.35;color:var(--ui-heading);}
+.shipments-workspace .shipment-context-copy small {font-size:11px;line-height:1.4;color:var(--ui-muted);overflow-wrap:anywhere;}
+.shipments-workspace .shipment-context-button > svg {flex:none;}
+.shipments-workspace .shipment-context-body {padding:0 20px 18px;border-top:1px solid var(--ui-line);}
+.shipments-workspace .shipment-context-info .badge {flex:none;}
+.shipments-workspace .shipment-context-note {font-size:11px;color:var(--ui-muted);margin:2px 0 15px;line-height:1.5;}
+.shipments-workspace .grid-wrap {border-radius:20px;overflow:hidden;}
+.shipments-workspace .grid-wrap .grid-toolbar {background:var(--ui-surface);}
+.shipments-workspace .grid-wrap .table-scroller {width:100%;}
+.shipments-workspace .grid-wrap .grid-footer {background:var(--ui-surface);}
+.shipments-workspace .grid-wrap .grid-count {color:var(--ui-muted);}
+
+/* Shared responsive layout in BOTH themes, independent of data-theme. */
+@media(max-width:1260px){
+  .overview-page .kpi-grid {grid-template-columns:repeat(3,minmax(0,1fr));}
+  .overview-page .overview-bottom {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .overview-page .overview-bottom > .overview-alerts {grid-column:1/-1;}
+}
+@media(max-width:980px){
+  .overview-hero-art {inset-inline-start:48%;}
+  .overview-hero-content {max-width:61%;}
+  .overview-hero .w-orbit {width:min(275px,100%);--orbit-cargo-size:29px;}
+  .overview-page .overview-primary {grid-template-columns:minmax(0,1fr);}
+  .overview-page .kpi-grid {grid-template-columns:repeat(3,minmax(0,1fr));}
+  .shipments-workspace .shipment-filters {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .shipments-workspace .shipment-filters > :first-child {grid-column:span 1;}
+}
+@media(max-width:760px){
+  .overview-page .kpi-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .overview-page .kpi-link:last-child {grid-column:1/-1;}
+  .overview-page .kpi-link:last-child .kpi {height:100%;min-height:135px;display:flex;flex-direction:column;align-items:flex-start;padding:16px 15px 14px;}
+  .overview-page .kpi-link:last-child .kpi-icon {margin-bottom:10px;}
+  .overview-page .kpi-link:last-child .kpi-label,.overview-page .kpi-link:last-child .kpi-value,.overview-page .kpi-link:last-child .kpi-note {grid-column:auto;grid-row:auto;}
+  .overview-page .kpi-link:last-child .kpi-arrow {top:16px;margin:0;}
+  .overview-page .overview-bottom {grid-template-columns:minmax(0,1fr);}
+  .overview-page .overview-bottom > .overview-alerts {grid-column:auto;}
+  .overview-hero {min-height:280px;}
+  .overview-hero-content {max-width:100%;}
+  .overview-hero-art {inset-inline-start:47%;opacity:.44;}
+  .overview-hero .w-orbit {width:min(225px,100%);--orbit-cargo-size:24px;}
+  .overview-hero .w-orbit-center-box {width:66px;border-radius:16px;}
+  .overview-page .donut-layout {grid-template-columns:minmax(120px, .8fr) minmax(130px,1fr);}
+  .shipments-workspace .shipment-filters {grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media(max-width:490px){
+  .overview-hero h1 {font-size:clamp(36px,9vw,45px);}
+  .overview-hero-content {max-width:100%;}
+  .overview-page .kpi {min-height:163px;padding:14px 12px;}
+  .overview-page .kpi-value {font-size:30px;}
+  .overview-page .kpi-note {font-size:10px;}
+  .overview-page .kpi-label {font-size:11px;}
+  .overview-page .overview-hero-actions {max-width:280px;}
+  .overview-page .donut-layout {grid-template-columns: minmax(125px, .9fr) minmax(122px,1fr);gap:8px;}
+  .overview-page .donut-wrap {height:152px;}
+  .forecast-dataset-picker .forecast-mode-switch {padding:9px;}
+  .forecast-dataset-picker .btn {width:100%;}
+  .shipments-workspace .shipment-filters {grid-template-columns:minmax(0,1fr);}
+  .shipments-workspace .shipment-context-button,.shipments-workspace .shipment-context-info {padding:12px;gap:10px;}
+  .shipments-workspace .shipment-context-info .badge {display:none;}
+  .method-panel {padding:9px!important;}
+}
+@media(prefers-reduced-motion: reduce){
+  .w-orbit-track,.w-orbit-satellite,.w-orbit-center-float,.w-orbit-beacon {animation:none!important;}
+  .w-orbit-track--outer {transform:rotate(31deg);}
+  .w-orbit-track--inner {transform:rotate(225deg);}
+}

@@ -5,6 +5,7 @@ import {
   Clock3, Database, ShieldCheck, Truck,
 } from 'lucide-react';
 import { ShipmentDonut } from '../components/Charts';
+import { OrbitingCargo } from '../components/OrbitingCargo';
 import { RafForecastChart } from '../components/RafChart';
 import { raf, rafPoints } from '../data/raf';
 import { NiceSelect } from '../components/NiceSelect';
@@ -43,10 +44,7 @@ export default function Overview() {
   return (
     <div className="page overview-page">
       <section className="overview-hero" aria-labelledby="overview-title">
-        <div className="overview-hero-art" aria-hidden="true">
-          <div className="hero-orbits" />
-          <div className="hero-beacon"><img src="/brand/wathaq-olive-icon-light.svg" alt="" /></div>
-        </div>
+        <div className="overview-hero-art"><OrbitingCargo /></div>
         <div className="overview-hero-content">
           <span className="overview-environment"><i /> Academic demo · Synthetic data</span>
           <h1 id="overview-title">Operations <em>overview</em></h1>
@@ -95,7 +93,7 @@ export default function Overview() {
             ))}
             {!risk.length && <p className="muted">No inventory risks in this snapshot</p>}
           </div>
-          <div className="panel-notice"><AlertTriangle size={16} aria-hidden="true" /> Based on simulated stock and lead times</div>
+          <p className="overview-context-note"><AlertTriangle size={14} aria-hidden="true" /> Simulated stock · lead-time assumptions</p>
         </Panel>
       </div>
 
@@ -129,7 +127,7 @@ export default function Overview() {
               </Link>
             ))}
           </div>
-          <div className="panel-notice"><Database size={15} aria-hidden="true" /> {live ? 'Hyperledger Fabric ledger records' : 'Simulated ledger records'}</div>
+          <p className="overview-context-note"><Database size={14} aria-hidden="true" /> {live ? 'Records from the connected ledger' : 'Demonstration records · no live Fabric connection'}</p>
         </Panel>
 
         <Panel className="overview-alerts" title="Active alerts" subtitle="Shortages and discrepancies awaiting review" action={<Link to="/inventory?tab=alerts&alert=New" className="text-link">Alerts <ArrowUpRight size={15} aria-hidden="true" /></Link>}>

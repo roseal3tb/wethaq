@@ -23,10 +23,10 @@ export default function Forecasts() {
   const openRaf = () => setParams({ part: raf.parts[0].id });
   const openSynthetic = () => setParams({ view: 'synthetic', part: 'SP-001' });
   return <>
-    <div className="forecast-mode-switch" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }} aria-label="Select forecasting dataset">
+    <div className="page forecast-dataset-picker"><div className="forecast-mode-switch" aria-label="Select forecasting dataset">
       <Button size="sm" variant={!synthetic ? 'primary' : 'secondary'} onClick={openRaf}>RAF benchmark · actual historical data</Button>
       <Button size="sm" variant={synthetic ? 'primary' : 'secondary'} onClick={openSynthetic}>Synthetic planning demo · SP parts</Button>
-    </div>
+    </div></div>
     {synthetic ? <ForecastsSynthetic /> : <RafForecasts />}
   </>;
 }
@@ -93,7 +93,7 @@ function RafForecasts() {
         <div><span>Test demand (6m)</span><strong>{nf(selected.testActualTotal)}</strong></div>
       </div>
     </Panel>
-    <Panel title="Model comparison" subtitle="RAF test evaluation · 5,000 parts · Jul–Dec 2002">
+    <Panel className="raf-model-comparison" title="Model comparison" subtitle="RAF test evaluation · 5,000 parts · Jul–Dec 2002">
       <div className="table-scroller"><table><thead><tr><th>METHOD</th><th>MAE</th><th>RMSE</th><th>MASE</th><th>BIAS (ME)</th><th>FORECAST / ACTUAL</th><th>COVERAGE¹</th></tr></thead><tbody>
         {raf.overall.map(row => <tr key={row.method}><td>{row.method}</td><td>{nf(row.mae, 3)}</td><td>{nf(row.rmse, 3)}</td><td>{nf(row.mase, 3)}</td><td>{nf(row.bias, 3)}</td><td>{nf(row.forecastActual, 2)}</td><td>{nf(row.coverage, 1)}%</td></tr>)}
       </tbody></table></div>
