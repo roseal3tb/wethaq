@@ -126,7 +126,9 @@ test('All three workflow areas stay reachable at narrow viewports', async ({ pag
   await login(page);
   for (const route of ['/forecasts', '/inventory', '/shipments']) {
     await page.goto(route);
-    await expect(page.locator('.page')).toBeVisible();
+    // Wait for the loaded page itself: the forecasting page also renders a dataset picker with
+    // the .page class, and the loading skeleton uses it too, so a bare '.page' is ambiguous.
+    await expect(page.locator('.page:not(.skeleton-page):not(.forecast-dataset-picker)')).toBeVisible();
     await noDocumentOverflow(page);
   }
   if (page.viewportSize()!.width < 761) {
