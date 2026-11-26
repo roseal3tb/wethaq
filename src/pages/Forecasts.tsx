@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Download, Info, ChevronDown } from 'lucide-react';
 import { NiceSelect } from '../components/NiceSelect';
 import { downloadCSV, nf } from '../utils/core';
-import { raf, rafMethodology, rafModelColor, rafModelLabel, rafModels, rafPoints, type RafModel } from '../data/raf';
+import { raf, rafDefaultPart, rafMethodology, rafModelColor, rafModelLabel, rafModels, rafPoints, type RafModel } from '../data/raf';
 import { RafForecastChart } from '../components/RafChart';
 import { SmallBarChart } from '../components/Charts';
 import { Badge, Button, Field, InfoBanner, Panel } from '../components/UI';
@@ -33,7 +33,7 @@ const classMethods = [
 export default function Forecasts() {
   const [params, setParams] = useSearchParams();
   const synthetic = params.get('view') === 'synthetic' || (params.get('part') || '').startsWith('SP-');
-  const openRaf = () => setParams({ part: raf.parts[0].id });
+  const openRaf = () => setParams({ part: rafDefaultPart.id });
   const openSynthetic = () => setParams({ view: 'synthetic', part: 'SP-001' });
   return <>
     <div className="page forecast-dataset-picker"><div className="forecast-mode-switch" aria-label="Select forecasting dataset">
@@ -51,7 +51,7 @@ function RafForecasts() {
   const [show, setShow] = useState<RafModel[]>(['tsb', 'gbm']);
   const [asTable, setAsTable] = useState(false);
   const [methodOpen, setMethodOpen] = useState(false);
-  const selected = raf.parts.find(part => part.id === params.get('part')) ?? raf.parts[0];
+  const selected = raf.parts.find(part => part.id === params.get('part')) ?? rafDefaultPart;
   const eligible = useMemo(() => raf.parts.filter(part =>
     (classFilter === 'All classes' || part.demandClass === classFilter) &&
     (part.id.toLowerCase().includes(query.trim().toLowerCase()) || part.demandClass.toLowerCase().includes(query.trim().toLowerCase()))

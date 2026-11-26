@@ -22,6 +22,8 @@ export interface RafData {
   months: string[]; futureMonths: string[]; overall: RafOverallRow[]; byClass: Record<string, string | number>[]; parts: RafPart[];
 }
 export const raf = data as unknown as RafData;
+/** Part shown first: the first sample part (by id) with at least 5 units of test-window demand, so the chart opens on a part with visible demand. Chosen by demand only, not by forecast accuracy. */
+export const rafDefaultPart = raf.parts.find(part => part.testActualTotal >= 5) ?? raf.parts[0];
 
 export interface RafPoint { month: string; zone: 'History' | 'Test' | 'Projection'; actual?: number; naive?: number; croston?: number; tsb?: number; gbm?: number; }
 export function rafPoints(part: RafPart): RafPoint[] {

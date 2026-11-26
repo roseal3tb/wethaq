@@ -7,7 +7,7 @@ import {
 import { ShipmentDonut } from '../components/Charts';
 import { OrbitingCargo } from '../components/OrbitingCargo';
 import { RafForecastChart } from '../components/RafChart';
-import { raf, rafPoints } from '../data/raf';
+import { raf, rafDefaultPart, rafPoints } from '../data/raf';
 import { NiceSelect } from '../components/NiceSelect';
 import { MiniStat, Panel, Status } from '../components/UI';
 import { useStore } from '../context/Store';
@@ -19,9 +19,9 @@ const partsById = new Map(PARTS.map(part => [part.id, part]));
 
 export default function Overview() {
   const { data, role, ack, live } = useStore();
-  const [part, setPart] = useState(raf.parts[0].id);
+  const [part, setPart] = useState(rafDefaultPart.id);
   const inventory = useMemo(() => computeInventory(data.shipments), [data.shipments]);
-  const rafPart = raf.parts.find(p => p.id === part) ?? raf.parts[0];
+  const rafPart = raf.parts.find(p => p.id === part) ?? rafDefaultPart;
   const forecastPoints = useMemo(() => rafPoints(rafPart), [rafPart]);
   const risk = inventory.filter(row => row.status !== 'Healthy').sort((a, b) => a.daysCover - b.daysCover).slice(0, 5);
   const active = data.alerts.filter(alert => !alert.acknowledged);
