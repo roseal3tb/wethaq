@@ -82,7 +82,7 @@ for i in rng_ids:
 
 name_map = {'Zero (always 0)': 'Zero (always 0)', 'Naive (last month)': 'Naive', 'Moving average 12m': 'Moving average 12m',
             'SES': 'SES', 'Croston': 'Croston', 'SBA': 'SBA', 'TSB': 'TSB', 'Gradient boosting (Poisson)': 'Gradient boosting'}
-overall = [{'method': name_map[r['method']], 'mae': r['MAE'], 'rmse': r['RMSE'], 'mase': r['MASE'], 'bias': r['Bias (ME)'],
+overall = [{'method': name_map[r['method']], 'mae': r['MAE'], 'rmse': r['RMSE'], 'mase': r['MASE'], 'rmsse': r['RMSSE'], 'bias': r['Bias (ME)'],
             'forecastActual': r['Forecast/Actual total'], 'coverage': r['Coverage % (sum fcst >= sum demand)']}
            for r in res['RAF']['test']]
 byc = pd.read_excel(f'{res_dir}/forecast_results.xlsx', sheet_name='RAF_test_by_SBC_class')

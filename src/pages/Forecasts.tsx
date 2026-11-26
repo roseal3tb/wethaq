@@ -8,8 +8,21 @@ import { RafForecastChart } from '../components/RafChart';
 import { SmallBarChart } from '../components/Charts';
 import { Badge, Button, Field, InfoBanner, Panel } from '../components/UI';
 import ForecastsSynthetic from './ForecastsSynthetic';
+import rolling from '../data/raf-rolling.json';
 
 const demandClasses = ['Intermittent', 'Lumpy'] as const;
+
+type RollingMetrics = Record<string, number>;
+const rollingMean = rolling.summary_mean as Record<string, RollingMetrics>;
+const rollingMin = rolling.summary_min as Record<string, RollingMetrics>;
+const rollingMax = rolling.summary_max as Record<string, RollingMetrics>;
+const rollingRanks = rolling.rmsse_rank_per_window as Record<string, Record<string, number>>;
+const rollingOrigins = rolling.origins.map(String);
+/** Methods ranked in every window, sorted by mean RMSSE; the zero forecast is a reference and is not ranked. */
+const rollingRanked = Object.keys(rollingMean)
+  .filter(method => rollingOrigins.every(origin => rollingRanks[origin]?.[method] !== undefined))
+  .sort((a, b) => rollingMean[a].RMSSE - rollingMean[b].RMSSE);
+const rollingReference = Object.keys(rollingMean).filter(method => !rollingRanked.includes(method));
 const classMethods = [
   { key: 'Naive', label: 'Naive', color: rafModelColor.naive },
   { key: 'Croston', label: 'Croston', color: rafModelColor.croston },
@@ -94,14 +107,21 @@ function RafForecasts() {
       </div>
     </Panel>
     <Panel className="raf-model-comparison" title="Model comparison" subtitle="RAF test evaluation · 5,000 parts · Jul–Dec 2002">
-      <div className="table-scroller"><table><thead><tr><th>METHOD</th><th>MAE</th><th>RMSE</th><th>MASE</th><th>BIAS (ME)</th><th>FORECAST / ACTUAL</th><th>COVERAGE¹</th></tr></thead><tbody>
-        {raf.overall.map(row => <tr key={row.method}><td>{row.method}</td><td>{nf(row.mae, 3)}</td><td>{nf(row.rmse, 3)}</td><td>{nf(row.mase, 3)}</td><td>{nf(row.bias, 3)}</td><td>{nf(row.forecastActual, 2)}</td><td>{nf(row.coverage, 1)}%</td></tr>)}
+      <div className="table-scroller"><table><thead><tr><th>METHOD</th><th>MAE</th><th>RMSE</th><th>MASE</th><th title="Root mean squared scaled error — lower is better">RMSSE</th><th>BIAS (ME)</th><th>FORECAST / ACTUAL</th><th>COVERAGE¹</th></tr></thead><tbody>
+        {raf.overall.map(row => <tr key={row.method}><td>{row.method}</td><td>{nf(row.mae, 3)}</td><td>{nf(row.rmse, 3)}</td><td>{nf(row.mase, 3)}</td><td>{nf(row.rmsse, 3)}</td><td>{nf(row.bias, 3)}</td><td>{nf(row.forecastActual, 2)}</td><td>{nf(row.coverage, 1)}%</td></tr>)}
       </tbody></table></div>
+      <p className="subtle">MAE, RMSE, MASE and RMSSE: lower is better. The zero forecast is a reference that never predicts demand; its low error reflects the many zero months in the data, not useful forecasts.</p>
       <p className="subtle">¹ Coverage here means the percentage of parts whose total forecast demand is at least their observed 6-month demand; it does not measure prediction-interval calibration.</p>
     </Panel>
-    <Panel title="Results by demand class" subtitle="Historical RAF benchmark · per-class mean absolute error (MAE)">
-      <SmallBarChart data={raf.byClass.map(row => ({ name: String(row.name), ...Object.fromEntries(classMethods.map(method => [method.key, Number(row[method.key] ?? 0)])) }))} keys={classMethods.map(method => ({ key: method.key, label: method.label, color: method.color }))} />
-      <p className="subtle">Class-specific metrics and the aggregate comparison answer different questions. No single method is best across all metrics.</p>
+    <Panel className="raf-model-comparison raf-rolling" title="Rolling-origin evaluation" subtitle={`Four forecast origins (months ${rolling.origins.join(', ')}), 6-month horizon, 5,000 RAF series`}>
+      <div className="table-scroller"><table><thead><tr><th>METHOD</th><th title="Root mean squared scaled error — lower is better">MEAN RMSSE</th><th>RMSSE RANGE</th><th>MEAN MASE</th><th>MEAN FORECAST / ACTUAL</th><th>MEAN COVERAGE</th><th>RMSSE RANK BY ORIGIN ({rolling.origins.join(', ')})</th></tr></thead><tbody>
+        {rollingRanked.map(method => <tr key={method}><td>{method}</td><td>{nf(rollingMean[method].RMSSE, 3)}</td><td>{nf(rollingMin[method].RMSSE, 3)}–{nf(rollingMax[method].RMSSE, 3)}</td><td>{nf(rollingMean[method].MASE, 3)}</td><td>{nf(rollingMean[method]['Forecast/Actual total'], 2)}</td><td>{nf(rollingMean[method]['Coverage % (sum fcst >= sum demand)'], 1)}%</td><td>{rollingOrigins.map(origin => rollingRanks[origin][method]).join(', ')}</td></tr>)}
+      </tbody></table></div>
+      <p className="subtle">Lower RMSSE and MASE are better. Coverage is the share of series whose total forecast is at least their total demand. Ranks are among the {rollingRanked.length} ranked methods{rollingReference.length ? `; the reference ${rollingReference.join(', ')} forecast (mean RMSSE ${rollingReference.map(method => nf(rollingMean[method].RMSSE, 3)).join(', ')}) is not ranked` : ''}. Results are offline analysis on historical RAF data, not live forecasts.</p>
+    </Panel>
+    <Panel title="Results by demand class" subtitle="Historical RAF benchmark · total forecast ÷ total demand in the test window (1.0 = equal)">
+      <SmallBarChart data={raf.byClass.map(row => ({ name: String(row.name), ...Object.fromEntries(classMethods.map(method => [method.key, Number(row[method.key] ?? 0)])) }))} keys={classMethods.map(method => ({ key: method.key, label: method.label, color: method.color }))} ariaLabel="RAF forecast-to-actual ratio by demand class and method" />
+      <p className="subtle">Values above 1.0 over-forecast total demand and values below 1.0 under-forecast it. Class-specific metrics and the aggregate comparison answer different questions. No single method is best across all metrics.</p>
     </Panel>
     <Panel className="method-panel"><button type="button" className="method-head" onClick={() => setMethodOpen(open => !open)} aria-expanded={methodOpen}>
       <Info size={18}/><strong>Methodology & data provenance</strong><ChevronDown size={18} className={methodOpen ? 'rotate' : ''}/></button>
