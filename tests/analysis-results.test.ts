@@ -53,3 +53,11 @@ describe('Inventory simulation results shown in the dashboard', () => {
     expect(current.lostUnits).toBe(1241);
   });
 });
+
+describe('Default RAF part', () => {
+  it('opens on a sample part with test-window demand and a readable scale', async () => {
+    const { rafDefaultPart } = await import('../src/data/raf');
+    expect(rafDefaultPart.testActualTotal).toBeGreaterThanOrEqual(5);
+    expect(Math.max(...rafDefaultPart.history)).toBeLessThanOrEqual(20);
+  });
+});
