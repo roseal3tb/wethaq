@@ -15,23 +15,26 @@ GEN="$DATA/04_Optional_Extras/A_Synthetic_Aviation_Demand_12960/generate_obj1_sy
 for f in "$RAF" "$SYN" "$GEN"; do [ -f "$f" ] || { echo "Missing: $f"; exit 1; }; done
 mkdir -p "$OUT/sprint4" "$OUT/ablation"
 
-echo "1/6 Dataset assessment and demand classes"
+echo "1/7 Dataset assessment and demand classes"
 python3 "$S/assess.py" "$RAF" "$SYN" "$OUT" > "$OUT/assessment.log"
 
-echo "2/6 Forecasting: Naive, MA12, SES, Croston, SBA, TSB, gradient boosting"
+echo "2/7 Forecasting: Naive, MA12, SES, Croston, SBA, TSB, gradient boosting"
 python3 "$S/forecast.py" "$RAF" "$SYN" "$GEN" "$OUT"
 
-echo "3/6 Ablation: gradient boosting without flight cycles"
+echo "3/7 Ablation: gradient boosting without flight cycles"
 cp "$OUT/raf_series_classes.csv" "$OUT/ablation/"
 python3 "$S/forecast_ablation_no_flight_cycles.py" "$RAF" "$SYN" "$GEN" "$OUT/ablation"
 
-echo "4/6 Export RAF forecasts for the dashboard"
+echo "4/7 Export RAF forecasts for the dashboard"
 python3 "$S/raf_export.py" "$RAF" "$OUT" "$S/forecast.py" "$OUT/raf-forecasts.json"
 
-echo "5/6 Rolling-origin RAF evaluation (Sprint 4)"
+echo "5/7 Rolling-origin RAF evaluation (Sprint 4)"
 python3 "$S/rolling_raf.py" "$RAF" "$S/forecast.py" "$OUT" "$OUT/sprint4"
 
-echo "6/6 Inventory policy simulation (Sprint 4)"
+echo "6/7 Inventory policy simulation (Sprint 4)"
 python3 "$S/inventory_sim.py" "$SYN" "$S/forecast.py" "$GEN" "$OUT" "$OUT/sprint4"
+
+echo "7/7 Export inventory results for the dashboard"
+python3 "$S/inventory_export.py" "$OUT/sprint4/inventory_sim.json" "$OUT/inventory-sim.json"
 
 echo "Done. Results are in $OUT (compare with results/)"

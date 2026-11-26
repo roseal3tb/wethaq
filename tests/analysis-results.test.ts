@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import dashboard from '../src/data/raf-forecasts.json';
 import rolling from '../src/data/raf-rolling.json';
+import inventory from '../src/data/inventory-sim.json';
 
 const saved = (name: string) => JSON.parse(readFileSync(resolve(__dirname, '../analysis/results', name), 'utf8'));
 
@@ -28,5 +29,27 @@ describe('RAF results shown in the dashboard', () => {
     expect(rolling.origins).toEqual([60, 66, 72, 78]);
     for (const key of ['origins', 'best_alpha', 'summary_mean', 'summary_min', 'summary_max', 'rmsse_rank_per_window'] as const)
       expect(rolling[key]).toEqual(full[key]);
+  });
+});
+
+describe('Inventory simulation results shown in the dashboard', () => {
+  const full = saved('inventory_sim.json');
+  type Saved = { policy: string; class?: string; z?: number; fill_rate_pct: number; stockout_months_pct: number; avg_stock_units: number; orders_per_series_year: number; lost_units: number };
+  const same = (shown: { policy: string; fill: number; stockoutMonths: number; avgStock: number; ordersPerYear: number; lostUnits: number }, r: Saved) => {
+    expect(shown.policy).toBe(r.policy); expect(shown.fill).toBe(r.fill_rate_pct); expect(shown.stockoutMonths).toBe(r.stockout_months_pct);
+    expect(shown.avgStock).toBe(r.avg_stock_units); expect(shown.ordersPerYear).toBe(r.orders_per_series_year); expect(shown.lostUnits).toBe(r.lost_units);
+  };
+  it('copy the headline, per-class and service-factor results exactly', () => {
+    expect(inventory.headline).toHaveLength(full.headline.length);
+    inventory.headline.forEach((row, i) => same(row, full.headline[i]));
+    expect(inventory.byClass).toHaveLength(full.by_class.length);
+    inventory.byClass.forEach((row, i) => same(row, full.by_class[i]));
+    expect(inventory.curve).toHaveLength(full.curve.length);
+    inventory.curve.forEach((row, i) => { same(row, full.curve[i]); expect(row.z).toBe(full.curve[i].z); });
+  });
+  it('report the current policy at 82.57% fill rate and 1,241 lost units', () => {
+    const current = inventory.headline.find(row => row.policy === 'Current policy')!;
+    expect(current.fill).toBe(82.57);
+    expect(current.lostUnits).toBe(1241);
   });
 });
