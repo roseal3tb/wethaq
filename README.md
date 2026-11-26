@@ -64,7 +64,7 @@ See [the flagship walkthrough](docs/DEMO_WALKTHROUGH.md) for a complete 4-role d
 
 All generated records are deterministic across reloads until the demo session changes them. Interactions are persisted to `sessionStorage`; selected role is stored in `localStorage` with exception handling. To start fresh, clear site data or session storage.
 
-The **forecasting demonstration uses a naive baseline, a Croston estimator, and an explicitly labeled synthetic ML surrogate**. The surrogate is **not a trained XGBoost model**, because this is an interface demonstration. The synthetic policy comparison runs a simple local monthly discrete replenishment simulation, not a validated SimPy study. Figures have no claims about field performance.
+The **Demand Forecasting page shows precomputed offline results on the public RAF dataset** (including scikit-learn HistGradientBoostingRegressor with Poisson loss, not XGBoost) and a separate **synthetic SP-series view** with a naive baseline, a Croston estimator, and an explicitly labeled synthetic ML surrogate. The surrogate is **not a trained model**, because that view is an interface demonstration. The synthetic policy comparison runs a simple local monthly discrete replenishment simulation, not a validated SimPy study. Figures have no claims about field performance.
 
 The proposal distinguishes a synthetic aviation demand dataset from a separate synthetic civilian shipment dataset. The cross-module journey is a documented constructed scenario, **not a reconstructed real transfer**.
 
