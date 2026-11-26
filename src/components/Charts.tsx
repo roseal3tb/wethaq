@@ -2,10 +2,10 @@ import { ResponsiveContainer, LineChart, Line, Area, AreaChart, CartesianGrid, X
 import { month, nf } from '../utils/core';
 import type { ForecastPoint, Model } from '../data/forecast';
 const naiveColor = '#7E92A6';
-export function ForecastChart({ data, show = ['XGBoost'], compact = false }: { data: ForecastPoint[]; show?: Model[]; compact?: boolean }) {
+export function ForecastChart({ data, show = ['MLSurrogate'], compact = false }: { data: ForecastPoint[]; show?: Model[]; compact?: boolean }) {
   const futureCount = data.filter(point => point.zone === 'Forecast').length;
   const points = compact ? data.slice(-(18 + futureCount)) : data;
-  const showCandidate = show.includes('XGBoost');
+  const showCandidate = show.includes('MLSurrogate');
   const range = points.map(point => ({
     ...point,
     uncertainty: point.lower !== undefined && point.upper !== undefined ? [point.lower, point.upper] : null,
@@ -26,7 +26,7 @@ export function ForecastChart({ data, show = ['XGBoost'], compact = false }: { d
           <Area type="monotone" dataKey="actual" stroke="var(--chart-navy, #224b68)" strokeWidth={2.6} fill="var(--chart-navy, #224b68)" fillOpacity={.07} dot={false} name="Actual demand" isAnimationActive={false} />
           {show.includes('Naive') && <Area type="monotone" dataKey="naive" stroke={naiveColor} strokeWidth={2} strokeDasharray="5 5" fillOpacity={0} dot={false} name="Naive baseline" isAnimationActive={false} />}
           {show.includes('Croston') && <Area type="monotone" dataKey="croston" stroke="var(--chart-croston, #96612F)" strokeWidth={2.2} fillOpacity={0} dot={false} name="Croston" isAnimationActive={false} />}
-          {showCandidate && <Area type="monotone" dataKey="xgboost" stroke="var(--chart-olive, #718339)" strokeWidth={2.5} strokeDasharray="6 4" fillOpacity={0} dot={false} name="Synthetic ML candidate" isAnimationActive={false} />}
+          {showCandidate && <Area type="monotone" dataKey="mlSurrogate" stroke="var(--chart-olive, #718339)" strokeWidth={2.5} strokeDasharray="6 4" fillOpacity={0} dot={false} name="Synthetic ML candidate" isAnimationActive={false} />}
           {!compact && <ReferenceLine x="2025-11" stroke="#8697A5" strokeDasharray="3 4" label={{ value: 'Holdout →', position: 'insideTopRight', fontSize: 10, fill: 'var(--chart-tick, #526879)' }} />}
         </AreaChart>
       </ResponsiveContainer>

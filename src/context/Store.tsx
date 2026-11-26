@@ -5,7 +5,7 @@ import { identities, uid, validateOperation } from '../utils/core';
 import { ApiError, LIVE, liveApi, session, type LedgerResult, type LiveUser, type VerifyResult } from '../api/live';
 const load = <T,>(key: string, defaultValue: T, storage: 'session' | 'local' = 'session'): T => { try { const v = (storage === 'session' ? sessionStorage : localStorage).getItem(key); return v ? JSON.parse(v) as T : defaultValue; } catch { return defaultValue; } };
 interface Store {
-  /** true when connected to the Wethaq API and Hyperledger Fabric (VITE_WETHAQ_LIVE=true) */
+  /** true when the dashboard calls the Wethaq API (VITE_WETHAQ_LIVE=true); Hyperledger Fabric is not yet implemented */
   live: boolean; user: LiveUser | null; refresh: () => Promise<void>; roleSwitch: boolean; apiDown: boolean;
   role: Role; authenticated: boolean; setRole: (r: Role) => void; login: (email: string, password: string, role: Role) => Promise<string | null>; logout: () => void;
   data: AppData; toast: string; notify: (s: string) => void; dismiss: () => void;
