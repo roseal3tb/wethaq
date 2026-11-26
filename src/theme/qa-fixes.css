@@ -25,6 +25,10 @@ html[data-theme='dark'] .filter-help{background:#243B4E;color:#DBE5EA}
 .grid-wrap tbody td:first-child{background:#FFFFFF}
 .grid-wrap tbody tr:nth-child(even) td:first-child{background:#FAFCFC}
 .grid-wrap thead th:first-child{z-index:4}
+/* On the narrowest phones the sticky identifying column is wide enough to cover the action buttons, so it scrolls with the table there. */
+@media(max-width:420px){
+  .grid-wrap thead th:first-child,.grid-wrap tbody td:first-child{position:static;box-shadow:none}
+}
 @media(max-width:760px){
   .grid-wrap th[data-col-key='status'],.grid-wrap td[data-col-key='status']{position:sticky;right:0;z-index:3;box-shadow:-3px 0 8px rgba(7,25,39,.12)}
   .grid-wrap th[data-col-key='status']{z-index:5;background:#EDF3F4}

@@ -19,7 +19,7 @@ test('Direct links resume after sign-in and restricted pages retain role navigat
   await expect(page.getByRole('combobox', { name: 'Demand class' })).toContainText('All classes');
   const forecastDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download CSV' }).click();
-  expect((await forecastDownload).suggestedFilename()).toBe('wethaq-forecast-RAF0002.csv');
+  expect((await forecastDownload).suggestedFilename()).toBe('wethaq-raf-RAF0002.csv');
 
   await changeRole(page, 'Receiver');
   await expect(page.getByRole('heading', { name: 'Access restricted' })).toBeVisible();
@@ -117,9 +117,12 @@ test('A rejected demonstration attempt opens its own ledger record even with an 
 });
 
 
-test('Login rejects malformed email and renders illustrative floating workflow cards', async ({ page }) => {
+test('Login rejects malformed email and renders the decorative login animation', async ({ page }) => {
   await page.goto('/login');
-  await expect(page.locator('.login-flow-card')).toHaveCount(4);
+  const animation = page.locator('.login-flow');
+  await expect(animation).toHaveCount(1);
+  await expect(animation).toHaveAttribute('aria-hidden', 'true');
+  await expect(animation.locator('.w-orbit--login')).toHaveCount(1);
   const email = page.getByRole('textbox', { name: 'Email address' });
   await email.fill('notanemail');
   expect(await email.evaluate((el: HTMLInputElement) => el.checkValidity())).toBe(false);
