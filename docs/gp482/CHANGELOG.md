@@ -42,7 +42,7 @@
 ## CI
 * `checks.yml` rewritten:
   * jobs for lint, migrations (applied twice, seed, constraints, dump and restore), analysis manifest, Docker images
-    (mirror base images, three attempts, optional Docker Hub login) and secrets with more patterns;
+    (official base images from Docker Hub, then the public.ecr.aws mirror, bounded attempts, optional Docker Hub login) and secrets with more patterns;
   * the CSP hash step and the OpenAPI freshness check.
 * `browser-qa.yml` gains a live-mode job. `fabric.yml` uses the mirror images.
 * None of these has run on GitHub yet.
