@@ -22,7 +22,7 @@ export function GuidedDemo() {
   const [step, setStep] = useState(0);
   const item = steps[step];
   return <>
-    <button type="button" className="demo-tour-button" onClick={() => setOpen(true)} aria-label="Start guided demonstration">
+    <button type="button" className="demo-tour-button" onClick={() => setOpen(true)} aria-label="Start guided demo">
       <Compass size={16} /><span>Guided demo</span>
     </button>
     <Modal open={open} onClose={() => setOpen(false)} title="Wethaq guided demonstration" description="Six steps connect forecasting, inventory decisions and simulated transaction traceability" width="570px">
