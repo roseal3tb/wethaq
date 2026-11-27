@@ -36,3 +36,12 @@ playwright-report/
 test-results/
 blob-report/
 tsconfig.tsbuildinfo
+
+# Environment files (secrets); the .env.example files are committed
+.env
+.env.*
+!.env.example
+deploy/production.env
+
+# Live-mode dashboard build used by deploy/compose.yml
+dist-live/

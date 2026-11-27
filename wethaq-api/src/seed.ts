@@ -3,7 +3,7 @@
  * 60 parts, 180 inventory positions, 8 users and 48 shipments. Shipment history is replayed through
  * the ledger, so every seeded transaction is a real ledger transaction with its own id and block.
  */
-import type { Db } from './db.js';
+import type { Db, Queryable } from './db.js';
 import type { Ledger } from './ledger/types.js';
 import { findUser, hashPassword, ROLES } from './auth.js';
 import { DEMO_ACCOUNTS } from './app.js';
@@ -11,12 +11,29 @@ import { LOCATIONS, locationId } from './services/common.js';
 import { createShipment, invalidDemo, operate, DEMO_SCENARIOS } from './services/shipments.js';
 import { BASE_INVENTORY, INITIAL_USERS, PARTS, initialData } from '../../src/data/mock.js';
 
-const ORGS = [
+export const ORGS = [
   ['ORG-LC', 'Logistics Command', null], ['ORG-1', 'Org1 (Issuing)', 'Org1MSP'],
   ['ORG-2', 'Org2 (Receiving)', 'Org2MSP'], ['ORG-ADMIN', 'System Administration', null]
 ] as const;
 
 const TABLES = ['revoked_tokens', 'audit_log', 'event_checkpoints', 'ledger_operations', 'alerts', 'ledger_records', 'shipment_events', 'shipments', 'forecasts', 'inventory', 'users', 'parts', 'locations', 'roles', 'organizations', 'local_ledger_blocks', 'local_ledger_state'];
+
+/**
+ * The organizations, roles and storage locations that every installation needs, and optionally the parts
+ * catalogue and the baseline inventory. The catalogue and inventory are the synthetic demonstration values
+ * from src/data/mock.ts: a real installation loads its own instead.
+ */
+export async function insertReferenceData(q: Queryable, { catalogue }: { catalogue: boolean }) {
+  for (const [id, name, msp] of ORGS) await q.query('INSERT INTO organizations (org_id, name, msp_id) VALUES ($1, $2, $3)', [id, name, msp]);
+  for (const role of ROLES) await q.query('INSERT INTO roles (role_id, name) VALUES ($1, $2)', [`ROLE-${role.toUpperCase()}`, role]);
+  for (const l of LOCATIONS) await q.query('INSERT INTO locations (location_id, name) VALUES ($1, $2)', [l.id, l.name]);
+  if (!catalogue) return;
+  for (const p of PARTS) await q.query('INSERT INTO parts (part_id, name, demand_class, criticality, unit) VALUES ($1, $2, $3, $4, $5)', [p.id, p.name, p.demandClass, p.criticality, p.unit]);
+  for (const r of BASE_INVENTORY) {
+    await q.query('INSERT INTO inventory (part_id, location_id, on_hand, reorder_point, safety_stock, lead_days, monthly_demand) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+      [r.partId, locationId(r.location), r.onHand, r.reorderPoint, r.safetyStock, r.leadDays, r.monthlyDemand]);
+  }
+}
 
 export async function seed(db: Db, ledger: Ledger, { password, reset = false, log = () => undefined }: { password: string; reset?: boolean; log?: (s: string) => void }) {
   if (reset) {
@@ -32,17 +49,10 @@ export async function seed(db: Db, ledger: Ledger, { password, reset = false, lo
   const orgId = (name: string) => ORGS.find(o => o[1] === name)![0];
 
   await db.transaction(async q => {
-    for (const [id, name, msp] of ORGS) await q.query('INSERT INTO organizations (org_id, name, msp_id) VALUES ($1, $2, $3)', [id, name, msp]);
-    for (const role of ROLES) await q.query('INSERT INTO roles (role_id, name) VALUES ($1, $2)', [`ROLE-${role.toUpperCase()}`, role]);
+    await insertReferenceData(q, { catalogue: true });
     for (const u of INITIAL_USERS) {
       await q.query('INSERT INTO users (user_id, name, email, password_hash, role_id, org_id, active, last_seen) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
         [u.id, u.name, demoEmails[u.id] ?? u.email, hash, `ROLE-${u.role.toUpperCase()}`, orgId(u.org), u.active, u.lastSeen]);
-    }
-    for (const l of LOCATIONS) await q.query('INSERT INTO locations (location_id, name) VALUES ($1, $2)', [l.id, l.name]);
-    for (const p of PARTS) await q.query('INSERT INTO parts (part_id, name, demand_class, criticality, unit) VALUES ($1, $2, $3, $4, $5)', [p.id, p.name, p.demandClass, p.criticality, p.unit]);
-    for (const r of BASE_INVENTORY) {
-      await q.query('INSERT INTO inventory (part_id, location_id, on_hand, reorder_point, safety_stock, lead_days, monthly_demand) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-        [r.partId, locationId(r.location), r.onHand, r.reorderPoint, r.safetyStock, r.leadDays, r.monthlyDemand]);
     }
   });
   log(`Seeded ${ORGS.length} organizations, ${INITIAL_USERS.length} users, ${PARTS.length} parts and ${BASE_INVENTORY.length} inventory positions`);

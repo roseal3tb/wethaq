@@ -1,0 +1,19 @@
+First administrator for a real installation (npm run bootstrap) — 2026-11-27 (UTC), sandbox machine
+
+Scratch PostgreSQL database wethaq_boot (created for this check, dropped afterwards), migrations applied:
+  Applied: 001_init.sql, 002_password_policy.sql, 003_ledger_sync.sql, 004_integrity.sql, 005_sessions.sql
+
+npm run -s bootstrap -- --admin-email ops@example.org --admin-name "Operations Admin"   -> exit 0
+  Created the reference data and the administrator ops@example.org (USR-001).
+  Temporary password (shown once, valid for 24 hours, must be changed at first sign-in):
+  <third line: the 12-character password, not recorded here>
+Second run with another email                                                         -> exit 1
+  The database already has users or organizations: bootstrap only runs on an empty, migrated database
+npm run -s bootstrap (no arguments)                                                   -> exit 2 (usage)
+
+Row counts afterwards (users | organizations | locations | parts | shipments | audit actions):
+  1|4|3|0|0|system.bootstrap ok
+
+Automated test: wethaq-api/test/bootstrap.test.ts (4 tests, passed): no demonstration data, password stored
+only as a hash, refusal on a used database, sign-in limited to the password change until it is replaced,
+and --demo-catalogue loading the 60 synthetic parts without shipments.
