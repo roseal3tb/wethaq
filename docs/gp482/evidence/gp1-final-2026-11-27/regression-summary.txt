@@ -1,0 +1,23 @@
+== unit
+ Test Files  3 passed (3)
+      Tests  20 passed (20)
+== lint
+✖ 106 problems (0 errors, 106 warnings)
+== cc
+ Test Files  1 passed (1)
+      Tests  24 passed (24)
+== api
+ Test Files  10 passed | 1 skipped (11)
+      Tests  109 passed | 7 skipped (116)
+== e2e
+  2 skipped
+  54 passed (2.6m)
+== live
+  9 passed (39.4s)
+== fabric-it
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+== fabric-e2e
+  1 passed (28.1s)
+== nfr
+31 of 31 checks passed. Report: nfr-results/nfr-2026-11-27T23-16-32.md
