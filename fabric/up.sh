@@ -12,6 +12,8 @@ cd "$NET"
 # Wethaq submits one transaction per user action, so blocks are cut after 500 ms instead (blocks still close
 # early when 10 transactions are waiting). This changes only the local test network's channel configuration.
 sed -i.bak 's/^\( *BatchTimeout:\).*/\1 500ms/' configtx/configtx.yaml && rm -f configtx/configtx.yaml.bak
+# The chaincode containers are started outside docker compose, so network.sh down does not always remove them.
+docker rm -f peer0org1_wethaq_ccaas peer0org2_wethaq_ccaas >/dev/null 2>&1 || true
 ./network.sh down
 ./network.sh up createChannel -c wethaq
 # The chaincode runs as a service in its own container (built here with docker build), which avoids
