@@ -1,0 +1,252 @@
+name: Oracle Cloud ARM64 Readiness
+# Native linux/arm64 readiness check for a future Ampere A1 server (OCI shape VM.Standard.A1.Flex).
+# It runs on a GitHub-hosted Arm runner (ubuntu-24.04-arm, free for public repositories). It builds the images
+# natively, starts the Fabric test network, PostgreSQL and the API on the runner, runs the integration and
+# non-functional checks, measures resource use, then removes everything.
+# Nothing is deployed: no cloud account, credential or paid resource is used, and no emulation (QEMU) is involved.
+# Manual only. See docs/gp482/ORACLE_CLOUD_READINESS.md.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: oracle-arm64-readiness
+  cancel-in-progress: false
+jobs:
+  arm64:
+    name: Native arm64 · images, Fabric, PostgreSQL, API, tests, resources
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 75
+    env:
+      DATABASE_URL: postgres://wethaq:wethaq@127.0.0.1:5432/wethaq
+      LEDGER_MODE: fabric
+      DEMO_PASSWORD: ci-demo-password-1
+      EVIDENCE: ${{ github.workspace }}/arm64-evidence
+      NODE_IMAGE: ${{ vars.NODE_IMAGE }}
+      CHAINCODE_NODE_IMAGE: ${{ vars.CHAINCODE_NODE_IMAGE }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Record the runner and require native arm64 (no emulation)
+        run: |
+          set -e
+          mkdir -p "$EVIDENCE"
+          {
+            echo "date (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "workflow run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID (attempt $GITHUB_RUN_ATTEMPT)"
+            echo "commit: $GITHUB_SHA  ref: $GITHUB_REF_NAME"
+            echo "runner: $RUNNER_NAME  os: $RUNNER_OS  arch: $RUNNER_ARCH  image: ${ImageOS:-?} ${ImageVersion:-?}"
+            echo "uname -m: $(uname -m)"
+            echo "uname -a: $(uname -a)"
+            echo; grep -E '^(PRETTY_NAME|VERSION_ID)=' /etc/os-release
+            echo; lscpu | grep -E 'Architecture|Model name|Vendor ID|^CPU\(s\)|Thread|Core|Socket' || true
+            echo "nproc: $(nproc)"
+            echo; free -m
+            echo; df -h / "$GITHUB_WORKSPACE"
+            echo; docker version --format 'docker client {{.Client.Version}} ({{.Client.Arch}}), server {{.Server.Version}} ({{.Server.Arch}})'
+            echo "docker info: $(docker info --format '{{.Architecture}} {{.OSType}} {{.OperatingSystem}}')"
+            echo "docker compose: $(docker compose version --short)"
+            echo; echo "binfmt_misc handlers registered:"; ls /proc/sys/fs/binfmt_misc/ 2>/dev/null || echo "(none)"
+          } | tee "$EVIDENCE/runner.txt"
+          test "$(uname -m)" = aarch64
+          test "$(docker info --format '{{.Architecture}}')" = aarch64
+
+      - name: Sign in to Docker Hub when credentials are configured (optional; raises the pull limit)
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ]; then
+            echo "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
+          else
+            echo "No Docker Hub credentials configured: anonymous pulls"
+          fi
+
+      - name: Check that every image the project uses publishes linux/arm64
+        run: |
+          set -u
+          fail=0
+          : > "$EVIDENCE/image-manifests.tsv"
+          check() { # <name> <reference> [<mirror of the same image> ...]
+            name=$1; shift
+            for ref in "$@"; do
+              if out=$(docker buildx imagetools inspect --format '{{.Manifest.Digest}}{{range .Manifest.Manifests}} {{.Platform.OS}}/{{.Platform.Architecture}}{{if .Platform.Variant}}/{{.Platform.Variant}}{{end}}{{end}}' "$ref" 2>&1); then
+                digest=${out%% *}; platforms=$(echo "${out#* }" | tr ' ' '\n' | grep -v unknown | sort -u | tr '\n' ' ')
+                arm=no; echo " $platforms " | grep -q ' linux/arm64' && arm=yes
+                printf '%s\t%s\t%s\t%s\t%s\n' "$name" "$ref" "$digest" "$arm" "$platforms" >> "$EVIDENCE/image-manifests.tsv"
+                [ "$arm" = yes ] || fail=1
+                return
+              fi
+              echo "inspect $ref failed: $(echo "$out" | tail -1)" >&2
+            done
+            printf '%s\t%s\t%s\t%s\t%s\n' "$name" "$*" "-" "unknown (no registry answered)" "-" >> "$EVIDENCE/image-manifests.tsv"
+            fail=1
+          }
+          for c in peer orderer ccenv baseos tools; do check "fabric-$c 2.5.12" "hyperledger/fabric-$c:2.5.12"; done
+          check "fabric-ca 1.5.15" hyperledger/fabric-ca:1.5.15
+          check "node 22 (API)" node:22-bookworm-slim public.ecr.aws/docker/library/node:22-bookworm-slim mirror.gcr.io/library/node:22-bookworm-slim
+          check "node 20 (chaincode)" node:20-bookworm-slim public.ecr.aws/docker/library/node:20-bookworm-slim mirror.gcr.io/library/node:20-bookworm-slim
+          check "postgres 16" postgres:16-alpine public.ecr.aws/docker/library/postgres:16-alpine mirror.gcr.io/library/postgres:16-alpine
+          check "caddy 2 (web server)" caddy:2 public.ecr.aws/docker/library/caddy:2 mirror.gcr.io/library/caddy:2
+          cat "$EVIDENCE/image-manifests.tsv"
+          exit $fail
+
+      - name: Set up Node.js with the npm cache
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            wethaq-api/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          set -e
+          echo "node $(node --version) $(node -p process.arch), npm $(npm --version)" | tee -a "$EVIDENCE/runner.txt"
+          test "$(node -p process.arch)" = arm64
+          .github/scripts/timed.sh "npm install (dashboard)" npm install --no-audit --no-fund
+          cd wethaq-api && ../.github/scripts/timed.sh "npm ci (API)" npm ci --no-audit --no-fund
+
+      - name: Pull the base images natively (Docker Hub, then official mirrors; bounded attempts)
+        run: |
+          set -e
+          pick() { .github/scripts/pull-image.sh "$@"; }
+          echo "API_BASE=$(pick "$NODE_IMAGE" node:22-bookworm-slim public.ecr.aws/docker/library/node:22-bookworm-slim mirror.gcr.io/library/node:22-bookworm-slim)" >> "$GITHUB_ENV"
+          echo "WETHAQ_NODE_IMAGE=$(pick "$CHAINCODE_NODE_IMAGE" node:20-bookworm-slim public.ecr.aws/docker/library/node:20-bookworm-slim mirror.gcr.io/library/node:20-bookworm-slim)" >> "$GITHUB_ENV"
+          echo "PG_IMAGE=$(pick postgres:16-alpine public.ecr.aws/docker/library/postgres:16-alpine mirror.gcr.io/library/postgres:16-alpine)" >> "$GITHUB_ENV"
+
+      - name: Start PostgreSQL 16 (bound to 127.0.0.1 only)
+        run: |
+          set -e
+          docker run -d --name wethaq-pg -p 127.0.0.1:5432:5432 \
+            -e POSTGRES_USER=wethaq -e POSTGRES_PASSWORD=wethaq -e POSTGRES_DB=wethaq "$PG_IMAGE"
+          .github/scripts/timed.sh "PostgreSQL ready" sh -c 'for i in $(seq 1 60); do docker exec wethaq-pg pg_isready -U wethaq -q && exit 0; sleep 1; done; exit 1'
+
+      - name: Build the API image natively
+        run: .github/scripts/timed.sh "build API image (linux/arm64)" docker build -f wethaq-api/Dockerfile --build-arg NODE_IMAGE="$API_BASE" -t wethaq-api:arm64 .
+
+      - name: Install Fabric (arm64 binaries and images)
+        run: |
+          set -e
+          .github/scripts/timed.sh "install Fabric 2.5.12 / CA 1.5.15" ./fabric/install.sh
+          file fabric/fabric-samples/bin/peer fabric/fabric-samples/bin/fabric-ca-client | tee "$EVIDENCE/fabric-binaries.txt"
+          file fabric/fabric-samples/bin/peer | grep -q 'ARM aarch64'
+
+      - name: Start the network (CA, channel, chaincode built natively, identities) and verify it
+        run: .github/scripts/timed.sh "start Fabric network (fabric/up.sh, includes chaincode image build and verify-network)" ./fabric/up.sh
+
+      - name: Check that every running container is arm64
+        run: |
+          set -e
+          : > "$EVIDENCE/containers.tsv"
+          bad=0
+          for id in $(docker ps -q); do
+            name=$(docker inspect --format '{{.Name}}' "$id" | tr -d /)
+            image=$(docker inspect --format '{{.Config.Image}}' "$id")
+            arch=$(docker image inspect --format '{{.Os}}/{{.Architecture}}' "$(docker inspect --format '{{.Image}}' "$id")")
+            printf '%s\t%s\t%s\n' "$name" "$image" "$arch" >> "$EVIDENCE/containers.tsv"
+            [ "$arch" = linux/arm64 ] || bad=1
+          done
+          cat "$EVIDENCE/containers.tsv"
+          exit $bad
+
+      - name: Seed through the ledger
+        working-directory: wethaq-api
+        run: ../.github/scripts/timed.sh "migrate and seed through the ledger" sh -c 'npm run migrate && npm run seed -- --reset'
+
+      - name: Start the API (Fabric mode)
+        working-directory: wethaq-api
+        run: |
+          JWT_SECRET=$(openssl rand -hex 32) nohup npm start > api.log 2>&1 &
+          ../.github/scripts/timed.sh "API ready (Fabric mode)" sh -c 'for i in $(seq 1 120); do curl -fs -o /dev/null http://127.0.0.1:4000/api/health/ready && exit 0; sleep 1; done; exit 1'
+
+      - name: Fabric integration tests
+        working-directory: wethaq-api
+        run: ../.github/scripts/timed.sh "Fabric integration tests" npm run test:fabric
+
+      - name: Non-functional checks (after the one-minute sign-in rate-limit window used by the tests above)
+        working-directory: wethaq-api
+        run: sleep 65 && ../.github/scripts/timed.sh "non-functional checks" npm run nfr
+
+      - name: Measure resources with the network, PostgreSQL and the API running
+        run: |
+          set -u
+          {
+            echo "## Containers (docker stats, one sample)"; docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}'
+            echo; echo "## API process (Node.js, Fabric mode)"; ps -o pid,rss,vsz,pcpu,etime,args -C node | grep -E 'PID|server.ts' || true
+            echo; echo "## Memory (MB)"; free -m
+            echo; echo "## Disk"; df -h /
+            echo; echo "## Docker disk use"; docker system df
+            echo; echo "## Images (size)"; docker images --format 'table {{.Repository}}:{{.Tag}}\t{{.Size}}' | sort
+            echo; echo "## Load average"; cat /proc/loadavg
+          } | tee "$EVIDENCE/resources.txt"
+          # Response time of the health endpoints, 20 requests each (seconds).
+          for path in /api/health/live /api/health/ready; do
+            for i in $(seq 1 20); do curl -s -o /dev/null -w '%{time_total}\n' "http://127.0.0.1:4000$path"; done \
+              | sort -n | awk -v p="$path" '{a[NR]=$1; s+=$1} END {printf "%s: n=%d mean=%.4f p50=%.4f p95=%.4f max=%.4f s\n", p, NR, s/NR, a[int(NR*0.5)+0], a[int(NR*0.95)+0], a[NR]}'
+          done | tee "$EVIDENCE/health-latency.txt"
+
+      - name: End-to-end browser test on Fabric (the test starts and restarts the API itself)
+        run: |
+          pkill -f "src/server.ts" || true
+          npx playwright install --with-deps chromium
+          .github/scripts/timed.sh "Fabric browser test (Playwright, Chromium arm64)" npx playwright test -c playwright.fabric.config.ts
+
+      - name: Start the production API image (arm64) and check it is ready
+        run: |
+          set -e
+          docker exec wethaq-pg psql -U wethaq -q -c 'CREATE DATABASE wethaq_image'
+          docker network create wethaq-arm64
+          docker network connect wethaq-arm64 wethaq-pg
+          docker run -d --name wethaq-api-image --network wethaq-arm64 -p 127.0.0.1:4100:4000 \
+            -e DATABASE_URL=postgres://wethaq:wethaq@wethaq-pg:5432/wethaq_image -e JWT_SECRET="$(openssl rand -hex 32)" -e NODE_ENV=production wethaq-api:arm64
+          .github/scripts/timed.sh "API image ready (migrations included)" sh -c 'for i in $(seq 1 120); do curl -fs -o /dev/null http://127.0.0.1:4100/api/health/ready && exit 0; sleep 1; done; exit 1'
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4100/api/state)" = 401
+          test "$(docker exec wethaq-api-image id -un)" = node
+          test "$(docker exec wethaq-api-image node -p process.arch)" = arm64
+          docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}' wethaq-api-image | tee -a "$EVIDENCE/resources.txt"
+          docker logs wethaq-api-image > "$EVIDENCE/api-image.log" 2>&1
+
+      - name: Collect and sanitize the evidence
+        if: always()
+        run: |
+          set -u
+          cp wethaq-api/api.log "$EVIDENCE/api.log" 2>/dev/null || true
+          cp -r wethaq-api/nfr-results "$EVIDENCE/" 2>/dev/null || true
+          docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}' > "$EVIDENCE/containers-final.txt" 2>&1 || true
+          # Nothing secret is written to these files; this is a safety net. Redact anything that looks like a
+          # bearer token or JWT, and drop any file that contains a private key.
+          find "$EVIDENCE" -type f -exec sed -i -E 's/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/[REDACTED JWT]/g; s/(Bearer )[A-Za-z0-9._-]+/\1[REDACTED]/g' {} +
+          grep -rlE 'BEGIN ([A-Z]+ )?PRIVATE KEY' "$EVIDENCE" | while read -r f; do echo "removed (private key): $f"; rm -f "$f"; done
+          {
+            echo "# WETHAQ native arm64 readiness run"
+            echo; echo '```'; cat "$EVIDENCE/runner.txt"; echo '```'
+            echo; echo "## Timings (seconds, exit code)"; echo; echo '| Step | Seconds | Exit |'; echo '|---|---|---|'
+            awk -F '\t' '{printf "| %s | %s | %s |\n", $1, $2, $3}' "$EVIDENCE/timings.tsv" 2>/dev/null
+            echo; echo "## Image manifests"; echo; echo '| Image | Reference | Digest | linux/arm64 | Platforms |'; echo '|---|---|---|---|---|'
+            awk -F '\t' '{printf "| %s | %s | `%s` | %s | %s |\n", $1, $2, $3, $4, $5}' "$EVIDENCE/image-manifests.tsv" 2>/dev/null
+            echo; echo "## Running containers"; echo; echo '```'; cat "$EVIDENCE/containers.tsv" 2>/dev/null; echo '```'
+            echo; echo "## Health endpoint latency"; echo; echo '```'; cat "$EVIDENCE/health-latency.txt" 2>/dev/null; echo '```'
+            echo; echo "## Non-functional checks"; echo; tail -n +1 "$EVIDENCE"/nfr-results/nfr-*.md 2>/dev/null | grep -E 'checks passed|^\| ' | head -60
+          } > "$EVIDENCE/SUMMARY.md"
+          cat "$EVIDENCE/SUMMARY.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Store the evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: wethaq-arm64-readiness
+          path: arm64-evidence/
+          retention-days: 14
+
+      - name: Remove everything that was started
+        if: always()
+        run: |
+          pkill -f "src/server.ts" || true
+          docker rm -f wethaq-api-image wethaq-pg >/dev/null 2>&1 || true
+          docker network rm wethaq-arm64 >/dev/null 2>&1 || true
+          ./fabric/reset.sh --yes || true
