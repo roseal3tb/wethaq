@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import type { NextFunction, Request, Response } from 'express';
@@ -25,14 +26,16 @@ export interface ApiUser {
   mustChangePassword: boolean;
   /** when the temporary password stops working (null once the user has chosen a password) */
   passwordExpiresAt: string | null;
+  /** Increased by a password change or reset; tokens with an older version are refused. */
+  sessionVersion?: number;
 }
-export interface AuthedRequest extends Request { user?: ApiUser; }
+export interface AuthedRequest extends Request { user?: ApiUser; session?: { jti: string | null; expiresAt: Date | null }; }
 
 export const hashPassword = (password: string) => bcrypt.hash(password, 10);
 export const checkPassword = (password: string, hash: string) => bcrypt.compare(password, hash);
 
 export const USER_SELECT = `SELECT u.user_id AS id, u.name, u.email, r.name AS role, o.name AS org, o.msp_id AS "mspId", u.active, u.last_seen AS "lastSeen", u.password_hash AS "passwordHash",
-  u.must_change_password AS "mustChangePassword", u.password_expires_at AS "passwordExpiresAt"
+  u.must_change_password AS "mustChangePassword", u.password_expires_at AS "passwordExpiresAt", u.session_version AS "sessionVersion"
   FROM users u JOIN roles r ON r.role_id = u.role_id JOIN organizations o ON o.org_id = u.org_id`;
 
 export async function findUser(q: Queryable, where: 'id' | 'email', value: string) {
@@ -56,11 +59,12 @@ export function passwordProblem(password: unknown): string | null {
 }
 
 export function signToken(user: ApiUser, secret: string, ttl: string) {
-  return jwt.sign({ sub: user.id, role: user.role }, secret, { expiresIn: ttl as jwt.SignOptions['expiresIn'], algorithm: 'HS256' });
+  return jwt.sign({ sub: user.id, role: user.role, sv: user.sessionVersion ?? 0, jti: randomUUID() }, secret, { expiresIn: ttl as jwt.SignOptions['expiresIn'], algorithm: 'HS256' });
 }
 
 /**
- * Verifies the bearer token and loads the current user; inactive users are refused.
+ * Verifies the bearer token and loads the current user; inactive users, and tokens from a session that has
+ * ended (sign-out, password change or reset), are refused.
  * An account that still has a temporary password may only reach the routes that let it change it
  * (allowPendingPassword), and is signed out once the temporary password expires.
  */
@@ -69,12 +73,18 @@ export function requireAuth(db: Queryable, secret: string, { allowPendingPasswor
     const header = req.headers.authorization || '';
     const token = header.startsWith('Bearer ') ? header.slice(7) : '';
     if (!token) return res.status(401).json({ error: 'Sign in required' });
-    let sub: string;
-    try { sub = String((jwt.verify(token, secret, { algorithms: ['HS256'] }) as jwt.JwtPayload).sub); }
-    catch { return res.status(401).json({ error: 'Session expired — sign in again' }); }
+    let sub: string; let version: number; let jti: string | null; let exp: number | undefined;
+    try {
+      const payload = jwt.verify(token, secret, { algorithms: ['HS256'] }) as jwt.JwtPayload;
+      sub = String(payload.sub); version = Number(payload.sv ?? 0); jti = typeof payload.jti === 'string' ? payload.jti : null; exp = payload.exp;
+    } catch { return res.status(401).json({ error: 'Session expired — sign in again' }); }
     try {
       const user = await findUser(db, 'id', sub);
       if (!user || !user.active) return res.status(401).json({ error: 'Account is not active' });
+      // The password was changed or reset after this token was issued, or the user signed out with it.
+      if (version !== (user.sessionVersion ?? 0)) return res.status(401).json({ error: 'This session has ended — sign in again' });
+      if (jti && (await db.query('SELECT 1 FROM revoked_tokens WHERE jti = $1', [jti])).rows.length) return res.status(401).json({ error: 'You have signed out — sign in again' });
+      req.session = { jti, expiresAt: exp ? new Date(exp * 1000) : null };
       if (temporaryPasswordExpired(user)) return res.status(401).json({ error: 'Your temporary password has expired — ask an administrator to issue a new one' });
       if (user.mustChangePassword && !allowPendingPassword) return res.status(403).json({ error: 'Change your temporary password before continuing', code: 'PASSWORD_CHANGE_REQUIRED' });
       req.user = user;

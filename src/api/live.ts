@@ -80,6 +80,8 @@ async function request<T>(method: string, path: string, body?: unknown, idempote
 export const liveApi = {
   login: (email: string, password: string) => request<AuthResponse>('POST', '/auth/login', { email, password }),
   me: () => request<{ user: LiveUser; demoRoleSwitch: boolean; ledger?: LedgerKind }>('GET', '/auth/me'),
+  /** Ends this session on the server: the token is refused from then on. */
+  logout: () => request<{ ok: true }>('POST', '/auth/logout'),
   switchRole: (role: Role) => request<AuthResponse>('POST', '/auth/switch', { role }),
   state: () => request<LiveState>('GET', '/state'),
   analytics: <T = unknown>(name: string) => request<AnalyticsResult<T>>('GET', `/analytics/${encodeURIComponent(name)}`),

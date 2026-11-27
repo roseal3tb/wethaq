@@ -59,9 +59,9 @@ export function Provider({ children }: { children: React.ReactNode; }) {
   });
   const [toast, setToast] = useState('');
   const roleRef = useRef(role); roleRef.current = role;
-  useEffect(() => { try { localStorage.setItem('wethaq.role', JSON.stringify(role)); } catch { } }, [role]);
-  useEffect(() => { if (!LIVE) { try { sessionStorage.setItem('wethaq.auth', JSON.stringify(authenticated)); } catch { } } }, [authenticated]);
-  useEffect(() => { if (!LIVE) { try { sessionStorage.setItem('wethaq.data', JSON.stringify(data)); } catch { } } }, [data]);
+  useEffect(() => { try { localStorage.setItem('wethaq.role', JSON.stringify(role)); } catch { /* storage unavailable: keep it in memory */ } }, [role]);
+  useEffect(() => { if (!LIVE) { try { sessionStorage.setItem('wethaq.auth', JSON.stringify(authenticated)); } catch { /* storage unavailable: keep it in memory */ } } }, [authenticated]);
+  useEffect(() => { if (!LIVE) { try { sessionStorage.setItem('wethaq.data', JSON.stringify(data)); } catch { /* storage unavailable: keep it in memory */ } } }, [data]);
   const notify = (s: string) => setToast(s);
   const failure = (err: unknown) => {
     const message = err instanceof Error ? err.message : 'Unexpected request failure';
@@ -145,7 +145,8 @@ export function Provider({ children }: { children: React.ReactNode; }) {
     return null;
   };
   const logout = () => {
-    if (LIVE) { session.clear(); setUser(null); setData(EMPTY); }
+    // The token is revoked on the server (best effort: the session is cleared here even if the API cannot be reached).
+    if (LIVE) { if (session.get()) void liveApi.logout().catch(() => undefined); session.clear(); setUser(null); setData(EMPTY); }
     setAuth(false); notify('Signed out');
   };
   const createRequest = async ({ partId, location, qty, month, note }: { partId: string; location: Location; qty: number; month: string; note: string; }): Promise<string> => {

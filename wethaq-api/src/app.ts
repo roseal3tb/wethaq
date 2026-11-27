@@ -115,6 +115,17 @@ export function createApp({ db, ledger, config, bus = new EventBus() }: { db: Db
     res.json(session(updated));
   }));
 
+  /** Signs out: the token used for this request is refused from now on (other devices stay signed in). */
+  api.post('/auth/logout', authPending, wrap(async (req, res) => {
+    const { jti, expiresAt } = req.session ?? { jti: null, expiresAt: null };
+    if (jti) {
+      await db.query('DELETE FROM revoked_tokens WHERE expires_at < now()');
+      await db.query('INSERT INTO revoked_tokens (jti, user_id, expires_at) VALUES ($1, $2, $3) ON CONFLICT (jti) DO NOTHING', [jti, req.user!.id, expiresAt ?? new Date(Date.now() + 86_400_000)]);
+    }
+    await audit(db, { action: 'auth.logout', outcome: 'ok', userId: req.user!.id, org: req.user!.org, requestId: (req as { requestId?: string }).requestId });
+    res.json({ ok: true });
+  }));
+
   /** Server-sent events: live ledger and database changes for open dashboards (read with fetch, so the token stays in the Authorization header). */
   api.get('/events', auth, (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive', 'X-Accel-Buffering': 'no' });
@@ -220,7 +231,6 @@ export function createApp({ db, ledger, config, bus = new EventBus() }: { db: Db
 
   app.use('/api', api);
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
     if (err instanceof HttpError) {
       const extra = err as HttpError & { ledgerFailure?: string; txId?: string };

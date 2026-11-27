@@ -16,7 +16,7 @@ const ORGS = [
   ['ORG-2', 'Org2 (Receiving)', 'Org2MSP'], ['ORG-ADMIN', 'System Administration', null]
 ] as const;
 
-const TABLES = ['audit_log', 'event_checkpoints', 'ledger_operations', 'alerts', 'ledger_records', 'shipment_events', 'shipments', 'forecasts', 'inventory', 'users', 'parts', 'locations', 'roles', 'organizations', 'local_ledger_blocks', 'local_ledger_state'];
+const TABLES = ['revoked_tokens', 'audit_log', 'event_checkpoints', 'ledger_operations', 'alerts', 'ledger_records', 'shipment_events', 'shipments', 'forecasts', 'inventory', 'users', 'parts', 'locations', 'roles', 'organizations', 'local_ledger_blocks', 'local_ledger_state'];
 
 export async function seed(db: Db, ledger: Ledger, { password, reset = false, log = () => undefined }: { password: string; reset?: boolean; log?: (s: string) => void }) {
   if (reset) {

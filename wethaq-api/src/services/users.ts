@@ -53,20 +53,20 @@ export async function updateUser(db: Db, actor: ApiUser, id: string, changes: { 
   return publicUser((await findUser(db, 'id', id))!);
 }
 
-/** Issues a new temporary password for another user (Admin). Existing sessions of that user stop working until it is changed. */
+/** Issues a new temporary password for another user (Admin). Every existing session of that user ends. */
 export async function resetPassword(db: Db, actor: ApiUser, id: string, hours = 24) {
   const target = await findUser(db, 'id', id);
   if (!target) throw new HttpError(404, 'User not found');
   if (target.id === actor.id) throw new HttpError(400, 'Use Change password to change your own password');
   const temporaryPassword = temporary();
   await db.query(
-    'UPDATE users SET password_hash = $2, must_change_password = TRUE, password_expires_at = now() + make_interval(secs => $3) WHERE user_id = $1',
+    'UPDATE users SET password_hash = $2, must_change_password = TRUE, password_expires_at = now() + make_interval(secs => $3), session_version = session_version + 1 WHERE user_id = $1',
     [id, await hashPassword(temporaryPassword), hours * 3600]
   );
   return { ...publicUser((await findUser(db, 'id', id))!), temporaryPassword };
 }
 
-/** Lets a signed-in user replace their password (and a temporary password at first sign-in). */
+/** Lets a signed-in user replace their password (and a temporary password at first sign-in). Other sessions end; the caller gets a new token. */
 export async function changePassword(db: Db, user: ApiUser, input: { currentPassword?: unknown; newPassword?: unknown }) {
   const { currentPassword, newPassword } = input;
   if (typeof currentPassword !== 'string' || !currentPassword) throw new HttpError(400, 'Enter your current password');
@@ -76,7 +76,7 @@ export async function changePassword(db: Db, user: ApiUser, input: { currentPass
   if (!stored || !(await checkPassword(currentPassword, stored.passwordHash))) throw new HttpError(400, 'The current password is incorrect');
   if (await checkPassword(newPassword as string, stored.passwordHash)) throw new HttpError(400, 'The new password must be different from the current password');
   await db.query(
-    'UPDATE users SET password_hash = $2, must_change_password = FALSE, password_expires_at = NULL, password_changed_at = now() WHERE user_id = $1',
+    'UPDATE users SET password_hash = $2, must_change_password = FALSE, password_expires_at = NULL, password_changed_at = now(), session_version = session_version + 1 WHERE user_id = $1',
     [user.id, await hashPassword(newPassword as string)]
   );
   return (await findUser(db, 'id', user.id))!;

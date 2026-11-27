@@ -34,6 +34,7 @@ paths={
  "/auth/login":{"post":op("Sign in","Auth",{"200":resp("Session",ref("Session")),"400":err,"401":err,"429":err},False,body=obj({"email":S,"password":S},["email","password"]),desc="10 attempts per minute per client.")},
  "/auth/me":{"get":op("Current user","Auth",{"200":resp("User"),"401":err})},
  "/auth/password":{"post":op("Change own password","Auth",{"200":resp("New session",ref("Session")),"400":err,"401":err},body=obj({"currentPassword":S,"newPassword":S},["currentPassword","newPassword"]))},
+ "/auth/logout":{"post":op("Sign out: the token used is refused from then on (a password change or reset ends every session)","Auth",{"200":resp("Signed out"),"401":err})},
  "/auth/switch":{"post":op("Switch to a demonstration account (development only)","Auth",{"200":resp("Session",ref("Session")),"403":err},body=obj({"role":{"type":"string","enum":["Planner","Dispatcher","Receiver","Admin"]}},["role"]),desc="Always disabled when NODE_ENV=production.")},
  "/events":{"get":op("Live changes (server-sent events)","Live",{"200":{"description":"text/event-stream of change events","content":{"text/event-stream":{"schema":ref("LiveEvent")}}}})},
  "/state":{"get":op("Dashboard state","Data",{"200":resp("Shipments, transactions, alerts, users and inventory positions")})},

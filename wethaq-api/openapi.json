@@ -920,6 +920,34 @@
         }
       }
     },
+    "/auth/logout": {
+      "post": {
+        "summary": "Sign out: the token used is refused from then on (a password change or reset ends every session)",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Signed out"
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/auth/switch": {
       "post": {
         "summary": "Switch to a demonstration account (development only)",
