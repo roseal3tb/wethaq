@@ -68,7 +68,7 @@ integration (7 passed); *NFR* = 31 of 31 on Fabric.
 | Chaincode container | `chaincode/shipment/Dockerfile` | IMPLEMENTED BUT NOT VERIFIED on this branch | build blocked here (B11); the earlier image runs on the network | — | CI *docker* job (B1) |
 | Single-server deployment configuration | `deploy/compose.yml`, `Caddyfile`, `production.env.example` | COMPLETE AND VERIFIED locally | full workflow through Caddy on Fabric; CSP browser check | passed | hosted deployment (B2) |
 | Hosted deployment | — | BLOCKED | — | — | B2 |
-| CI: validate, lint, API, migrations, chaincode, analysis, Docker, secrets, audit, browser, Fabric | `.github/workflows/*.yml` | PARTIALLY COMPLETE | GitHub Actions on pull request #13 | browser QA passed; quality checks passed except the dump and restore step (fixed, not yet re-run); Fabric workflow not run | B1 |
+| CI: validate, lint, API, migrations, chaincode, analysis, Docker, secrets, audit, browser, Fabric | `.github/workflows/*.yml`, `.github/scripts/pull-image.sh` | COMPLETE AND VERIFIED except `fabric.yml` | GitHub Actions on pull requests #13 to #15 | quality checks #27 and browser QA #23 passed (after two fixes); `fabric.yml` not run on GitHub | B1 |
 | Lint | `eslint.config.js` | COMPLETE AND VERIFIED | `npx eslint .` | 0 errors, 106 warnings | warnings in existing code |
 | Dependencies | three `package-lock.json` | COMPLETE AND VERIFIED | `npm audit` | 0 vulnerabilities | — |
 | No secrets in the repository | `.gitignore`; CI *secrets* job | COMPLETE AND VERIFIED | the job's patterns on the tree and history | 0 findings | — |

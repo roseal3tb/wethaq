@@ -85,6 +85,6 @@ These statements would be wrong, given the evidence above:
 * "Deployed", "in production" or "production-ready". Nothing was deployed to a server. The Vercel site is the
   demonstration without a backend. The single-server configuration was only checked locally.
 * "Real-time forecasting". The forecasts are precomputed results of the offline analysis.
-* "CI passes", until a complete run of `checks.yml` passes on GitHub (the first run failed one step, since fixed).
+* "All CI passes" without qualification. The pull-request checks pass on GitHub, but the manual Fabric workflow has not run there.
 * "Security-certified", "penetration-tested" or "WCAG-compliant".
 * "Per-user blockchain signatures". The ledger is signed per organization.

@@ -46,7 +46,7 @@ Never restore over the database that is in use. Restore into a new one, check it
 * What cannot be recovered from the ledger: users, inventory changes, alerts, notes and audit rows written after the
   backup.
 
-CI repeats the dump and restore on every pull request (job *migrations*). In its first GitHub run the restore failed because of the version mismatch described above; it now uses the container's own tools.
+CI repeats the dump and restore on every pull request (job *migrations*). Its first GitHub run failed because of the version mismatch described above. It now uses the container's own tools and passes.
 
 ## 3. Fabric network
 

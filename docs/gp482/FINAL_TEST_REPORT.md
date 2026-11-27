@@ -8,18 +8,18 @@ change to the NFR script described in note ⁴, committed afterwards as `301863e
 [evidence/completion-2026-11-27/final-run/](evidence/completion-2026-11-27/final-run/exit-codes.txt). Before the
 run the Fabric network was recreated (`./fabric/reset.sh --yes`, `./fabric/up.sh`) and the database seeded on it.
 
-**GitHub Actions, first run (pull request #13, 2026-11-27).**
-* *Responsive browser QA* passed, including the new live-mode job.
-* In *Wethaq quality checks*, every job passed except one. The *Database · migrations* job failed at its last step,
-  the dump and restore. The runner's `pg_dump` is newer than the PostgreSQL 16 service, and `pg_restore` into 16
-  refused `SET transaction_timeout`.
-* The fix runs `pg_dump` and `pg_restore` inside the PostgreSQL 16 container. It was checked locally with the same
-  container image. It has not yet run on GitHub.
-* Second run (pull request #14): the database job passed. The *Docker* job failed because public.ecr.aws answered
-  **429 Too Many Requests** to anonymous pulls of the Node.js base image.
-* The fix pulls each base image from Docker Hub first, then from the mirror, with bounded attempts. Not yet run on
-  GitHub.
-* The manual *Fabric integration* workflow has not been run.
+**GitHub Actions (2026-11-27, three pull requests).** Both workflows that run on pull requests pass on GitHub since
+pull request #15: *Wethaq quality checks* run #27 and *Responsive browser QA* run #23 both passed. Getting there took
+two fixes, and both earlier failures are kept here:
+1. Pull request #13: browser QA passed. In the quality checks, the *Database · migrations* job failed at the dump and
+   restore. The runner's `pg_dump` is newer than the PostgreSQL 16 service, and `pg_restore` into 16 refused
+   `SET transaction_timeout`. Fix: dump and restore with the tools inside the PostgreSQL 16 container.
+2. Pull request #14: the database job passed. The *Docker* job failed because public.ecr.aws answered
+   **429 Too Many Requests** to anonymous pulls of the Node.js base image. Fix: pull each base image from Docker Hub
+   first, then from the mirror, with bounded attempts (`.github/scripts/pull-image.sh`).
+3. Pull request #15: everything passed.
+
+The manual *Fabric integration* workflow (`fabric.yml`) has not been run on GitHub.
 
 Everything else on this page ran locally.
 
@@ -90,7 +90,7 @@ The test counts grew because of new tests, and no existing test was removed or w
 
 | What | Why |
 |---|---|
-| A complete passing run of `checks.yml` on GitHub; the manual `fabric.yml` | the first run failed one step (see the top of this page); the fix needs a new pull request. `fabric.yml` is started by hand |
+| The manual `fabric.yml` on GitHub | started by hand from the Actions tab; not run yet. Its steps ran locally (Fabric integration, NFR, Fabric browser test) |
 | Chaincode image build (`docker build chaincode/shipment`) | npm cannot reach the registry from build containers in this sandbox (`Exit handler never called`). The network used the image built earlier; the chaincode source is unchanged since b92b950. The API image was built with a sandbox-only proxy step that is not committed |
 | Mermaid diagrams | not re-parsed in this run. No diagram was changed on this branch, only links |
 | Hosted deployment | not authorized and not done (see DEPLOYMENT_GUIDE.md §9) |
