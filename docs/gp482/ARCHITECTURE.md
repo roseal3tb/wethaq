@@ -241,7 +241,9 @@ In Fabric mode the comparison runs on the peer (`VerifyShipment`).
 * One application identity per organization, not one Fabric identity per dashboard user. The ledger shows which
   organization submitted a transaction; the API's audit log shows which user asked for it.
 * The Fabric network is the single-host test network (one peer per organization, one Raft orderer). It is not a
-  production deployment, and nothing has been deployed outside the developer machine.
+  production deployment, and nothing has been deployed outside the developer machine (GitHub-hosted CI runs start
+  it temporarily for tests). Actual cloud deployment is intentionally deferred until GP2; the arm64 target is
+  described in [ORACLE_CLOUD_READINESS.md](ORACLE_CLOUD_READINESS.md).
 * A transaction id that the ledger never received is marked failed after `PENDING_EXPIRY_MS`. The API never re-sends a
   signed envelope, so it cannot commit later through this API.
 * The local development ledger is for development and tests only and is not Hyperledger Fabric.

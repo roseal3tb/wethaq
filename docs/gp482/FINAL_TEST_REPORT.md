@@ -1,5 +1,50 @@
 # Wethaq GP482 — final test report
 
+This file was called `TEST_EVIDENCE.md` until pull request #13; evidence files written before then still use the
+old name.
+
+## GP1 submission update (2026-11-27, branch `gp1-final-readiness`)
+
+**Final regression, local.** At commit `4e134e7` on Linux x86-64 (Node 22.23.5, Docker 29.9.3, PostgreSQL 16,
+Fabric 2.5.12, CA 1.5.15), on a freshly created network:
+
+| Suite | Result |
+| --- | --- |
+| Dashboard unit tests | 20 passed |
+| ESLint | 0 errors, 106 warnings |
+| Builds (Demo Mode and live mode), CSP hash | pass |
+| Chaincode unit tests | 24 passed |
+| API type check; API tests | pass; 109 passed, 7 skipped |
+| Demo-mode browser tests, 4 viewports | 54 passed, 2 skipped |
+| Live-mode browser tests | 9 passed |
+| `verify-network.sh` | 14 of 14 |
+| Fabric integration | 7 passed |
+| NFR on Fabric (`sleep 65 && npm run nfr`) | 31 of 31, exit 0 |
+| Fabric browser test | 1 passed |
+
+Logs and reports: [evidence/gp1-final-2026-11-27/](evidence/gp1-final-2026-11-27/README.md). The first Fabric
+attempt of that session failed (5 of 7 integration tests, 17 of 24 NFR checks) because the ledger had already been
+seeded once, so the seed stopped with "Shipment SHP-2026-0005 already exists". A reseed needs a fresh network; after
+`./fabric/up.sh` everything passed. That failing NFR run exited 1, which confirms the fix below.
+
+**Manual Fabric workflow on GitHub (2026-11-27).** The project owner ran *Fabric integration (manual)* on
+`ubuntu-latest` (x64): the run succeeded in 3 min 49 s with **7 of 7** Fabric integration tests passing. Its
+artifact is kept unchanged in [evidence/github-fabric-2026-11-27/](evidence/github-fabric-2026-11-27/README.md).
+The NFR report in that artifact shows **30 of 31**: the *SQL injection in the sign-in form* check expected 400 or 401
+and got 429, because the integration suite had just used up the sign-in rate limit (10 per minute). The NFR script
+exited 0 anyway, so the step and the run showed success. Fixed on this branch: `nfr.ts` sets exit code 1 when any
+check fails, and `fabric.yml` waits 65 s before the NFR step. The run URL and commit were not recorded. Until the
+workflow runs again on GitHub, the NFR result on GitHub stays 30 of 31.
+
+**Accessibility (automated only).** axe-core 4.14.1 on 7 pages in both colour schemes:
+[evidence/gp1-final-2026-11-27/accessibility/](evidence/gp1-final-2026-11-27/accessibility/README.md). This does not
+establish WCAG conformance.
+
+**Not run in GP1:** the native arm64 workflow (`oracle-arm64-readiness.yml`, needs GitHub's Arm runner), any cloud
+deployment (deferred to GP2), user acceptance testing and expert evaluation (no results exist).
+
+## Earlier GP482 run
+
 Every number on this page was copied from the output of a run on 2026-11-27 (UTC) on the development machine
 (Linux x64, Ubuntu 24.04 container, Node 22.23.5, Docker 29.9, PostgreSQL 16.15, Hyperledger Fabric 2.5.12, Fabric CA
 1.5.15). The final run started at commit `5f1ff0d` on branch `gp482-final`
@@ -19,7 +64,7 @@ two fixes, and both earlier failures are kept here:
    first, then from the mirror, with bounded attempts (`.github/scripts/pull-image.sh`).
 3. Pull request #15: everything passed.
 
-The manual *Fabric integration* workflow (`fabric.yml`) has not been run on GitHub.
+At the time of this run the manual *Fabric integration* workflow (`fabric.yml`) had not been run on GitHub; it was run on 2026-11-27 afterwards (see the GP1 update above).
 
 Everything else on this page ran locally.
 
@@ -90,10 +135,10 @@ The test counts grew because of new tests, and no existing test was removed or w
 
 | What | Why |
 |---|---|
-| The manual `fabric.yml` on GitHub | started by hand from the Actions tab; not run yet. Its steps ran locally (Fabric integration, NFR, Fabric browser test) |
+| The manual `fabric.yml` on GitHub | not run at the time of this run; run on 2026-11-27 afterwards (GP1 update above) |
 | Chaincode image build (`docker build chaincode/shipment`) | npm cannot reach the registry from build containers in this sandbox (`Exit handler never called`). The network used the image built earlier; the chaincode source is unchanged since b92b950. The API image was built with a sandbox-only proxy step that is not committed |
 | Mermaid diagrams | not re-parsed in this run. No diagram was changed on this branch, only links |
-| Hosted deployment | not authorized and not done (see DEPLOYMENT_GUIDE.md §9) |
+| Hosted deployment | not done; deferred to GP2 (ORACLE_CLOUD_READINESS.md) |
 | macOS and WSL2 | this branch ran only on Linux (DEPLOYMENT_GUIDE.md §10) |
 | Load beyond the NFR script's 20 concurrent requests, long-running stability, user acceptance testing | out of scope here; user testing was deferred by the project owner |
 
