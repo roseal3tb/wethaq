@@ -18,7 +18,8 @@ const shipmentStages = ['Requested', 'Dispatched', 'In Transit', 'Received'];
 const partsById = new Map(PARTS.map(part => [part.id, part]));
 
 export default function Overview() {
-  const { data, role, ack, live } = useStore();
+  const { data, role, ack, live, ledger } = useStore();
+  const onLedger = ledger === 'local' ? 'local development ledger' : 'Fabric';
   const [part, setPart] = useState(rafDefaultPart.id);
   const inventory = useMemo(() => computeInventory(data.shipments), [data.shipments]);
   const rafPart = raf.parts.find(p => p.id === part) ?? rafDefaultPart;
@@ -36,9 +37,9 @@ export default function Overview() {
   const stats = [
     { label: 'Parts tracked', value: PARTS.length, icon: Boxes, note: 'Across 3 locations', path: '/inventory', tone: 'blue' },
     { label: 'Active alerts', value: active.length, icon: Bell, note: 'Awaiting review', path: '/inventory?tab=alerts&alert=New', tone: 'amber' },
-    { label: 'In transit', value: inTransit, icon: Truck, note: live ? 'Shipments on Fabric' : 'Simulated shipments', path: '/shipments?status=In+Transit', tone: 'blue' },
+    { label: 'In transit', value: inTransit, icon: Truck, note: live ? `Shipments on the ${onLedger}` : 'Simulated shipments', path: '/shipments?status=In+Transit', tone: 'blue' },
     { label: 'Pending receipt', value: inTransit + groups[1].value, icon: Clock3, note: 'Dispatched or in transit', path: '/shipments?status=Pending+receipt', tone: 'amber' },
-    { label: 'Ledger committed', value: data.transactions.filter(transaction => transaction.status === 'Committed').length, icon: ShieldCheck, note: live ? 'Fabric transactions' : 'Simulated transactions', path: '/shipments?tab=ledger&status=Committed', tone: 'olive' },
+    { label: 'Ledger committed', value: data.transactions.filter(transaction => transaction.status === 'Committed').length, icon: ShieldCheck, note: live ? (ledger === 'local' ? 'Local ledger transactions' : 'Fabric transactions') : 'Simulated transactions', path: '/shipments?tab=ledger&status=Committed', tone: 'olive' },
   ];
 
   return (

@@ -17,7 +17,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   if (!['local', 'fabric'].includes(ledgerMode)) throw new Error('LEDGER_MODE must be local or fabric');
   return {
     port: Number(env.PORT || 4000),
-    databaseUrl: env.DATABASE_URL || 'postgres://wethaq:wethaq@127.0.0.1:5433/wethaq',
+    databaseUrl: env.DATABASE_URL || 'postgres://wethaq:wethaq@127.0.0.1:5434/wethaq',
     jwtSecret,
     jwtTtl: env.JWT_TTL || '8h',
     demoRoleSwitch: env.DEMO_ROLE_SWITCH !== 'false',

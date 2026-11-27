@@ -14,8 +14,8 @@ It implements the routes that the dashboard's live client already calls (`src/ap
 
 ## Ledger modes
 
-* `LEDGER_MODE=local` (current default): a **development ledger** stored in PostgreSQL. It applies the same chaincode rules and keeps an append-only transaction list, but it has no peers, endorsement or ordering. It exists so the API can be built and tested before Fabric runs. It must not be described as Hyperledger Fabric.
-* `LEDGER_MODE=fabric`: the Hyperledger Fabric test network through the Fabric Gateway SDK (added in the next stage).
+* `LEDGER_MODE=local` (default): a **development ledger** stored in PostgreSQL. It applies the same chaincode rules and keeps an append-only transaction list, but it has no peers, endorsement or ordering. It exists so the API can be built and tested before Fabric runs. It must not be described as Hyperledger Fabric.
+* `LEDGER_MODE=fabric`: the Hyperledger Fabric test network through the Fabric Gateway SDK. Start the network with `../fabric/up.sh` first (see `../fabric/README.md`).
 
 ## Run it locally
 
@@ -25,10 +25,12 @@ Needs Node 22 and Docker Desktop.
 cd wethaq-api
 npm install
 cp .env.example .env
-npm run db:up        # PostgreSQL in Docker on port 5433
+npm run db:up        # PostgreSQL in Docker on port 5434
 npm run setup        # create tables and load the demonstration data
 npm run dev          # API on http://127.0.0.1:4000/api
 ```
+
+For a quick look without Docker: `npm run dev:memory` starts the API with an in-memory database and freshly seeded data (nothing is saved).
 
 In a second terminal, from the repository root:
 
@@ -46,6 +48,9 @@ To start again from the seeded data: `npm run seed -- --reset`.
 npm test             # 33 tests; uses an in-process PostgreSQL (PGlite), no Docker needed
 npm run check        # type check
 ```
+
+The chaincode has its own tests (`cd ../chaincode/shipment && npm install && npm test`), and the dashboard's
+live-mode browser tests run from the repository root with `npm run test:live`.
 
 ## How an operation is processed
 

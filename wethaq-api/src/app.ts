@@ -34,7 +34,7 @@ export function createApp({ db, ledger, config }: { db: Db; ledger: Ledger; conf
   const api = express.Router();
   const auth = requireAuth(db, config.jwtSecret);
   const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) => (req: Request, res: Response, next: NextFunction) => fn(req as AuthedRequest, res).catch(next);
-  const session = (user: Awaited<ReturnType<typeof findUser>> & {}) => ({ token: signToken(user, config.jwtSecret, config.jwtTtl), user: publicUser(user), demoRoleSwitch: config.demoRoleSwitch });
+  const session = (user: Awaited<ReturnType<typeof findUser>> & {}) => ({ token: signToken(user, config.jwtSecret, config.jwtTtl), user: publicUser(user), demoRoleSwitch: config.demoRoleSwitch, ledger: ledger.kind });
 
   api.get('/health', wrap(async (_req, res) => {
     await db.query('SELECT 1');
@@ -53,7 +53,7 @@ export function createApp({ db, ledger, config }: { db: Db; ledger: Ledger; conf
     res.json(session(user));
   }));
 
-  api.get('/auth/me', auth, wrap(async (req, res) => res.json({ user: publicUser(req.user!), demoRoleSwitch: config.demoRoleSwitch })));
+  api.get('/auth/me', auth, wrap(async (req, res) => res.json({ user: publicUser(req.user!), demoRoleSwitch: config.demoRoleSwitch, ledger: ledger.kind })));
 
   api.post('/auth/switch', auth, wrap(async (req, res) => {
     if (!config.demoRoleSwitch) throw new HttpError(403, 'Role switching is disabled on this server');

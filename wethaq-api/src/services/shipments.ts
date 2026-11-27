@@ -18,7 +18,8 @@ const getShipment = async (q: Queryable, id: string) => (await q.query<ShipmentR
 
 export interface CreateShipmentInput { partId: string; location: string; qty: number; month: string; note: string; }
 
-export async function createShipment(db: Db, ledger: Ledger, user: ApiUser, input: CreateShipmentInput): Promise<{ id: string; txId: string; block?: number }> {
+/** `fixedId` is used only by the seed script, so seeded shipments keep the dashboard's identifiers. */
+export async function createShipment(db: Db, ledger: Ledger, user: ApiUser, input: CreateShipmentInput, fixedId?: string): Promise<{ id: string; txId: string; block?: number }> {
   const { partId, location, qty, month, note } = input;
   if (!allowed(user.role, 'request')) throw new HttpError(403, 'Only a Planner can create a shipment request');
   if (typeof partId !== 'string' || !/^SP-\d{3}$/.test(partId)) throw new HttpError(400, 'Invalid part reference');
@@ -31,16 +32,19 @@ export async function createShipment(db: Db, ledger: Ledger, user: ApiUser, inpu
   const id = await db.transaction(async q => {
     if (!(await q.query('SELECT 1 FROM parts WHERE part_id = $1', [partId])).rows.length) throw new HttpError(400, 'Unknown part');
     await q.query('LOCK TABLE shipments IN SHARE ROW EXCLUSIVE MODE');
+    if (fixedId) return insert(q, fixedId);
     const year = new Date().getUTCFullYear();
     const last = (await q.query<{ n: number | null }>(`SELECT max(split_part(shipment_id, '-', 3)::int) AS n FROM shipments WHERE shipment_id ~ $1`, [`^SHP-${year}-\\d+$`])).rows[0].n ?? 0;
-    const newId = `SHP-${year}-${String(last + 1).padStart(4, '0')}`;
+    return insert(q, `SHP-${year}-${String(last + 1).padStart(4, '0')}`);
+  });
+  async function insert(q: Queryable, newId: string) {
     await q.query(
       `INSERT INTO shipments (shipment_id, part_id, requested_qty, from_location, to_location, status, requested_by, expected_at, forecast_month, review_note, recommendation_id, created_live)
        VALUES ($1, $2, $3, $4, $5, 'Requested', $6, now() + interval '14 days', $7, $8, $9, TRUE)`,
-      [newId, partId, qty, to === 'LOC-CW' ? 'Supplier' : 'Central Warehouse', to, user.id, month, note.trim(), `REC-${partId}-${to.slice(4)}`]
+      [newId, partId, qty, to === 'LOC-CW' ? 'Supplier' : 'Central Warehouse', to, user.id, month, note.trim(), `REC-${partId}-${to!.slice(4)}`]
     );
     return newId;
-  });
+  }
 
   let outcome: LedgerOutcome;
   try {

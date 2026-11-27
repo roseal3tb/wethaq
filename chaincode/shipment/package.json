@@ -1,0 +1,23 @@
+{
+  "name": "wethaq-shipment-chaincode",
+  "version": "1.0.0",
+  "description": "Wethaq shipment chaincode: applies the five transfer rules and records every attempt",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "build": "tsc",
+    "start": "set -x && fabric-chaincode-node start",
+    "test": "tsc && vitest run",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "fabric-contract-api": "~2.5.8",
+    "fabric-shim": "~2.5.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}

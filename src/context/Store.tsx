@@ -2,11 +2,13 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState 
 import type { Role, AppData, Alert, DemoUser, Shipment, Transaction, Operation, CheckResult, Rule, Location } from '../types';
 import { initialData, reconcileShortageAlerts } from '../data/mock';
 import { identities, uid, validateOperation } from '../utils/core';
-import { ApiError, LIVE, liveApi, session, type LedgerResult, type LiveUser, type VerifyResult } from '../api/live';
+import { ApiError, LIVE, liveApi, session, type LedgerKind, type LedgerResult, type LiveUser, type VerifyResult } from '../api/live';
 const load = <T,>(key: string, defaultValue: T, storage: 'session' | 'local' = 'session'): T => { try { const v = (storage === 'session' ? sessionStorage : localStorage).getItem(key); return v ? JSON.parse(v) as T : defaultValue; } catch { return defaultValue; } };
 interface Store {
-  /** true when the dashboard calls the Wethaq API (VITE_WETHAQ_LIVE=true); Hyperledger Fabric is not yet implemented */
-  live: boolean; user: LiveUser | null; refresh: () => Promise<void>; roleSwitch: boolean; apiDown: boolean;
+  /** true when the dashboard calls the Wethaq API (VITE_WETHAQ_LIVE=true) */
+  live: boolean;
+  /** In live mode, the ledger the API writes to (Fabric, or the local development ledger); null in demo mode or before sign-in */
+  ledger: LedgerKind | null; user: LiveUser | null; refresh: () => Promise<void>; roleSwitch: boolean; apiDown: boolean;
   role: Role; authenticated: boolean; setRole: (r: Role) => void; login: (email: string, password: string, role: Role) => Promise<string | null>; logout: () => void;
   data: AppData; toast: string; notify: (s: string) => void; dismiss: () => void;
   resetDemo: () => void;
@@ -35,6 +37,7 @@ export function Provider({ children }: { children: React.ReactNode; }) {
   const [user, setUser] = useState<LiveUser | null>(null);
   const [roleSwitch, setRoleSwitch] = useState(true);
   const [apiDown, setApiDown] = useState(false);
+  const [ledger, setLedger] = useState<LedgerKind | null>(null);
   const [data, setData] = useState<AppData>(() => {
     if (LIVE) return EMPTY;
     const restored = load('wethaq.data', initialData());
@@ -61,6 +64,7 @@ export function Provider({ children }: { children: React.ReactNode; }) {
       setUser(identity.user);
       setRoleInner(identity.user.role);
       setRoleSwitch(identity.demoRoleSwitch);
+      setLedger(identity.ledger ?? null);
       setData(state);
       setAuth(true);
       setApiDown(false);
@@ -130,7 +134,7 @@ export function Provider({ children }: { children: React.ReactNode; }) {
       try {
         const result = await liveApi.operate(operation, shipmentId, qty, note); await refresh();
         const label = operation === 'dispatch' ? 'Dispatch' : operation === 'transit' ? 'In-transit update' : 'Receipt';
-        notify(result.passed ? `${label} committed on Fabric · block ${result.block}` : `Rejected by ${result.source === 'application' ? 'the application' : 'the smart contract'}: ${result.reason}`);
+        notify(result.passed ? `${label} committed on ${ledger === 'local' ? 'the local development ledger' : 'Fabric'} · block ${result.block}` : `Rejected by ${result.source === 'application' ? 'the application' : 'the smart contract'}: ${result.reason}`);
         return ledgerCheck(result, v);
       } catch (e) { failure(e); return { passed: false, rules: v.rules, failure: e instanceof Error ? e.message : 'Request failed' }; }
     }
@@ -216,11 +220,11 @@ export function Provider({ children }: { children: React.ReactNode; }) {
   };
   const visibleData = useMemo<AppData>(() => LIVE ? data : ({ ...data, alerts: reconcileShortageAlerts(data) }), [data]);
   const store = useMemo<Store>(() => ({
-    live: LIVE, user, refresh, roleSwitch, apiDown,
+    live: LIVE, ledger, user, refresh, roleSwitch, apiDown,
     role, authenticated, setRole, login, logout, data: visibleData, toast, notify,
     dismiss: () => setToast(''), createRequest, validate, perform, invalidDemo, verifyShipment,
     ack, addUser, setUserRole, toggleUser, resetDemo
-  }), [role, authenticated, visibleData, toast, user, roleSwitch, apiDown]);
+  }), [role, authenticated, visibleData, toast, user, roleSwitch, apiDown, ledger]);
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>;
 }
 export function useStore() { const ctx = useContext(Ctx); if (!ctx) throw Error('Store is missing'); return ctx; }

@@ -48,9 +48,11 @@ export async function seed(db: Db, ledger: Ledger, { password, reset = false, lo
   log(`Seeded ${ORGS.length} organizations, ${INITIAL_USERS.length} users, ${PARTS.length} parts and ${BASE_INVENTORY.length} inventory positions`);
 
   const [planner, dispatcher, receiver, admin] = await Promise.all(ROLES.map(role => findUser(db, 'email', DEMO_ACCOUNTS[role]).then(u => u!)));
+  // Replay each shipment's history through the ledger; shipments run in parallel because Fabric
+  // commits in blocks, and each shipment's own operations stay in order.
   let replayed = 0;
-  for (const s of demo.shipments) {
-    const { id } = await createShipment(db, ledger, planner, { partId: s.partId, location: s.to, qty: s.quantity, month: s.forecastMonth, note: s.note });
+  const replay = async (s: (typeof demo.shipments)[number]) => {
+    const { id } = await createShipment(db, ledger, planner, { partId: s.partId, location: s.to, qty: s.quantity, month: s.forecastMonth, note: s.note }, s.id);
     // Keep the seeded baseline apart from shipments created later (the dashboard treats them differently).
     await db.query('UPDATE shipments SET created_live = FALSE, requested_at = $2, expected_at = $3 WHERE shipment_id = $1', [id, s.requestedAt, s.expectedAt]);
     // The baseline inventory already includes these historical movements, so they do not change stock levels.
@@ -63,7 +65,9 @@ export async function seed(db: Db, ledger: Ledger, { password, reset = false, lo
       if (!result.passed) throw new Error(`Seeding ${id} ${op} was rejected: ${result.reason}`);
     }
     replayed += 1 + steps.length;
-  }
+  };
+  const queue = [...demo.shipments];
+  await Promise.all(Array.from({ length: ledger.kind === 'fabric' ? 12 : 1 }, async () => { for (let s = queue.shift(); s; s = queue.shift()) await replay(s); }));
   log(`Replayed ${demo.shipments.length} shipments through the ${ledger.kind} ledger (${replayed} transactions)`);
 
   for (const scenario of DEMO_SCENARIOS) await invalidDemo(db, ledger, admin, scenario);

@@ -2,19 +2,19 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: wethaq-postgres
+    container_name: wethaq-api-db
     environment:
       POSTGRES_USER: wethaq
       POSTGRES_PASSWORD: wethaq
       POSTGRES_DB: wethaq
     ports:
-      - "127.0.0.1:5433:5432"   # 5433 on the host, so it does not clash with another local PostgreSQL
+      - "127.0.0.1:5434:5432"   # 5434 on the host, so it does not clash with another local PostgreSQL
     volumes:
-      - wethaq-pgdata:/var/lib/postgresql/data
+      - wethaq-api-pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U wethaq -d wethaq"]
       interval: 2s
       timeout: 3s
       retries: 30
 volumes:
-  wethaq-pgdata:
+  wethaq-api-pgdata:

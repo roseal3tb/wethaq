@@ -19,7 +19,9 @@ export class ApiError extends Error {
 }
 
 export interface LiveUser { id: string; name: string; email: string; role: Role; org: string; active: boolean; lastSeen: string; }
-export interface AuthResponse { token: string; user: LiveUser; demoRoleSwitch: boolean; }
+/** Which ledger the API writes to: the Hyperledger Fabric network, or the local development ledger used before Fabric runs. */
+export type LedgerKind = 'fabric' | 'local';
+export interface AuthResponse { token: string; user: LiveUser; demoRoleSwitch: boolean; ledger?: LedgerKind; }
 /** Outcome of a ledger operation: committed on Fabric, or rejected by the chaincode / application. */
 export interface LedgerResult { passed: boolean; failure?: string; failedRule?: string; reason?: string; source?: 'chaincode' | 'application'; transactionId: string; txId?: string; block?: number; }
 export interface VerifyResult { shipmentId: string; onLedger: boolean; match: boolean; differences: string[]; note?: string; ledger?: Record<string, unknown>; history?: unknown[]; }
@@ -49,7 +51,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 
 export const liveApi = {
   login: (email: string, password: string) => request<AuthResponse>('POST', '/auth/login', { email, password }),
-  me: () => request<{ user: LiveUser; demoRoleSwitch: boolean }>('GET', '/auth/me'),
+  me: () => request<{ user: LiveUser; demoRoleSwitch: boolean; ledger?: LedgerKind }>('GET', '/auth/me'),
   switchRole: (role: Role) => request<AuthResponse>('POST', '/auth/switch', { role }),
   state: () => request<AppData>('GET', '/state'),
   createShipment: (p: { partId: string; location: string; qty: number; month: string; note: string }) => request<{ id: string }>('POST', '/shipments', p),
