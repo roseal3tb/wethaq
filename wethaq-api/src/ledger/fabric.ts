@@ -2,9 +2,10 @@ import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createPrivateKey } from 'node:crypto';
 import * as grpc from '@grpc/grpc-js';
-import { connect, hash, signers, type Contract, type Gateway } from '@hyperledger/fabric-gateway';
+import { EventEmitter } from 'node:events';
+import { connect, hash, signers, type ChaincodeEvent, type CloseableAsyncIterable, type Contract, type Gateway, type Network } from '@hyperledger/fabric-gateway';
 import type { LedgerRecord, LedgerShipment } from '../../../chaincode/shipment/src/rules.js';
-import type { Ledger, LedgerOperation, LedgerOutcome, OrgMsp } from './types.js';
+import type { Ledger, LedgerCommitEvent, LedgerOperation, LedgerOutcome, OrgMsp } from './types.js';
 
 export interface FabricConfig {
   /** Path to fabric-samples/test-network (holds the generated crypto material). */
@@ -24,7 +25,7 @@ const ORGS = {
 const FUNCTION: Record<LedgerOperation, string> = { dispatch: 'Dispatch', transit: 'MarkInTransit', receive: 'Receive' };
 const decoder = new TextDecoder();
 
-async function connectOrg(cfg: FabricConfig, msp: OrgMsp): Promise<{ gateway: Gateway; client: grpc.Client; contract: Contract }> {
+async function connectOrg(cfg: FabricConfig, msp: OrgMsp): Promise<{ gateway: Gateway; client: grpc.Client; network: Network; contract: Contract }> {
   const { domain, endpoint } = ORGS[msp];
   const orgDir = path.join(cfg.testNetworkPath, 'organizations', 'peerOrganizations', domain);
   const userDir = path.join(orgDir, 'users', `User1@${domain}`, 'msp');
@@ -43,7 +44,8 @@ async function connectOrg(cfg: FabricConfig, msp: OrgMsp): Promise<{ gateway: Ga
     submitOptions: () => ({ deadline: Date.now() + 5_000 }),
     commitStatusOptions: () => ({ deadline: Date.now() + 60_000 })
   });
-  return { gateway, client, contract: gateway.getNetwork(cfg.channel).getContract(cfg.chaincode) };
+  const network = gateway.getNetwork(cfg.channel);
+  return { gateway, client, network, contract: network.getContract(cfg.chaincode) };
 }
 
 /**
@@ -54,6 +56,37 @@ async function connectOrg(cfg: FabricConfig, msp: OrgMsp): Promise<{ gateway: Ga
  */
 export async function fabricLedger(cfg: FabricConfig): Promise<Ledger> {
   const orgs = { Org1MSP: await connectOrg(cfg, 'Org1MSP'), Org2MSP: await connectOrg(cfg, 'Org2MSP') };
+  const events = new EventEmitter();
+  events.setMaxListeners(0);
+  let closed = false;
+  let stream: CloseableAsyncIterable<ChaincodeEvent> | undefined;
+
+  /**
+   * Listens to the chaincode events of every committed block (through Org1's peer), so the API hears
+   * about transactions from any client of the network, not only its own. The stream resumes after the
+   * last block it delivered if the connection drops.
+   */
+  async function listen() {
+    let nextBlock: bigint | undefined;
+    while (!closed) {
+      try {
+        stream = await orgs.Org1MSP.network.getChaincodeEvents(cfg.chaincode, nextBlock === undefined ? undefined : { startBlock: nextBlock });
+        for await (const event of stream) {
+          nextBlock = event.blockNumber + 1n;
+          let record: LedgerRecord;
+          try { record = JSON.parse(decoder.decode(event.payload)) as LedgerRecord; } catch { continue; }
+          events.emit('commit', { name: event.eventName, txId: event.transactionId, block: Number(event.blockNumber), record } satisfies LedgerCommitEvent);
+        }
+      } catch (err) {
+        if (closed) return;
+        console.warn(`Fabric event stream interrupted (${(err as Error).message}); reconnecting in 3 seconds`);
+      } finally {
+        stream?.close();
+      }
+      if (!closed) await new Promise(resolve => setTimeout(resolve, 3_000));
+    }
+  }
+  void listen();
 
   async function submit(msp: OrgMsp, fn: string, args: string[]): Promise<LedgerOutcome> {
     const commit = await orgs[msp].contract.submitAsync(fn, { arguments: args });
@@ -74,7 +107,14 @@ export async function fabricLedger(cfg: FabricConfig): Promise<Ledger> {
     async history(shipmentId) {
       return JSON.parse(decoder.decode(await orgs.Org1MSP.contract.evaluateTransaction('GetHistory', shipmentId))) as LedgerRecord[];
     },
+    onCommit(listener) {
+      events.on('commit', listener);
+      return () => { events.off('commit', listener); };
+    },
     async close() {
+      closed = true;
+      stream?.close();
+      events.removeAllListeners();
       for (const o of Object.values(orgs)) { o.gateway.close(); o.client.close(); }
     }
   };

@@ -14,8 +14,8 @@ export async function loadState(q: Queryable, user: ApiUser) {
     q.query<Record<string, any>>(`SELECT * FROM ledger_records WHERE type <> 'REQUEST' ORDER BY timestamp DESC, record_id DESC`),
     q.query<Record<string, any>>(`SELECT a.*, u.name AS resolved_by FROM alerts a LEFT JOIN users u ON u.user_id = a.acknowledged_by ORDER BY a.at DESC`),
     user.role === 'Admin'
-      ? q.query<Record<string, any>>(`SELECT u.user_id, u.name, u.email, r.name AS role, o.name AS org, u.active, u.last_seen FROM users u JOIN roles r ON r.role_id = u.role_id JOIN organizations o ON o.org_id = u.org_id ORDER BY u.user_id`)
-      : Promise.resolve({ rows: [{ user_id: user.id, name: user.name, email: user.email, role: user.role, org: user.org, active: user.active, last_seen: user.lastSeen }] })
+      ? q.query<Record<string, any>>(`SELECT u.user_id, u.name, u.email, r.name AS role, o.name AS org, u.active, u.last_seen, u.must_change_password, u.password_expires_at FROM users u JOIN roles r ON r.role_id = u.role_id JOIN organizations o ON o.org_id = u.org_id ORDER BY u.user_id`)
+      : Promise.resolve({ rows: [{ user_id: user.id, name: user.name, email: user.email, role: user.role, org: user.org, active: user.active, last_seen: user.lastSeen, must_change_password: user.mustChangePassword, password_expires_at: user.passwordExpiresAt }] as Record<string, any>[] })
   ]);
   const byShipment = new Map<string, any[]>();
   for (const e of events.rows) {
@@ -39,7 +39,7 @@ export async function loadState(q: Queryable, user: ApiUser) {
       id: a.alert_id, severity: a.severity, type: a.type, title: a.title, detail: a.detail, partId: opt(a.part_id), shipmentId: opt(a.shipment_id),
       at: iso(a.at), acknowledged: a.acknowledged, resolutionNote: opt(a.resolution_note), resolvedBy: opt(a.resolved_by)
     })),
-    users: users.rows.map(u => ({ id: u.user_id, name: u.name, email: u.email, role: u.role, org: u.org, active: u.active, lastSeen: iso(u.last_seen) }))
+    users: users.rows.map(u => ({ id: u.user_id, name: u.name, email: u.email, role: u.role, org: u.org, active: u.active, lastSeen: iso(u.last_seen), mustChangePassword: u.must_change_password, passwordExpiresAt: u.password_expires_at ? iso(u.password_expires_at) : null }))
   };
 }
 

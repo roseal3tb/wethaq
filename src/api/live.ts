@@ -18,7 +18,17 @@ export class ApiError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
 
-export interface LiveUser { id: string; name: string; email: string; role: Role; org: string; active: boolean; lastSeen: string; }
+export interface LiveUser {
+  id: string; name: string; email: string; role: Role; org: string; active: boolean; lastSeen: string;
+  /** true while the account still uses a temporary password from an administrator */
+  mustChangePassword?: boolean;
+  /** when that temporary password stops working */
+  passwordExpiresAt?: string | null;
+}
+/** A user account returned with its one-time temporary password (shown once to the administrator). */
+export type IssuedUser = LiveUser & { temporaryPassword: string };
+/** A live change from the API's event stream (/api/events): a ledger commit, or a change in PostgreSQL. */
+export interface LiveEvent { kind: 'ledger' | 'app'; name: string; shipmentId?: string; txId?: string; block?: number; status?: string; operation?: string; at: string; }
 /** Which ledger the API writes to: the Hyperledger Fabric network, or the local development ledger used before Fabric runs. */
 export type LedgerKind = 'fabric' | 'local';
 export interface AuthResponse { token: string; user: LiveUser; demoRoleSwitch: boolean; ledger?: LedgerKind; }
@@ -54,11 +64,39 @@ export const liveApi = {
   me: () => request<{ user: LiveUser; demoRoleSwitch: boolean; ledger?: LedgerKind }>('GET', '/auth/me'),
   switchRole: (role: Role) => request<AuthResponse>('POST', '/auth/switch', { role }),
   state: () => request<AppData>('GET', '/state'),
-  createShipment: (p: { partId: string; location: string; qty: number; month: string; note: string }) => request<{ id: string }>('POST', '/shipments', p),
+  createShipment: (p: { partId: string; location: string; qty: number; month: string; note: string }) => request<{ id: string; txId?: string; block?: number }>('POST', '/shipments', p),
   operate: (op: 'dispatch' | 'transit' | 'receive', shipmentId: string, qty: number, note: string) => request<LedgerResult>('POST', `/shipments/${encodeURIComponent(shipmentId)}/${op}`, { qty, note }),
   invalid: (scenario: string, shipmentId?: string) => request<LedgerResult>('POST', '/demo/invalid', { scenario, shipmentId }),
   verify: (shipmentId: string) => request<VerifyResult>('GET', `/shipments/${encodeURIComponent(shipmentId)}/verify`),
   ack: (id: string, note?: string) => request<{ ok: boolean }>('POST', `/alerts/${encodeURIComponent(id)}/ack`, { note }),
-  addUser: (u: Omit<DemoUser, 'id' | 'lastSeen' | 'active'>) => request<LiveUser>('POST', '/users', u),
+  addUser: (u: Omit<DemoUser, 'id' | 'lastSeen' | 'active'>) => request<IssuedUser>('POST', '/users', u),
+  resetPassword: (id: string) => request<IssuedUser>('POST', `/users/${encodeURIComponent(id)}/reset-password`),
+  changePassword: (currentPassword: string, newPassword: string) => request<AuthResponse>('POST', '/auth/password', { currentPassword, newPassword }),
   updateUser: (id: string, changes: { role?: Role; active?: boolean }) => request<LiveUser>('PATCH', `/users/${encodeURIComponent(id)}`, changes)
 };
+
+/**
+ * Follows the API's server-sent event stream until the signal is aborted. It is read with fetch
+ * (not EventSource) so the token is sent in the Authorization header rather than in the URL.
+ * Resolves when the stream ends, so the caller can reconnect.
+ */
+export async function followEvents(onEvent: (event: LiveEvent) => void, signal: AbortSignal): Promise<void> {
+  const token = session.get();
+  if (!token) return;
+  const res = await fetch('/api/events', { headers: { Authorization: `Bearer ${token}`, Accept: 'text/event-stream' }, signal });
+  if (!res.ok || !res.body) throw new ApiError(res.status, `Live updates unavailable (${res.status})`);
+  const reader = res.body.getReader(); const decoder = new TextDecoder();
+  let buffer = '';
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) return;
+    buffer += decoder.decode(value, { stream: true });
+    let end: number;
+    while ((end = buffer.indexOf('\n\n')) >= 0) {
+      const block = buffer.slice(0, end); buffer = buffer.slice(end + 2);
+      if (!/^event: change$/m.test(block)) continue;
+      const data = block.split('\n').filter(line => line.startsWith('data: ')).map(line => line.slice(6)).join('\n');
+      try { onEvent(JSON.parse(data) as LiveEvent); } catch { /* ignore a malformed event */ }
+    }
+  }
+}

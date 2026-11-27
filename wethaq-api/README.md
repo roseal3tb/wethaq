@@ -45,7 +45,7 @@ To start again from the seeded data: `npm run seed -- --reset`.
 ## Tests
 
 ```bash
-npm test             # 33 tests; uses an in-process PostgreSQL (PGlite), no Docker needed
+npm test             # 41 tests; uses an in-process PostgreSQL (PGlite), no Docker needed
 npm run check        # type check
 ```
 
@@ -61,12 +61,43 @@ live-mode browser tests run from the repository root with `npm run test:live`.
 
 `GET /api/shipments/:id/verify` compares the PostgreSQL copy with the ledger state and lists any differences.
 
+## Accounts and passwords
+
+* Passwords are stored as bcrypt hashes. A password chosen by a user needs 8 to 128 characters with at least one letter and one digit.
+* An administrator who adds a user, or resets a user's password, receives a one-time temporary password (shown once).
+  It must be changed at first sign-in (until then every other route answers 403 `PASSWORD_CHANGE_REQUIRED`), and it
+  stops working after `TEMP_PASSWORD_HOURS` hours (default 24), at sign-in and for open sessions.
+* Any signed-in user can change their password from the key icon in the dashboard header.
+
+## Live updates
+
+`GET /api/events` is a server-sent event stream. It sends an event for every transaction committed on the ledger
+(in Fabric mode, from the chaincode events of each block, so transactions from any client of the network appear)
+and for every change to PostgreSQL (acknowledged alerts, user changes, application-level rejections). The dashboard
+reads it with `fetch`, so the token stays in the Authorization header, and reloads its data when an event arrives.
+
+## NFR measurements
+
+With the API running (`npm run dev`), in a second terminal:
+
+```bash
+npm run nfr                                    # 10 workflow runs, 20 concurrent requests
+npm run nfr -- --runs 30 --concurrency 50      # larger run
+```
+
+It measures response times for each workflow step and the throughput of concurrent requests, and checks security
+(tokens, roles, password storage, headers), integrity (verification, a tampered database copy, an append-only history)
+and reliability (the five smart-contract rules). Results go to `nfr-results/` as Markdown and JSON. It creates and
+completes real shipments (review note "NFR test run"), so run it on demonstration data.
+
 ## Routes
 
 | Method | Route | Who |
 |---|---|---|
 | POST | `/api/auth/login` | anyone (10 attempts per minute) |
-| GET | `/api/auth/me` | signed in |
+| GET | `/api/auth/me` | signed in (also with a temporary password) |
+| POST | `/api/auth/password` | signed in (also with a temporary password; 10 attempts per minute) |
+| GET | `/api/events` | signed in (server-sent events) |
 | POST | `/api/auth/switch` | signed in, when `DEMO_ROLE_SWITCH=true` |
 | GET | `/api/state` | signed in (other users are listed for Admin only) |
 | GET | `/api/inventory` | signed in |
@@ -75,5 +106,5 @@ live-mode browser tests run from the repository root with `npm run test:live`.
 | GET | `/api/shipments/:id/verify` | signed in |
 | POST | `/api/demo/invalid` | signed in |
 | POST | `/api/alerts/:id/ack` | signed in |
-| POST | `/api/users` · PATCH `/api/users/:id` | Admin |
+| POST | `/api/users` · PATCH `/api/users/:id` · POST `/api/users/:id/reset-password` | Admin |
 | GET | `/api/health` | anyone |

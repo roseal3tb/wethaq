@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState 
 import type { Role, AppData, Alert, DemoUser, Shipment, Transaction, Operation, CheckResult, Rule, Location } from '../types';
 import { initialData, reconcileShortageAlerts } from '../data/mock';
 import { identities, uid, validateOperation } from '../utils/core';
-import { ApiError, LIVE, liveApi, session, type LedgerKind, type LedgerResult, type LiveUser, type VerifyResult } from '../api/live';
+import { ApiError, followEvents, LIVE, liveApi, session, type IssuedUser, type LedgerKind, type LedgerResult, type LiveEvent, type LiveUser, type VerifyResult } from '../api/live';
 const load = <T,>(key: string, defaultValue: T, storage: 'session' | 'local' = 'session'): T => { try { const v = (storage === 'session' ? sessionStorage : localStorage).getItem(key); return v ? JSON.parse(v) as T : defaultValue; } catch { return defaultValue; } };
 interface Store {
   /** true when the dashboard calls the Wethaq API (VITE_WETHAQ_LIVE=true) */
@@ -17,7 +17,13 @@ interface Store {
   perform: (operation: Operation, shipmentId: string, qty: number, note: string) => Promise<CheckResult>;
   invalidDemo: (scenario: string, shipmentId?: string) => Promise<CheckResult & { transactionId: string }>;
   verifyShipment: (shipmentId: string) => Promise<VerifyResult>;
-  ack: (id: string, note?: string) => void; addUser: (u: Omit<DemoUser, 'id' | 'lastSeen'>) => void; setUserRole: (id: string, r: Role) => void; toggleUser: (id: string) => void;
+  ack: (id: string, note?: string) => void; addUser: (u: Omit<DemoUser, 'id' | 'lastSeen'>) => Promise<IssuedUser | null>; setUserRole: (id: string, r: Role) => void; toggleUser: (id: string) => void;
+  /** Live mode: replaces the signed-in user's password; returns an error message, or null on success */
+  changePassword: (currentPassword: string, newPassword: string) => Promise<string | null>;
+  /** Live mode (Admin): issues a new temporary password for another user */
+  resetPassword: (id: string) => Promise<IssuedUser | null>;
+  /** Live mode: true while the dashboard receives live ledger and database changes from the API */
+  liveFeed: boolean;
 }
 const Ctx = createContext<Store | null>(null);
 const EMPTY: AppData = { shipments: [], transactions: [], alerts: [], users: [] };
@@ -38,6 +44,11 @@ export function Provider({ children }: { children: React.ReactNode; }) {
   const [roleSwitch, setRoleSwitch] = useState(true);
   const [apiDown, setApiDown] = useState(false);
   const [ledger, setLedger] = useState<LedgerKind | null>(null);
+  const [liveFeed, setLiveFeed] = useState(false);
+  const ledgerRef = useRef<LedgerKind | null>(null); ledgerRef.current = ledger;
+  /** Transactions submitted from this dashboard, so live events for them do not show a second toast. */
+  const ownTx = useRef(new Set<string>());
+  const mine = (txId?: string) => { if (txId) { ownTx.current.add(txId); if (ownTx.current.size > 200) ownTx.current.delete(ownTx.current.values().next().value!); } };
   const [data, setData] = useState<AppData>(() => {
     if (LIVE) return EMPTY;
     const restored = load('wethaq.data', initialData());
@@ -60,13 +71,15 @@ export function Provider({ children }: { children: React.ReactNode; }) {
   const refresh = async (): Promise<void> => {
     if (!LIVE) return;
     try {
-      const [identity, state] = await Promise.all([liveApi.me(), liveApi.state()]);
+      const identity = await liveApi.me();
       setUser(identity.user);
       setRoleInner(identity.user.role);
       setRoleSwitch(identity.demoRoleSwitch);
       setLedger(identity.ledger ?? null);
-      setData(state);
       setAuth(true);
+      // An account with a temporary password sees nothing until it has chosen its own password.
+      if (identity.user.mustChangePassword) { setData(EMPTY); setApiDown(false); return; }
+      setData(await liveApi.state());
       setApiDown(false);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
@@ -79,6 +92,29 @@ export function Provider({ children }: { children: React.ReactNode; }) {
   useEffect(() => {
     if (LIVE && session.get()) { void refresh().catch(failure); }
   }, []);
+  // Live updates: reload when the ledger commits a transaction or the database changes, from any user.
+  const followUser = LIVE && authenticated && user && !user.mustChangePassword ? user.id : null;
+  useEffect(() => {
+    if (!followUser) return;
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const onEvent = (event: LiveEvent) => {
+      if (event.kind === 'ledger' && event.txId && !ownTx.current.has(event.txId)) {
+        const where = ledgerRef.current === 'local' ? 'the local development ledger' : 'Fabric';
+        notify(`${event.shipmentId} · ${event.status === 'Rejected' ? 'rejected attempt recorded' : event.status} on ${where}${event.block ? ` · block ${event.block}` : ''}`);
+      }
+      clearTimeout(timer);
+      timer = setTimeout(() => { void refresh().catch(() => undefined); }, 400);
+    };
+    void (async () => {
+      while (!controller.signal.aborted) {
+        try { setLiveFeed(true); await followEvents(onEvent, controller.signal); } catch { /* reconnect below */ }
+        setLiveFeed(false);
+        if (!controller.signal.aborted) await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+    })();
+    return () => { controller.abort(); clearTimeout(timer); setLiveFeed(false); };
+  }, [followUser]);
   const setRole = (r: Role) => {
     if (!LIVE) { setRoleInner(r); notify(`Viewing as ${r}`); return; }
     if (!roleSwitch) { notify('Role switching is unavailable for this account'); return; }
@@ -97,7 +133,7 @@ export function Provider({ children }: { children: React.ReactNode; }) {
         setUser(response.user); setRoleInner(response.user.role);
         setRoleSwitch(response.demoRoleSwitch);
         await refresh();
-        notify('Welcome to Wethaq');
+        notify(response.user.mustChangePassword ? 'Choose a new password to continue' : 'Welcome to Wethaq');
         return null;
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) { session.clear(); setAuth(false); }
@@ -119,6 +155,7 @@ export function Provider({ children }: { children: React.ReactNode; }) {
     if (!/^SP-\d{3}$/.test(partId)) throw new Error('Invalid part reference');
     if (LIVE) {
       const result = await liveApi.createShipment({ partId, location, qty, month, note });
+      mine(result.txId);
       await refresh();
       notify(`${result.id} — shipment request created`);
       return result.id;
@@ -132,7 +169,7 @@ export function Provider({ children }: { children: React.ReactNode; }) {
     const s = data.shipments.find(x => x.id === shipmentId); const v = validate(operation, s, qty);
     if (LIVE) {
       try {
-        const result = await liveApi.operate(operation, shipmentId, qty, note); await refresh();
+        const result = await liveApi.operate(operation, shipmentId, qty, note); mine(result.txId); await refresh();
         const label = operation === 'dispatch' ? 'Dispatch' : operation === 'transit' ? 'In-transit update' : 'Receipt';
         notify(result.passed ? `${label} committed on ${ledger === 'local' ? 'the local development ledger' : 'Fabric'} · block ${result.block}` : `Rejected by ${result.source === 'application' ? 'the application' : 'the smart contract'}: ${result.reason}`);
         return ledgerCheck(result, v);
@@ -163,7 +200,7 @@ export function Provider({ children }: { children: React.ReactNode; }) {
   };
   const invalidDemo = async (scenario: string, shipmentId?: string): Promise<CheckResult & { transactionId: string }> => {
     if (LIVE) {
-      const result = await liveApi.invalid(scenario, shipmentId); await refresh();
+      const result = await liveApi.invalid(scenario, shipmentId); mine(result.txId); await refresh();
       notify(result.passed ? 'Unexpected: the operation was accepted by the smart contract' : `Smart contract rejected the operation: ${result.reason}`);
       return { ...ledgerCheck(result), transactionId: result.transactionId };
     }
@@ -193,14 +230,33 @@ export function Provider({ children }: { children: React.ReactNode; }) {
         : visible ? [...prev.alerts, { ...visible, acknowledged: true }] : prev.alerts };
     });
   };
-  const addUser = (nextUser: Omit<DemoUser, 'id' | 'lastSeen'>) => {
-    if (role !== 'Admin') return;
+  const addUser = async (nextUser: Omit<DemoUser, 'id' | 'lastSeen'>): Promise<IssuedUser | null> => {
+    if (role !== 'Admin') return null;
     if (LIVE) {
       const { active: _active, ...payload } = nextUser;
-      void liveApi.addUser(payload).then(refresh).catch(failure); return;
+      try { const created = await liveApi.addUser(payload); await refresh(); notify(`${created.name} added · temporary password issued`); return created; }
+      catch (err) { failure(err); return null; }
     }
     setData(prev => ({ ...prev, users: [{ ...nextUser, id: uid('USR'), lastSeen: new Date().toISOString() }, ...prev.users] }));
     notify('Demo user created');
+    return null;
+  };
+  const resetPassword = async (id: string): Promise<IssuedUser | null> => {
+    if (!LIVE || role !== 'Admin') return null;
+    try { const issued = await liveApi.resetPassword(id); await refresh(); notify(`New temporary password issued for ${issued.name}`); return issued; }
+    catch (err) { failure(err); return null; }
+  };
+  const changePassword = async (currentPassword: string, newPassword: string): Promise<string | null> => {
+    if (!LIVE) return 'Passwords can be changed only in Live Mode';
+    try {
+      const response = await liveApi.changePassword(currentPassword, newPassword);
+      session.set(response.token); setUser(response.user);
+      await refresh(); notify('Password changed');
+      return null;
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) { session.clear(); setAuth(false); setUser(null); }
+      return err instanceof Error ? err.message : 'The password could not be changed';
+    }
   };
   const setUserRole = (id: string, nextRole: Role) => {
     if (role !== 'Admin') return;
@@ -223,8 +279,8 @@ export function Provider({ children }: { children: React.ReactNode; }) {
     live: LIVE, ledger, user, refresh, roleSwitch, apiDown,
     role, authenticated, setRole, login, logout, data: visibleData, toast, notify,
     dismiss: () => setToast(''), createRequest, validate, perform, invalidDemo, verifyShipment,
-    ack, addUser, setUserRole, toggleUser, resetDemo
-  }), [role, authenticated, visibleData, toast, user, roleSwitch, apiDown, ledger]);
+    ack, addUser, setUserRole, toggleUser, resetDemo, changePassword, resetPassword, liveFeed
+  }), [role, authenticated, visibleData, toast, user, roleSwitch, apiDown, ledger, liveFeed]);
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>;
 }
 export function useStore() { const ctx = useContext(Ctx); if (!ctx) throw Error('Store is missing'); return ctx; }

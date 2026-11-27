@@ -1,7 +1,8 @@
 import { randomBytes } from 'node:crypto';
+import { EventEmitter } from 'node:events';
 import type { Db, Queryable } from '../db.js';
 import { applyOperation, checkRules, NEXT_STATUS, type LedgerRecord, type LedgerShipment } from '../../../chaincode/shipment/src/rules.js';
-import type { Ledger, LedgerOutcome } from './types.js';
+import type { Ledger, LedgerCommitEvent, LedgerOutcome } from './types.js';
 
 /**
  * Local development ledger (LEDGER_MODE=local).
@@ -14,6 +15,13 @@ export function localLedger(db: Db): Ledger {
   const putState = (q: Queryable, key: string, value: unknown) => q.query('INSERT INTO local_ledger_state (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value', [key, JSON.stringify(value)]);
   const commit = async (q: Queryable, record: LedgerRecord) => (await q.query<{ block: number }>('INSERT INTO local_ledger_blocks (tx_id, payload, timestamp) VALUES ($1, $2, $3) RETURNING block', [record.txId, JSON.stringify(record), record.timestamp])).rows[0].block;
   const newTx = () => ({ txId: randomBytes(32).toString('hex'), timestamp: new Date().toISOString() });
+  const events = new EventEmitter();
+  events.setMaxListeners(0);
+  // Emitted after the database transaction commits, mirroring the chaincode events Fabric emits.
+  const announce = (name: string) => (outcome: LedgerOutcome) => {
+    events.emit('commit', { name, txId: outcome.txId, block: outcome.block, record: outcome.record } satisfies LedgerCommitEvent);
+    return outcome;
+  };
 
   return {
     kind: 'local',
@@ -26,7 +34,7 @@ export function localLedger(db: Db): Ledger {
       await putState(q, shipmentId, shipment);
       const block = await commit(q, record);
       return { passed: true, txId, block, timestamp, record, shipment } satisfies LedgerOutcome;
-    }),
+    }).then(announce('ShipmentRegistered')),
     submit: ({ operation, shipmentId, qty, org }) => db.transaction(async q => {
       const { txId, timestamp } = newTx();
       const current = await getState(q, shipmentId);
@@ -44,13 +52,17 @@ export function localLedger(db: Db): Ledger {
       }
       const block = await commit(q, record);
       return { passed: check.passed, txId, block, timestamp, record, shipment, failedRule: check.failedRule, failure: check.failure, reason: check.reason } satisfies LedgerOutcome;
-    }),
+    }).then(outcome => announce(outcome.passed ? 'ShipmentUpdated' : 'OperationRejected')(outcome)),
     async read(shipmentId) {
       return (await db.query<{ value: LedgerShipment }>('SELECT value FROM local_ledger_state WHERE key = $1', [shipmentId])).rows[0]?.value ?? null;
     },
     async history(shipmentId) {
       return (await db.query<{ payload: LedgerRecord }>("SELECT payload FROM local_ledger_blocks WHERE payload->>'shipmentId' = $1 ORDER BY block", [shipmentId])).rows.map(r => r.payload);
     },
-    close: async () => undefined
+    onCommit(listener) {
+      events.on('commit', listener);
+      return () => { events.off('commit', listener); };
+    },
+    close: async () => { events.removeAllListeners(); }
   };
 }

@@ -58,6 +58,7 @@ export class ShipmentContract extends Contract {
     const record: LedgerRecord = { docType: 'record', txId, shipmentId, partId, operation: 'request', quantity: qty, org: msp, toStatus: 'Requested', status: 'Committed', timestamp };
     await ctx.stub.putState(shipmentId, Buffer.from(stableStringify(shipment)));
     await this.putRecord(ctx, record);
+    ctx.stub.setEvent('ShipmentRegistered', Buffer.from(stableStringify(record)));
     return stableStringify({ passed: true, record, shipment } satisfies Outcome);
   }
 

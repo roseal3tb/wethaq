@@ -14,7 +14,8 @@
     "seed": "tsx src/cli/seed.ts",
     "setup": "npm run migrate && npm run seed",
     "test": "vitest run",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "nfr": "tsx src/cli/nfr.ts"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.7",

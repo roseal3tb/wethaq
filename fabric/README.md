@@ -26,6 +26,9 @@ npm run dev
 `./fabric/up.sh` always starts a fresh ledger, so run `npm run seed -- --reset` after it to keep
 PostgreSQL and the ledger in step. Stop everything with `./fabric/down.sh`.
 
+`up.sh` also sets the orderer's `BatchTimeout` to 500 ms (the sample network waits 2 s), so a single transaction
+commits in about half a second. A block still closes early when 10 transactions are waiting.
+
 ## How the chaincode runs
 
 `up.sh` deploys the chaincode as a service (`network.sh deployCCAAS`): `docker build` makes an image from
@@ -43,6 +46,8 @@ approval by both organizations, commit with the endorsement policy) is the same 
 * The chaincode stores one state entry per shipment and one record per operation, including rejected attempts.
   Only the fields of Table 4.8 go on the ledger.
 * `GET /api/shipments/:id/verify` reads the shipment and its history from the ledger and compares it with PostgreSQL.
+* It listens to the chaincode events (`ShipmentRegistered`, `ShipmentUpdated`, `OperationRejected`) of every new block
+  and forwards them to open dashboards through `GET /api/events`.
 
 Settings (in `wethaq-api/.env`, all optional): `FABRIC_TEST_NETWORK` (default `../fabric/fabric-samples/test-network`),
 `FABRIC_CHANNEL` (default `wethaq`), `FABRIC_CHAINCODE` (default `wethaq`), `FABRIC_ORG1_ENDPOINT` (`localhost:7051`),

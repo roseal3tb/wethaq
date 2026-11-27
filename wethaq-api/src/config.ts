@@ -7,6 +7,8 @@ export interface Config {
   demoRoleSwitch: boolean;
   ledgerMode: 'local' | 'fabric';
   corsOrigin?: string;
+  /** Hours before a temporary password issued by an administrator stops working (default 24). */
+  tempPasswordHours: number;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -22,6 +24,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     jwtTtl: env.JWT_TTL || '8h',
     demoRoleSwitch: env.DEMO_ROLE_SWITCH !== 'false',
     ledgerMode,
-    corsOrigin: env.CORS_ORIGIN || undefined
+    corsOrigin: env.CORS_ORIGIN || undefined,
+    tempPasswordHours: Number(env.TEMP_PASSWORD_HOURS || 24)
   };
 }

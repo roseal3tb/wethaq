@@ -23,5 +23,16 @@ export interface Ledger {
   submit(input: { operation: LedgerOperation; shipmentId: string; qty: number; org: OrgMsp }): Promise<LedgerOutcome>;
   read(shipmentId: string): Promise<LedgerShipment | null>;
   history(shipmentId: string): Promise<LedgerRecord[]>;
+  /** Calls the listener for every transaction committed on the ledger, including those submitted by other clients. Returns an unsubscribe function. */
+  onCommit(listener: (event: LedgerCommitEvent) => void): () => void;
   close(): Promise<void>;
+}
+
+/** A committed ledger transaction, as reported by the ledger's event stream. */
+export interface LedgerCommitEvent {
+  /** Chaincode event name: ShipmentRegistered, ShipmentUpdated or OperationRejected. */
+  name: string;
+  txId: string;
+  block?: number;
+  record: LedgerRecord;
 }

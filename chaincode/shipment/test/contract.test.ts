@@ -32,6 +32,7 @@ beforeEach(async () => {
 
 describe('ShipmentContract', () => {
   it('registers a request only from Org1, and only once', async () => {
+    expect(stub.events.at(-1)).toMatchObject({ name: 'ShipmentRegistered', payload: expect.stringContaining('"operation":"request"') });
     await expect(contract.RegisterRequest(ctx('Org2MSP'), 'SHP-2026-0002', 'SP-001', '5')).rejects.toThrow(/Only Org1/);
     await expect(contract.RegisterRequest(ctx('Org1MSP'), 'SHP-2026-0001', 'SP-001', '5')).rejects.toThrow(/already exists/);
     await expect(contract.RegisterRequest(ctx('Org1MSP'), 'SHP-2026-0003', 'SP-001', '0')).rejects.toThrow(/positive/);
