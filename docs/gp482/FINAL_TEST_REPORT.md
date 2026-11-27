@@ -8,8 +8,16 @@ change to the NFR script described in note ⁴, committed afterwards as `301863e
 [evidence/completion-2026-11-27/final-run/](evidence/completion-2026-11-27/final-run/exit-codes.txt). Before the
 run the Fabric network was recreated (`./fabric/reset.sh --yes`, `./fabric/up.sh`) and the database seeded on it.
 
-**GitHub Actions has not run any of these workflows.** Everything below ran locally. The CI jobs were simulated
-locally where possible (migrations, Docker), which is not the same as a passing GitHub run.
+**GitHub Actions, first run (pull request #13, 2026-11-27).**
+* *Responsive browser QA* passed, including the new live-mode job.
+* In *Wethaq quality checks*, every job passed except one. The *Database · migrations* job failed at its last step,
+  the dump and restore. The runner's `pg_dump` is newer than the PostgreSQL 16 service, and `pg_restore` into 16
+  refused `SET transaction_timeout`.
+* The fix runs `pg_dump` and `pg_restore` inside the PostgreSQL 16 container. It was checked locally with the same
+  container image. It has not yet run on GitHub.
+* The manual *Fabric integration* workflow has not been run.
+
+Everything else on this page ran locally.
 
 ## Final run (branch `gp482-final`)
 
@@ -78,7 +86,7 @@ The test counts grew because of new tests, and no existing test was removed or w
 
 | What | Why |
 |---|---|
-| GitHub Actions workflows (`checks.yml`, `browser-qa.yml`, `fabric.yml`) | they run on GitHub when the branch is pushed and a pull request is opened. They have not run yet, so no CI result is claimed |
+| A complete passing run of `checks.yml` on GitHub; the manual `fabric.yml` | the first run failed one step (see the top of this page); the fix needs a new pull request. `fabric.yml` is started by hand |
 | Chaincode image build (`docker build chaincode/shipment`) | npm cannot reach the registry from build containers in this sandbox (`Exit handler never called`). The network used the image built earlier; the chaincode source is unchanged since b92b950. The API image was built with a sandbox-only proxy step that is not committed |
 | Mermaid diagrams | not re-parsed in this run. No diagram was changed on this branch, only links |
 | Hosted deployment | not authorized and not done (see DEPLOYMENT_GUIDE.md §9) |
