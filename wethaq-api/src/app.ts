@@ -16,6 +16,8 @@ import { inventoryPositions } from './services/inventory.js';
 import { startSync } from './services/operations.js';
 import { createShipment, idempotencyKey, invalidDemo, operate, verifyShipment, type RequestContext } from './services/shipments.js';
 import { loadState } from './services/state.js';
+import { listAlerts, listAudit, listLedgerRecords, listShipments, shipmentTrace } from './services/lists.js';
+import { consistencyReport } from './services/consistency.js';
 import { analyticsRouter, analyticsV1Router } from './services/analytics.js';
 import { addUser, changePassword, resetPassword, updateUser } from './services/users.js';
 
@@ -159,6 +161,12 @@ export function createApp({ db, ledger, config, bus = new EventBus() }: { db: Db
     }));
   }
 
+  /** Paginated, filtered lists of the reporting copy (/state returns everything at once for the dashboard). */
+  api.get('/shipments', auth, wrap(async (req, res) => res.json(await listShipments(db, req.query))));
+  api.get('/shipments/:id', auth, wrap(async (req, res) => res.json(await shipmentTrace(db, ledger, req.params.id, req.query))));
+  api.get('/ledger/records', auth, wrap(async (req, res) => res.json(await listLedgerRecords(db, req.query))));
+  api.get('/alerts', auth, wrap(async (req, res) => res.json(await listAlerts(db, req.query))));
+
   api.get('/shipments/:id/verify', auth, wrap(async (req, res) => res.json(await verifyShipment(db, ledger, req.params.id))));
 
   api.post('/demo/invalid', auth, requireRole('demo'), wrap(async (req, res) => {
@@ -175,9 +183,12 @@ export function createApp({ db, ledger, config, bus = new EventBus() }: { db: Db
     await audit(db, { action: 'ledger.reconcile', outcome: 'ok', userId: req.user!.id, requestId: (req as { requestId?: string }).requestId, detail: { ...report, errors: report.errors.length } });
     res.json(report);
   }));
-  api.get('/admin/audit', auth, requireRole('manageUsers'), wrap(async (req, res) => {
-    const limit = Math.min(500, Math.max(1, Number(req.query.limit) || 100));
-    res.json((await db.query('SELECT audit_id AS id, at, request_id AS "requestId", user_id AS "userId", org, action, target, outcome, detail FROM audit_log ORDER BY audit_id DESC LIMIT $1', [limit])).rows);
+  api.get('/admin/audit', auth, requireRole('manageUsers'), wrap(async (req, res) => res.json(await listAudit(db, req.query))));
+  /** Compares every shipment in PostgreSQL with the ledger, and the event checkpoint with the ledger height. Read-only. */
+  api.get('/admin/consistency', auth, requireRole('manageUsers'), wrap(async (req, res) => {
+    const report = await consistencyReport(db, ledger);
+    await audit(db, { action: 'ledger.consistency_check', outcome: 'ok', userId: req.user!.id, requestId: (req as { requestId?: string }).requestId, detail: { consistent: report.consistent, ...report.summary, ledgerHeight: report.ledgerHeight } });
+    res.json(report);
   }));
 
   api.post('/alerts/:id/ack', auth, requireRole('ack'), wrap(async (req, res) => {

@@ -94,6 +94,9 @@ export function localLedger(db: Db): Ledger {
       events.on('commit', enqueue);
       return () => { stopped = true; events.off('commit', enqueue); };
     },
+    async height() {
+      return Number((await db.query<{ h: number }>('SELECT COALESCE(max(block), 0) + 1 AS h FROM local_ledger_blocks')).rows[0].h);
+    },
     async health() {
       await db.query('SELECT 1 FROM local_ledger_blocks LIMIT 1');
       return { ok: true, detail: 'Local development ledger in PostgreSQL (not Hyperledger Fabric)' };

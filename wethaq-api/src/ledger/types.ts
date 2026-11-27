@@ -97,6 +97,8 @@ export interface Ledger {
    * Returns a function that stops listening.
    */
   onCommit(listener: (event: LedgerCommitEvent) => void | Promise<void>, options?: { fromBlock?: number }): () => void;
+  /** The number of blocks on the channel (block numbers run from 0 for Fabric, 1 for the local ledger, up to height - 1). */
+  height(): Promise<number>;
   health(): Promise<LedgerHealth>;
   close(): Promise<void>;
 }
