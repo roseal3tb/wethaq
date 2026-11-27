@@ -58,7 +58,7 @@ Severity is the team's judgement for this prototype on one machine. It is not a 
 | F10 | The audit trigger stops application UPDATE and DELETE, but the table owner can drop it or TRUNCATE the table | Low | **Accepted**: documented. Separating the owner role from the API's role is recommended for a real installation |
 | F11 | The test network uses fabric-samples defaults: one orderer, one peer per organization, CA registrar passwords from the samples, TLS certificates created by the scripts | High for production, acceptable for the prototype | **Accepted limitation**: not a production network. A real deployment needs its own CAs, changed registrar secrets, several orderers and HSM or protected key storage |
 | F12 | PostgreSQL connections inside `deploy/compose.yml` are not encrypted | Low | **Accepted**: the database is only on an internal Docker network on the same host. Use TLS if the database moves to another host |
-| F13 | CI workflows have never run on GitHub, and `actions/setup-node` is referenced by its tag (`@v4`), not a commit SHA, because the SHA could not be looked up from here | Low | **Open**: pin after the first run on GitHub |
+| F13 | CI has run once on GitHub (one step failed, since fixed), and `actions/setup-node` is referenced by its tag (`@v4`), not a commit SHA, because the SHA could not be looked up from here | Low | **Open**: pin after the first run on GitHub |
 | F14 | A new database on a channel that already has shipments produces ids the chaincode refuses (no data is corrupted; the request fails with 502) | Low | **Documented** (DEPLOYMENT_GUIDE.md §9): use a new channel per installation |
 
 ## 4. Not done

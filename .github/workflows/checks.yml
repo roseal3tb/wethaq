@@ -146,11 +146,15 @@ jobs:
           { psql -h 127.0.0.1 -U wethaq -d wethaq -c "DELETE FROM audit_log" 2>&1 || true; } | grep "append-only"
           { psql -h 127.0.0.1 -U wethaq -d wethaq -c "UPDATE shipments SET dispatched_qty = requested_qty + 1 WHERE status = 'Dispatched'" 2>&1 || true; } | grep "shipments_dispatched_le_requested"
       - name: Back up with pg_dump and restore into another database; every table must be identical
+        # pg_dump and pg_restore run inside the PostgreSQL 16 container, so their version matches the server's
+        # (the runner's own client is newer and writes settings, such as transaction_timeout, that 16 refuses).
+        env:
+          PG_CONTAINER: ${{ job.services.postgres.id }}
         run: |
           set -e
-          pg_dump -h 127.0.0.1 -U wethaq --format=custom --no-owner wethaq -f wethaq.dump
-          createdb -h 127.0.0.1 -U wethaq wethaq_restore
-          pg_restore -h 127.0.0.1 -U wethaq --no-owner --exit-on-error -d wethaq_restore wethaq.dump
+          docker exec "$PG_CONTAINER" pg_dump -U wethaq --format=custom --no-owner wethaq > wethaq.dump
+          docker exec "$PG_CONTAINER" createdb -U wethaq wethaq_restore
+          docker exec -i "$PG_CONTAINER" pg_restore -U wethaq --no-owner --exit-on-error -d wethaq_restore < wethaq.dump
           q="SELECT string_agg(t || '=' || (xpath('/row/h/text()', query_to_xml('SELECT md5(coalesce(string_agg(x::text, '''' ORDER BY x::text), '''')) AS h FROM ' || t || ' x', false, true, '')))[1]::text, ' ' ORDER BY t) FROM unnest(ARRAY['users','parts','inventory','shipments','shipment_events','ledger_records','alerts','ledger_operations','audit_log','local_ledger_blocks','schema_migrations']) t"
           a=$(psql -h 127.0.0.1 -U wethaq -d wethaq -Atc "$q"); b=$(psql -h 127.0.0.1 -U wethaq -d wethaq_restore -Atc "$q")
           echo "$a" | tr ' ' '\n'

@@ -5,8 +5,8 @@ been pushed, merged or deployed. The GP481 report and the research results in `a
 
 **Status.** The backend, the Hyperledger Fabric integration and the operations work are complete for a
 single-machine academic prototype. Every suite was run on a freshly created Fabric 2.5.12 network and passed. The
-system is **not 100% complete**, and it is not production-ready or deployed. The GitHub Actions workflows have not
-run yet. Nothing has been hosted. User testing was deferred. Cancellation and return workflows do not exist. The
+system is **not 100% complete**, and it is not production-ready or deployed. The first GitHub Actions run passed
+except one database step, which is fixed but not yet re-run. Nothing has been hosted. User testing was deferred. Cancellation and return workflows do not exist. The
 open items are listed in [REMAINING_BLOCKERS.md](REMAINING_BLOCKERS.md).
 
 ## 1. What this branch added
@@ -22,7 +22,7 @@ open items are listed in [REMAINING_BLOCKERS.md](REMAINING_BLOCKERS.md).
 | Analytics verification | `MANIFEST.json` of the result files, checked by the API (verified, modified, outdated, unverified) and in CI. Precomputed results are labelled as such. Missing or damaged files answer 503 with a reason | analytics-files tests; analysis reproduced byte for byte |
 | First installation | `npm run bootstrap`: reference data and one administrator with a temporary password, without demonstration data | tests; PostgreSQL and container runs |
 | Single-server deployment (prepared) | `deploy/compose.yml` (PostgreSQL, API in Fabric mode, Caddy with HTTPS and a CSP), `production.env.example` | full workflow through Caddy on Fabric, locally; CSP browser check with a negative control |
-| CI | jobs for lint, migrations (twice, plus dump and restore), analysis manifest, Docker images (mirror base images, bounded retries, optional login), live browser tests, the CSP hash; extended secret scan | each step run locally; **not run on GitHub** |
+| CI | jobs for lint, migrations (twice, plus dump and restore), analysis manifest, Docker images (mirror base images, bounded retries, optional login), live browser tests, the CSP hash; extended secret scan | first GitHub run: all jobs passed except the database dump step, fixed afterwards |
 | Lint | ESLint over the whole repository with the existing config | 0 errors (106 warnings) |
 | Documentation | the files in §5 | — |
 
@@ -47,7 +47,7 @@ note 4).
 | API container image | COMPLETE AND VERIFIED (built with a sandbox-only npm proxy step) |
 | Chaincode container image on this branch | IMPLEMENTED BUT NOT VERIFIED (B11) |
 | Single-server configuration | COMPLETE AND VERIFIED locally; not deployed |
-| CI workflows | IMPLEMENTED BUT NOT VERIFIED (B1) |
+| CI workflows | PARTIALLY COMPLETE: the first GitHub run passed except the database dump step, which is fixed but not yet re-run (B1) |
 | Hosted deployment | BLOCKED (B2) |
 | Cancellation, returns, multi-step partial receipts | PARTIALLY COMPLETE (B5) |
 | User acceptance testing | BLOCKED (B9) |

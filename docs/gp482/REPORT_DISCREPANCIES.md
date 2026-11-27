@@ -85,6 +85,6 @@ These statements would be wrong, given the evidence above:
 * "Deployed", "in production" or "production-ready". Nothing was deployed to a server. The Vercel site is the
   demonstration without a backend. The single-server configuration was only checked locally.
 * "Real-time forecasting". The forecasts are precomputed results of the offline analysis.
-* "CI passes". The GitHub Actions workflows have not run yet.
+* "CI passes", until a complete run of `checks.yml` passes on GitHub (the first run failed one step, since fixed).
 * "Security-certified", "penetration-tested" or "WCAG-compliant".
 * "Per-user blockchain signatures". The ledger is signed per organization.

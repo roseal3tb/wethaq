@@ -32,6 +32,8 @@ createdb -O wethaq wethaq_restore
 pg_restore --no-owner -d postgres://wethaq:<password>@<host>:<port>/wethaq_restore wethaq.dump
 ```
 
+Use `pg_dump` and `pg_restore` of the same major version as the server, for example the ones inside the PostgreSQL container. A dump written by a newer client can contain settings that an older server refuses (PostgreSQL 16 refuses `transaction_timeout`, which version 17 writes). This happened in the first GitHub Actions run.
+
 Never restore over the database that is in use. Restore into a new one, check it, then switch `DATABASE_URL`.
 
 * An isolated dump and restore of the development database gave identical row counts and content checksums for
@@ -44,7 +46,7 @@ Never restore over the database that is in use. Restore into a new one, check it
 * What cannot be recovered from the ledger: users, inventory changes, alerts, notes and audit rows written after the
   backup.
 
-CI repeats the dump and restore on every pull request (job *migrations*). That job has not run on GitHub yet.
+CI repeats the dump and restore on every pull request (job *migrations*). In its first GitHub run the restore failed because of the version mismatch described above; it now uses the container's own tools.
 
 ## 3. Fabric network
 

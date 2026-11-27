@@ -8,7 +8,7 @@ Because of the items below, the project is **not** 100% complete.
 
 | # | Item | Status | Why | What unblocks it |
 | --- | --- | --- | --- | --- |
-| B1 | GitHub Actions runs of `checks.yml`, `browser-qa.yml` and `fabric.yml` | BLOCKED | the workflows run only on GitHub. This work is not pushed, and pushing is the owner's decision | push the branch and open a pull request. Then read the results: a job may fail on GitHub even though its steps passed locally |
+| B1 | GitHub Actions: a passing run of `checks.yml` after the dump fix; `fabric.yml` (manual) | PARTIALLY COMPLETE | first run on pull request #13: `browser-qa.yml` passed. In `checks.yml` every job passed except the database dump and restore step (pg_dump version mismatch), which is now fixed | push the fix and open a pull request; run *Fabric integration (manual)* from the Actions tab |
 | B2 | Hosted deployment (API, PostgreSQL and Fabric on a server, dashboard in live mode) | BLOCKED | not authorized; it needs a server or VM and a domain name, and may cost money. Nothing was provisioned | the owner chooses a host and authorizes it. `deploy/` and DEPLOYMENT_GUIDE.md §9 are ready and were checked locally |
 | B3 | Revoking the superseded `wethaq-app` certificate after a renewal | IMPLEMENTED BUT NOT VERIFIED on a live identity | a change to the channel configuration of the existing network; only done with explicit approval. The same script was verified on a disposable identity | the owner runs `./fabric/revoke-identity.sh <1\|2> --certificate <old cert.pem> superseded` |
 | B4 | Merge to `main` | BLOCKED | the owner merges. Vercel deploys `main` automatically; this branch leaves demo mode unchanged (54 demonstration tests pass) | review and merge |
