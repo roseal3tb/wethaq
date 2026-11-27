@@ -5,6 +5,11 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+env:
+  # Official Docker images from the Amazon ECR Public mirror of Docker Hub's library (the same images), so the
+  # checks do not depend on Docker Hub's anonymous pull limit. Set the repository variables to use another registry.
+  NODE_IMAGE: ${{ vars.WETHAQ_NODE_IMAGE || 'public.ecr.aws/docker/library/node:22-bookworm-slim' }}
+  CHAINCODE_NODE_IMAGE: ${{ vars.WETHAQ_CHAINCODE_NODE_IMAGE || 'public.ecr.aws/docker/library/node:20-bookworm-slim' }}
 jobs:
   validate:
     name: TypeScript, unit tests and production build
@@ -14,6 +19,11 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
+      - name: Set up Node.js with the npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
       - name: Show runtime
         run: node --version && npm --version
       - name: Install project dependencies
@@ -25,6 +35,29 @@ jobs:
       - name: Production build
         run: npm run build
 
+  lint:
+    name: ESLint (dashboard, API, chaincode, tests)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Node.js with the npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install project dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install the ESLint tool chain used by eslint.config.js (pinned, not saved to package.json)
+        run: >-
+          npm install --no-save --no-audit --no-fund eslint@9.39.5 @eslint/js@9.39.5 typescript-eslint@8.74.0
+          eslint-plugin-react-hooks@5.2.0 eslint-plugin-react-refresh@0.4.26 globals@16.5.0
+          eslint-plugin-prettier@5.5.7 eslint-config-prettier@10.1.9 prettier@3.10.1
+      - name: Lint (errors fail; warnings are reported)
+        run: npx eslint .
+
   api:
     name: API · typecheck and tests (local ledger, in-process PostgreSQL)
     runs-on: ubuntu-latest
@@ -33,6 +66,14 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
+      - name: Set up Node.js with the npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            wethaq-api/package-lock.json
       - name: Install dashboard dependencies (the API shares its types and seed data)
         run: npm install --no-audit --no-fund
       - name: Install API dependencies
@@ -44,6 +85,74 @@ jobs:
       - name: Tests
         run: npm test
         working-directory: wethaq-api
+      - name: The OpenAPI document is up to date with its generator
+        run: python3 scripts/openapi.py && git diff --exit-code -- openapi.json
+        working-directory: wethaq-api
+
+  migrations:
+    name: Database · migrations on PostgreSQL 16, seed, dump and restore
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: public.ecr.aws/docker/library/postgres:16-alpine
+        env:
+          POSTGRES_USER: wethaq
+          POSTGRES_PASSWORD: wethaq
+          POSTGRES_DB: wethaq
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U wethaq" --health-interval 2s --health-retries 30
+    env:
+      DATABASE_URL: postgres://wethaq:wethaq@127.0.0.1:5432/wethaq
+      PGPASSWORD: wethaq
+      LEDGER_MODE: local
+      DEMO_PASSWORD: ci-demo-password-1
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Node.js with the npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            wethaq-api/package-lock.json
+      - name: Install dependencies
+        run: |
+          npm install --no-audit --no-fund
+          (cd wethaq-api && npm ci --no-audit --no-fund)
+      - name: PostgreSQL client tools
+        run: command -v pg_dump || (sudo apt-get update && sudo apt-get install -y postgresql-client)
+      - name: Apply every migration to an empty database, then again (nothing to do the second time)
+        working-directory: wethaq-api
+        run: |
+          npm run migrate | tee migrate1.txt
+          grep -q "004_integrity.sql" migrate1.txt
+          npm run migrate | tee migrate2.txt
+          grep -q "up to date" migrate2.txt
+      - name: Seed through the local development ledger
+        working-directory: wethaq-api
+        run: npm run seed
+      - name: Integrity rules are in force (each refused change must report its rule)
+        run: |
+          set -eo pipefail
+          psql -h 127.0.0.1 -U wethaq -d wethaq -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM shipments" | grep -qx 48
+          psql -h 127.0.0.1 -U wethaq -d wethaq -v ON_ERROR_STOP=1 -c "INSERT INTO audit_log (action, outcome) VALUES ('ci.check', 'ok')"
+          { psql -h 127.0.0.1 -U wethaq -d wethaq -c "UPDATE audit_log SET outcome = 'x'" 2>&1 || true; } | grep "append-only"
+          { psql -h 127.0.0.1 -U wethaq -d wethaq -c "DELETE FROM audit_log" 2>&1 || true; } | grep "append-only"
+          { psql -h 127.0.0.1 -U wethaq -d wethaq -c "UPDATE shipments SET dispatched_qty = requested_qty + 1 WHERE status = 'Dispatched'" 2>&1 || true; } | grep "shipments_dispatched_le_requested"
+      - name: Back up with pg_dump and restore into another database; every table must be identical
+        run: |
+          set -e
+          pg_dump -h 127.0.0.1 -U wethaq --format=custom --no-owner wethaq -f wethaq.dump
+          createdb -h 127.0.0.1 -U wethaq wethaq_restore
+          pg_restore -h 127.0.0.1 -U wethaq --no-owner --exit-on-error -d wethaq_restore wethaq.dump
+          q="SELECT string_agg(t || '=' || (xpath('/row/h/text()', query_to_xml('SELECT md5(coalesce(string_agg(x::text, '''' ORDER BY x::text), '''')) AS h FROM ' || t || ' x', false, true, '')))[1]::text, ' ' ORDER BY t) FROM unnest(ARRAY['users','parts','inventory','shipments','shipment_events','ledger_records','alerts','ledger_operations','audit_log','local_ledger_blocks','schema_migrations']) t"
+          a=$(psql -h 127.0.0.1 -U wethaq -d wethaq -Atc "$q"); b=$(psql -h 127.0.0.1 -U wethaq -d wethaq_restore -Atc "$q")
+          echo "$a" | tr ' ' '\n'
+          [ "$a" = "$b" ] && echo "Restored copy identical"
 
   chaincode:
     name: Chaincode · build and tests
@@ -53,12 +162,82 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
+      - name: Set up Node.js with the npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: chaincode/shipment/package-lock.json
       - name: Install
         run: npm ci --no-audit --no-fund
         working-directory: chaincode/shipment
       - name: Build and test
         run: npm test
         working-directory: chaincode/shipment
+
+  analysis:
+    name: Analysis results match their checksum manifest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Result files and the scripts that produced them are unchanged since MANIFEST.json
+        run: python3 -I analysis/scripts/check_manifest.py
+      - name: The dashboard's copies of the exported results are the published ones
+        run: |
+          cmp analysis/results/raf-forecasts.json src/data/raf-forecasts.json && echo "src/data/raf-forecasts.json matches analysis/results"
+
+  docker:
+    name: Docker · build the API and chaincode images, start the API with PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Sign in to Docker Hub when credentials are configured (optional; raises the pull limit)
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ]; then
+            echo "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
+          else
+            echo "No Docker Hub credentials configured: using $NODE_IMAGE"
+          fi
+      - name: Build the API image (up to 3 attempts, 30 s and 60 s apart, for registry errors)
+        run: |
+          for attempt in 1 2 3; do
+            docker build -f wethaq-api/Dockerfile --build-arg NODE_IMAGE="$NODE_IMAGE" -t wethaq-api:ci . && exit 0
+            [ "$attempt" -lt 3 ] && { echo "Build failed (attempt $attempt); retrying in $((attempt * 30)) s"; sleep $((attempt * 30)); }
+          done
+          exit 1
+      - name: Build the chaincode image (up to 3 attempts)
+        run: |
+          for attempt in 1 2 3; do
+            docker build --build-arg NODE_IMAGE="$CHAINCODE_NODE_IMAGE" -t wethaq_ccaas_image:ci chaincode/shipment && exit 0
+            [ "$attempt" -lt 3 ] && { echo "Build failed (attempt $attempt); retrying in $((attempt * 30)) s"; sleep $((attempt * 30)); }
+          done
+          exit 1
+      - name: Start PostgreSQL and the API container, and check that it is ready
+        run: |
+          set -e
+          docker network create wethaq-ci
+          docker run -d --name db --network wethaq-ci -e POSTGRES_USER=wethaq -e POSTGRES_PASSWORD=wethaq -e POSTGRES_DB=wethaq public.ecr.aws/docker/library/postgres:16-alpine
+          for i in $(seq 1 30); do docker exec db pg_isready -U wethaq && break; sleep 2; done
+          docker run -d --name api --network wethaq-ci -p 127.0.0.1:4000:4000 \
+            -e DATABASE_URL=postgres://wethaq:wethaq@db:5432/wethaq -e JWT_SECRET="$(openssl rand -hex 32)" -e NODE_ENV=production wethaq-api:ci
+          for i in $(seq 1 60); do curl -fs http://127.0.0.1:4000/api/health/ready && break; sleep 2; done
+          curl -fs http://127.0.0.1:4000/api/health/ready
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4000/api/state)" = 401
+          test "$(docker exec api id -un)" = node
+          docker logs api 2>&1 | grep -E "Applied|up to date"
+      - name: API container log
+        if: failure()
+        run: docker logs api || true
 
   secrets:
     name: No keys or secrets in the repository
@@ -68,12 +247,13 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - name: Look for private keys, Fabric identities and .env files
+      - name: Look for private keys, Fabric identities, backups, .env files and common token formats
         run: |
           set -e
           found=0
-          if git ls-files | grep -E '(^|/)\.env$|(^|/)\.env\.[^e]|fabric/identities/|_sk$|keystore/' ; then echo "Tracked secret-bearing file"; found=1; fi
+          if git ls-files | grep -E '(^|/)\.env$|(^|/)\.env\.[^e]|fabric/identities/|fabric/backups/|_sk$|keystore/|\.tar\.enc$' ; then echo "Tracked secret-bearing file"; found=1; fi
           if git grep -lE -- '-----BEGIN ([A-Z]+ )?PRIVATE KEY-----' ; then echo "Private key in a tracked file"; found=1; fi
+          if git grep -lE -- '(AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{36}|xox[baprs]-[A-Za-z0-9-]{10,}|sk-[A-Za-z0-9]{32,})' -- ':!*.lock' ':!package-lock.json' ; then echo "Token-like string in a tracked file"; found=1; fi
           exit $found
 
   audit:
