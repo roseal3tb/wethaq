@@ -26,6 +26,14 @@ npm run dev
 `./fabric/up.sh` always starts a fresh ledger, so run `npm run seed -- --reset` after it to keep
 PostgreSQL and the ledger in step. Stop everything with `./fabric/down.sh`.
 
+## How the chaincode runs
+
+`up.sh` deploys the chaincode as a service (`network.sh deployCCAAS`): `docker build` makes an image from
+`chaincode/shipment/Dockerfile`, and one chaincode container per peer (`peer0org1_wethaq_ccaas`,
+`peer0org2_wethaq_ccaas`) serves the contract. The peers do not build chaincode images themselves, which
+avoids the "docker build failed … broken pipe" error of Docker Desktop on macOS. The lifecycle (install,
+approval by both organizations, commit with the endorsement policy) is the same as for a normal deployment.
+
 ## What the API does with Fabric
 
 * It connects through the Fabric Gateway SDK with the test network's `User1` identity of each organization
