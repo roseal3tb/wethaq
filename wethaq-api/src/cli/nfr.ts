@@ -235,6 +235,8 @@ async function report(ledgerKind: string, perf: ({ action: string } & ReturnType
   await writeFile(path.join(dir, `nfr-${stamp}.md`), md);
   await writeFile(path.join(dir, `nfr-${stamp}.json`), JSON.stringify({ measuredAt: when, api: API, ledger: ledgerKind, runs: RUNS, concurrency: CONCURRENCY, targetMs: TARGET_MS, performance: perf, throughput: { committed: burstOk, seconds: burstSeconds }, checks }, null, 2));
   console.log(`\n${passed} of ${checks.length} checks passed. Report: nfr-results/nfr-${stamp}.md`);
+  // A failed check must fail the command (and the CI step that runs it).
+  if (passed < checks.length) process.exitCode = 1;
 }
 
 try { await main(); } finally { await db.close(); }

@@ -66,9 +66,9 @@ jobs:
       - name: Fabric integration tests
         working-directory: wethaq-api
         run: npm run test:fabric
-      - name: Non-functional checks
+      - name: Non-functional checks (after the one-minute sign-in rate-limit window used by the tests above)
         working-directory: wethaq-api
-        run: npm run nfr
+        run: sleep 65 && npm run nfr
       - name: End-to-end browser test on Fabric (the test starts and restarts the API itself)
         run: |
           pkill -f "src/server.ts" || true
