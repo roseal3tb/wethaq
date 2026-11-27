@@ -24,3 +24,54 @@ jobs:
         run: npm run test
       - name: Production build
         run: npm run build
+
+  api:
+    name: API · typecheck and tests (local ledger, in-process PostgreSQL)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Install dashboard dependencies (the API shares its types and seed data)
+        run: npm install --no-audit --no-fund
+      - name: Install API dependencies
+        run: npm ci --no-audit --no-fund
+        working-directory: wethaq-api
+      - name: Typecheck
+        run: npm run check
+        working-directory: wethaq-api
+      - name: Tests
+        run: npm test
+        working-directory: wethaq-api
+
+  chaincode:
+    name: Chaincode · build and tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Install
+        run: npm ci --no-audit --no-fund
+        working-directory: chaincode/shipment
+      - name: Build and test
+        run: npm test
+        working-directory: chaincode/shipment
+
+  secrets:
+    name: No keys or secrets in the repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Look for private keys, Fabric identities and .env files
+        run: |
+          set -e
+          found=0
+          if git ls-files | grep -E '(^|/)\.env$|(^|/)\.env\.[^e]|fabric/identities/|_sk$|keystore/' ; then echo "Tracked secret-bearing file"; found=1; fi
+          if git grep -lE -- '-----BEGIN ([A-Z]+ )?PRIVATE KEY-----' ; then echo "Private key in a tracked file"; found=1; fi
+          exit $found

@@ -1,7 +1,10 @@
 import { Context, Contract, Info, Returns, Transaction } from 'fabric-contract-api';
-import { applyOperation, checkRules, NEXT_STATUS, type LedgerOperation, type LedgerRecord, type LedgerShipment } from './rules';
+import { applyOperation, checkRules, compareShipment, NEXT_STATUS, type LedgerOperation, type LedgerRecord, type LedgerShipment } from './rules';
 
 const RECORD = 'record';
+/** Index from a transaction id to its record (composite key tx~txId), for ReadTransactionRecord. */
+const TX_INDEX = 'tx';
+const MAX_PAGE = 200;
 
 /** Serialises with sorted keys, so every endorsing peer writes byte-identical values. */
 export function stableStringify(value: unknown): string {
@@ -41,7 +44,10 @@ export class ShipmentContract extends Contract {
   private async putRecord(ctx: Context, record: LedgerRecord) {
     const key = ctx.stub.createCompositeKey(RECORD, [record.shipmentId, record.txId]);
     await ctx.stub.putState(key, Buffer.from(stableStringify(record)));
+    await ctx.stub.putState(ctx.stub.createCompositeKey(TX_INDEX, [record.txId]), Buffer.from(stableStringify({ shipmentId: record.shipmentId })));
   }
+
+  private static readonly SHIPMENT_ID = /^[A-Za-z0-9-]{1,64}$/;
 
   /** Registers a planner's approved request. Submitted by the issuing organization (Org1). */
   @Transaction()
@@ -75,7 +81,7 @@ export class ShipmentContract extends Contract {
   public async Receive(ctx: Context, shipmentId: string, qty: string): Promise<string> { return this.operate(ctx, 'receive', shipmentId, Number(qty)); }
 
   private async operate(ctx: Context, operation: LedgerOperation, shipmentId: string, qty: number): Promise<string> {
-    if (typeof shipmentId !== 'string' || shipmentId.length > 64) throw new Error('Invalid shipment identifier');
+    if (typeof shipmentId !== 'string' || !ShipmentContract.SHIPMENT_ID.test(shipmentId)) throw new Error('Invalid shipment identifier');
     const msp = ctx.clientIdentity.getMSPID();
     const txId = ctx.stub.getTxID(); const timestamp = this.timestamp(ctx);
     const current = await this.getShipment(ctx, shipmentId);
@@ -101,6 +107,58 @@ export class ShipmentContract extends Contract {
   public async ReadShipment(ctx: Context, shipmentId: string): Promise<string> {
     const shipment = await this.getShipment(ctx, shipmentId);
     return shipment ? stableStringify(shipment) : '';
+  }
+
+  /** One transaction record by its Fabric transaction id, or '' when the ledger has no such record. */
+  @Transaction(false)
+  @Returns('string')
+  public async ReadTransactionRecord(ctx: Context, txId: string): Promise<string> {
+    if (!/^[0-9a-f]{64}$/.test(txId)) throw new Error('Invalid transaction id');
+    const pointer = await ctx.stub.getState(ctx.stub.createCompositeKey(TX_INDEX, [txId]));
+    if (!pointer || !pointer.length) return '';
+    const { shipmentId } = JSON.parse(Buffer.from(pointer).toString('utf8')) as { shipmentId: string };
+    const bytes = await ctx.stub.getState(ctx.stub.createCompositeKey(RECORD, [shipmentId, txId]));
+    return bytes && bytes.length ? Buffer.from(bytes).toString('utf8') : '';
+  }
+
+  /**
+   * Transaction records, optionally for one shipment and filtered by operation and outcome, one page at a time.
+   * Arguments: shipmentId ('' for all), operation ('' or request/dispatch/transit/receive),
+   * status ('' or Committed/Rejected), pageSize (1-200), bookmark ('' for the first page).
+   */
+  @Transaction(false)
+  @Returns('string')
+  public async QueryTransactionRecords(ctx: Context, shipmentId: string, operation: string, status: string, pageSize: string, bookmark: string): Promise<string> {
+    if (shipmentId && !ShipmentContract.SHIPMENT_ID.test(shipmentId)) throw new Error('Invalid shipment identifier');
+    if (operation && !['request', 'dispatch', 'transit', 'receive'].includes(operation)) throw new Error('Invalid operation');
+    if (status && !['Committed', 'Rejected'].includes(status)) throw new Error('Invalid status');
+    const size = Number(pageSize || 50);
+    if (!Number.isInteger(size) || size < 1 || size > MAX_PAGE) throw new Error(`pageSize must be between 1 and ${MAX_PAGE}`);
+    const { iterator, metadata } = await ctx.stub.getStateByPartialCompositeKeyWithPagination(RECORD, shipmentId ? [shipmentId] : [], size, bookmark || '');
+    const records: LedgerRecord[] = [];
+    try {
+      for (let res = await iterator.next(); !res.done; res = await iterator.next()) {
+        const record = JSON.parse(Buffer.from(res.value.value).toString('utf8')) as LedgerRecord;
+        if ((!operation || record.operation === operation) && (!status || record.status === status)) records.push(record);
+      }
+    } finally { await iterator.close(); }
+    return stableStringify({ records, bookmark: metadata?.bookmark ?? '', fetched: metadata?.fetchedRecordsCount ?? records.length });
+  }
+
+  /**
+   * Compares an off-chain copy of a shipment with the ledger state, on the peer.
+   * expected: JSON with any of partId, requestedQty, dispatchedQty, receivedQty, status, lastTxId.
+   * Returns { found, match, differences[], ledger }. Read-only: it never changes the ledger.
+   */
+  @Transaction(false)
+  @Returns('string')
+  public async VerifyShipment(ctx: Context, shipmentId: string, expected: string): Promise<string> {
+    let claim: Record<string, unknown>;
+    try { claim = JSON.parse(expected || '{}'); } catch { throw new Error('expected must be JSON'); }
+    const shipment = await this.getShipment(ctx, shipmentId);
+    if (!shipment) return stableStringify({ found: false, match: false, differences: ['The shipment has no ledger record'] });
+    const differences = compareShipment(claim, shipment);
+    return stableStringify({ found: true, match: differences.length === 0, differences, ledger: shipment });
   }
 
   /** Every record (accepted or rejected) for one shipment, in commit order. */

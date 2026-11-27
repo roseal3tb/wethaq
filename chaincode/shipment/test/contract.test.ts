@@ -6,17 +6,26 @@ class FakeStub {
   state = new Map<string, Buffer>();
   events: { name: string; payload: string }[] = [];
   private n = 0; txId = ''; time = Date.UTC(2026, 10, 27, 9) / 1000;
-  begin() { this.n += 1; this.txId = `tx${String(this.n).padStart(4, '0')}`; this.time += 1; }
+  begin() { this.n += 1; this.txId = this.n.toString(16).padStart(64, '0'); this.time += 1; }
   getTxID() { return this.txId; }
   getTxTimestamp() { return { seconds: { toNumber: () => this.time }, nanos: 0 }; }
   async getState(key: string) { return this.state.get(key) ?? Buffer.alloc(0); }
   async putState(key: string, value: Buffer) { this.state.set(key, value); }
-  createCompositeKey(type: string, attrs: string[]) { return `\u0000${type}\u0000${attrs.join('\u0000')}\u0000`; }
-  async getStateByPartialCompositeKey(type: string, attrs: string[]) {
-    const prefix = `\u0000${type}\u0000${attrs.join('\u0000')}\u0000`;
-    const items = [...this.state.entries()].filter(([k]) => k.startsWith(prefix)).sort(([a], [b]) => a.localeCompare(b));
+  // Same layout as fabric-shim: \u0000type\u0000attr1\u0000attr2\u0000
+  createCompositeKey(type: string, attrs: string[]) { return `\u0000${type}\u0000${attrs.map(a => `${a}\u0000`).join('')}`; }
+  private matching(type: string, attrs: string[]) {
+    const prefix = this.createCompositeKey(type, attrs);
+    return [...this.state.entries()].filter(([k]) => k.startsWith(prefix)).sort(([a], [b]) => a.localeCompare(b));
+  }
+  private iterate(items: [string, Buffer][]) {
     let i = 0;
     return { next: async () => i < items.length ? { done: false, value: { key: items[i][0], value: items[i++][1] } } : { done: true, value: undefined }, close: async () => undefined };
+  }
+  async getStateByPartialCompositeKey(type: string, attrs: string[]) { return this.iterate(this.matching(type, attrs)); }
+  async getStateByPartialCompositeKeyWithPagination(type: string, attrs: string[], pageSize: number, bookmark: string) {
+    const all = this.matching(type, attrs); const start = bookmark ? all.findIndex(([k]) => k === bookmark) : 0;
+    const page = all.slice(start, start + pageSize); const next = all[start + pageSize]?.[0] ?? '';
+    return { iterator: this.iterate(page), metadata: { fetchedRecordsCount: page.length, bookmark: next } };
   }
   setEvent(name: string, payload: Buffer) { this.events.push({ name, payload: payload.toString() }); }
 }
@@ -82,5 +91,82 @@ describe('ShipmentContract', () => {
     const raw = await contract.ReadShipment(ctx('Org1MSP'), 'SHP-2026-0001');
     const keys = Object.keys(JSON.parse(raw));
     expect(keys).toEqual([...keys].sort());
+  });
+
+  it.each([
+    ['zero', '0'], ['negative', '-3'], ['non-integer', '2.5'], ['excessive', '11'], ['empty', '']
+  ])('rejects a %s dispatch quantity (validQuantity)', async (_name, qty) => {
+    const result = await run(contract.Dispatch(ctx('Org1MSP'), 'SHP-2026-0001', qty));
+    expect(result).toMatchObject({ passed: false, failedRule: 'validQuantity' });
+    expect(JSON.parse(await contract.ReadShipment(ctx('Org1MSP'), 'SHP-2026-0001')).status).toBe('Requested');
+  });
+
+  it('accepts a receipt straight from Dispatched (the existing lifecycle rule)', async () => {
+    await contract.Dispatch(ctx('Org1MSP'), 'SHP-2026-0001', '10');
+    expect((await run(contract.Receive(ctx('Org2MSP'), 'SHP-2026-0001', '10'))).passed).toBe(true);
+  });
+
+  it('applies the rules in priority order: authorizedOrg before validReference, noDuplicate before validQuantity', async () => {
+    // Wrong organization and unknown shipment: the organization rule is reported first.
+    expect((await run(contract.Receive(ctx('Org1MSP'), 'SHP-NOPE', '1'))).failedRule).toBe('authorizedOrg');
+    await contract.Dispatch(ctx('Org1MSP'), 'SHP-2026-0001', '10');
+    await contract.Receive(ctx('Org2MSP'), 'SHP-2026-0001', '10');
+    // Duplicate receipt with an excessive quantity: the duplicate rule is reported first.
+    expect((await run(contract.Receive(ctx('Org2MSP'), 'SHP-2026-0001', '99'))).failedRule).toBe('noDuplicate');
+    // Org1 receiving an already received shipment: still authorizedOrg first.
+    expect((await run(contract.Receive(ctx('Org1MSP'), 'SHP-2026-0001', '10'))).failedRule).toBe('authorizedOrg');
+  });
+
+  it('uses the Fabric transaction id and timestamp, never its own', async () => {
+    const result = await run(contract.Dispatch(ctx('Org1MSP'), 'SHP-2026-0001', '10'));
+    expect(result.record.txId).toBe(stub.txId);
+    expect(result.shipment.lastTxId).toBe(stub.txId);
+    expect(result.record.timestamp).toBe(new Date(stub.time * 1000).toISOString());
+  });
+
+  it('is deterministic: the same transaction on two peers writes identical bytes', async () => {
+    const write = async () => {
+      stub = new FakeStub();
+      await contract.RegisterRequest(ctx('Org1MSP'), 'SHP-2026-0001', 'SP-001', '10');
+      await contract.Dispatch(ctx('Org1MSP'), 'SHP-2026-0001', '10');
+      return [...stub.state.entries()].map(([k, v]) => `${k}=${v.toString()}`).join('|');
+    };
+    expect(await write()).toBe(await write());
+  });
+
+  it('rejects malformed shipment identifiers before reading state', async () => {
+    await expect(contract.Dispatch(ctx('Org1MSP'), 'bad id with spaces', '1')).rejects.toThrow(/Invalid shipment identifier/);
+    await expect(contract.Dispatch(ctx('Org1MSP'), 'X'.repeat(65), '1')).rejects.toThrow(/Invalid shipment identifier/);
+  });
+
+  it('reads one transaction record by its transaction id, including a rejected attempt', async () => {
+    const rejected = await run(contract.Dispatch(ctx('Org2MSP'), 'SHP-2026-0001', '10'));
+    const record = JSON.parse(await contract.ReadTransactionRecord(ctx('Org1MSP'), rejected.record.txId));
+    expect(record).toMatchObject({ txId: rejected.record.txId, status: 'Rejected', failedRule: 'authorizedOrg' });
+    expect(await contract.ReadTransactionRecord(ctx('Org1MSP'), 'f'.repeat(64))).toBe('');
+    await expect(contract.ReadTransactionRecord(ctx('Org1MSP'), 'not-a-tx')).rejects.toThrow(/Invalid transaction id/);
+  });
+
+  it('queries transaction records by shipment, operation and outcome, in pages', async () => {
+    await contract.RegisterRequest(ctx('Org1MSP'), 'SHP-2026-0002', 'SP-002', '4');
+    await contract.Dispatch(ctx('Org2MSP'), 'SHP-2026-0001', '10');
+    await contract.Dispatch(ctx('Org1MSP'), 'SHP-2026-0001', '10');
+    const rejected = await run(contract.QueryTransactionRecords(ctx('Org1MSP'), 'SHP-2026-0001', '', 'Rejected', '50', ''));
+    expect(rejected.records).toHaveLength(1);
+    const dispatches = await run(contract.QueryTransactionRecords(ctx('Org1MSP'), '', 'dispatch', '', '50', ''));
+    expect(dispatches.records).toHaveLength(2);
+    const page1 = await run(contract.QueryTransactionRecords(ctx('Org1MSP'), '', '', '', '2', ''));
+    const page2 = await run(contract.QueryTransactionRecords(ctx('Org1MSP'), '', '', '', '2', page1.bookmark));
+    expect(page1.records).toHaveLength(2); expect(page2.records).toHaveLength(2);
+    await expect(contract.QueryTransactionRecords(ctx('Org1MSP'), '', '', '', '500', '')).rejects.toThrow(/pageSize/);
+  });
+
+  it('verifies an off-chain copy against the ledger state', async () => {
+    await contract.Dispatch(ctx('Org1MSP'), 'SHP-2026-0001', '10');
+    const ok = await run(contract.VerifyShipment(ctx('Org1MSP'), 'SHP-2026-0001', JSON.stringify({ status: 'Dispatched', dispatchedQty: 10, requestedQty: 10 })));
+    expect(ok).toMatchObject({ found: true, match: true, differences: [] });
+    const bad = await run(contract.VerifyShipment(ctx('Org1MSP'), 'SHP-2026-0001', JSON.stringify({ status: 'Received', dispatchedQty: 9 })));
+    expect(bad.match).toBe(false); expect(bad.differences).toHaveLength(2);
+    expect((await run(contract.VerifyShipment(ctx('Org1MSP'), 'SHP-NOPE', '{}'))).found).toBe(false);
   });
 });

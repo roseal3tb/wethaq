@@ -3,7 +3,7 @@
  * Enabled when the dashboard is started with VITE_WETHAQ_LIVE=true (npm run dev:live).
  * Vite proxies /api to the local API service (see vite.config.ts).
  */
-import type { AppData, Role, DemoUser } from '../types';
+import type { AppData, Role, DemoUser, Inventory } from '../types';
 
 export const LIVE = import.meta.env.VITE_WETHAQ_LIVE === 'true';
 
@@ -33,16 +33,26 @@ export interface LiveEvent { kind: 'ledger' | 'app'; name: string; shipmentId?: 
 export type LedgerKind = 'fabric' | 'local';
 export interface AuthResponse { token: string; user: LiveUser; demoRoleSwitch: boolean; ledger?: LedgerKind; }
 /** Outcome of a ledger operation: committed on Fabric, or rejected by the chaincode / application. */
-export interface LedgerResult { passed: boolean; failure?: string; failedRule?: string; reason?: string; source?: 'chaincode' | 'application'; transactionId: string; txId?: string; block?: number; }
-export interface VerifyResult { shipmentId: string; onLedger: boolean; match: boolean; differences: string[]; note?: string; ledger?: Record<string, unknown>; history?: unknown[]; }
+export interface LedgerResult { passed: boolean; failure?: string; failedRule?: string; reason?: string; source?: 'chaincode' | 'application'; transactionId: string; txId?: string; block?: number; pending?: false; }
+/** HTTP 202: the ledger has not confirmed the transaction yet; the API applies it once its outcome is known. */
+export interface PendingResult { pending: true; ledgerState: 'pending'; operationId: string; txId: string; transactionId: string; id?: string; message: string; }
+export type VerifyStatus = 'verified' | 'mismatch' | 'not_found' | 'pending' | 'ledger_unavailable' | 'failed';
+export interface VerifyResult { shipmentId: string; status?: VerifyStatus; onLedger: boolean; match: boolean; differences: string[]; note?: string; lastTxId?: string | null; checkedAt?: string; ledger?: Record<string, unknown>; history?: unknown[]; }
+/** Live state: the dashboard's AppData plus inventory positions computed by the API from PostgreSQL. */
+export type LiveState = AppData & { inventory?: Inventory[] };
+/** A result file from analysis/results, served by the API with where it came from. */
+export interface AnalyticsResult<T = unknown> { data: T; provenance: { artifact: string; file: string; script: string; dataset: string; generatedAt: string; sha256: string; note: string } }
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+/** A new key per user action, so a retried request (for example after a network error) is not recorded twice. */
+export const newIdempotencyKey = () => (globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`);
+
+async function request<T>(method: string, path: string, body?: unknown, idempotencyKey?: string): Promise<T> {
   const token = session.get();
   let res: Response;
   try {
     res = await fetch(`/api${path}`, {
       method,
-      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}) },
       body: body === undefined ? undefined : JSON.stringify(body)
     });
   } catch {
@@ -53,8 +63,10 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   try { json = text ? JSON.parse(text) : {}; } catch {
     throw new ApiError(res.status, 'Wethaq API is not reachable — start it with npm run dev in wethaq-api');
   }
-  // 422 = a ledger operation was rejected; this is a business result, not a transport failure.
-  if (res.status === 422) return json as T;
+  // 422 = a ledger operation was rejected; this is a business result, not a transport failure. Only a body
+  // that is really a rejection result counts: any other 422 is an error.
+  if (res.status === 422 && json.passed === false && (json.source === 'chaincode' || json.source === 'application')) return json as T;
+  if (res.status === 422) throw new ApiError(422, String(json.error || 'The request could not be processed'));
   if (!res.ok) throw new ApiError(res.status, String(json.error || `Request failed (${res.status})`));
   return json as T;
 }
@@ -63,10 +75,11 @@ export const liveApi = {
   login: (email: string, password: string) => request<AuthResponse>('POST', '/auth/login', { email, password }),
   me: () => request<{ user: LiveUser; demoRoleSwitch: boolean; ledger?: LedgerKind }>('GET', '/auth/me'),
   switchRole: (role: Role) => request<AuthResponse>('POST', '/auth/switch', { role }),
-  state: () => request<AppData>('GET', '/state'),
-  createShipment: (p: { partId: string; location: string; qty: number; month: string; note: string }) => request<{ id: string; txId?: string; block?: number }>('POST', '/shipments', p),
-  operate: (op: 'dispatch' | 'transit' | 'receive', shipmentId: string, qty: number, note: string) => request<LedgerResult>('POST', `/shipments/${encodeURIComponent(shipmentId)}/${op}`, { qty, note }),
-  invalid: (scenario: string, shipmentId?: string) => request<LedgerResult>('POST', '/demo/invalid', { scenario, shipmentId }),
+  state: () => request<LiveState>('GET', '/state'),
+  analytics: <T = unknown>(name: string) => request<AnalyticsResult<T>>('GET', `/analytics/${encodeURIComponent(name)}`),
+  createShipment: (p: { partId: string; location: string; qty: number; month: string; note: string }, key = newIdempotencyKey()) => request<{ id: string; txId?: string; block?: number; pending?: boolean; message?: string }>('POST', '/shipments', p, key),
+  operate: (op: 'dispatch' | 'transit' | 'receive', shipmentId: string, qty: number, note: string, key = newIdempotencyKey()) => request<LedgerResult | PendingResult>('POST', `/shipments/${encodeURIComponent(shipmentId)}/${op}`, { qty, note }, key),
+  invalid: (scenario: string, shipmentId?: string) => request<LedgerResult | PendingResult>('POST', '/demo/invalid', { scenario, shipmentId }),
   verify: (shipmentId: string) => request<VerifyResult>('GET', `/shipments/${encodeURIComponent(shipmentId)}/verify`),
   ack: (id: string, note?: string) => request<{ ok: boolean }>('POST', `/alerts/${encodeURIComponent(id)}/ack`, { note }),
   addUser: (u: Omit<DemoUser, 'id' | 'lastSeen' | 'active'>) => request<IssuedUser>('POST', '/users', u),

@@ -9,7 +9,7 @@ const opt = <T>(v: T | null | undefined) => (v === null ? undefined : v);
 export async function loadState(q: Queryable, user: ApiUser) {
   const [shipments, events, records, alerts, users] = await Promise.all([
     q.query<Record<string, any>>(`SELECT s.*, u.name AS requested_by_name FROM shipments s JOIN users u ON u.user_id = s.requested_by ORDER BY s.requested_at DESC, s.shipment_id DESC`),
-    q.query<Record<string, any>>(`SELECT e.*, u.name AS actor, o.name AS org FROM shipment_events e JOIN users u ON u.user_id = e.actor_id JOIN organizations o ON o.org_id = u.org_id ORDER BY e.time, e.event_id`),
+    q.query<Record<string, any>>(`SELECT e.*, COALESCE(u.name, r.user_name, 'Ledger client') AS actor, COALESCE(o.name, r.org, 'Ledger network') AS org FROM shipment_events e LEFT JOIN users u ON u.user_id = e.actor_id LEFT JOIN organizations o ON o.org_id = u.org_id LEFT JOIN ledger_records r ON r.record_id = e.tx_id ORDER BY e.time, e.event_id`),
     // REQUEST records stay in the database and on the ledger; the dashboard's ledger view lists operations only.
     q.query<Record<string, any>>(`SELECT * FROM ledger_records WHERE type <> 'REQUEST' ORDER BY timestamp DESC, record_id DESC`),
     q.query<Record<string, any>>(`SELECT a.*, u.name AS resolved_by FROM alerts a LEFT JOIN users u ON u.user_id = a.acknowledged_by ORDER BY a.at DESC`),
@@ -28,7 +28,7 @@ export async function loadState(q: Queryable, user: ApiUser) {
       id: s.shipment_id, partId: s.part_id, quantity: s.requested_qty, dispatchedQty: opt(s.dispatched_qty), receivedQty: opt(s.received_qty),
       from: s.from_location, to: locationName(s.to_location), status: s.status, requestedBy: s.requested_by_name, requestedAt: iso(s.requested_at),
       forecastMonth: s.forecast_month, note: s.review_note, expectedAt: iso(s.expected_at), recommendationId: opt(s.recommendation_id),
-      createdInSession: s.created_live, events: byShipment.get(s.shipment_id) ?? []
+      createdInSession: s.created_live, ledgerState: s.ledger_state, lastTxId: opt(s.last_tx_id), events: byShipment.get(s.shipment_id) ?? []
     })),
     transactions: records.rows.map(t => ({
       id: t.record_id, type: t.type, shipmentId: t.shipment_id, partId: t.part_id, quantity: t.quantity, org: t.org, user: t.user_name,

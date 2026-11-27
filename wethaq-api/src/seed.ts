@@ -16,7 +16,7 @@ const ORGS = [
   ['ORG-2', 'Org2 (Receiving)', 'Org2MSP'], ['ORG-ADMIN', 'System Administration', null]
 ] as const;
 
-const TABLES = ['alerts', 'ledger_records', 'shipment_events', 'shipments', 'forecasts', 'inventory', 'users', 'parts', 'locations', 'roles', 'organizations', 'local_ledger_blocks', 'local_ledger_state'];
+const TABLES = ['audit_log', 'event_checkpoints', 'ledger_operations', 'alerts', 'ledger_records', 'shipment_events', 'shipments', 'forecasts', 'inventory', 'users', 'parts', 'locations', 'roles', 'organizations', 'local_ledger_blocks', 'local_ledger_state'];
 
 export async function seed(db: Db, ledger: Ledger, { password, reset = false, log = () => undefined }: { password: string; reset?: boolean; log?: (s: string) => void }) {
   if (reset) {
@@ -52,7 +52,9 @@ export async function seed(db: Db, ledger: Ledger, { password, reset = false, lo
   // commits in blocks, and each shipment's own operations stay in order.
   let replayed = 0;
   const replay = async (s: (typeof demo.shipments)[number]) => {
-    const { id } = await createShipment(db, ledger, planner, { partId: s.partId, location: s.to, qty: s.quantity, month: s.forecastMonth, note: s.note }, s.id);
+    const created = await createShipment(db, ledger, planner, { partId: s.partId, location: s.to, qty: s.quantity, month: s.forecastMonth, note: s.note }, s.id);
+    if (created.status !== 201) throw new Error(`Seeding ${s.id} was not confirmed by the ledger (HTTP ${created.status})`);
+    const id = s.id;
     // Keep the seeded baseline apart from shipments created later (the dashboard treats them differently).
     await db.query('UPDATE shipments SET created_live = FALSE, requested_at = $2, expected_at = $3 WHERE shipment_id = $1', [id, s.requestedAt, s.expectedAt]);
     // The baseline inventory already includes these historical movements, so they do not change stock levels.
@@ -62,7 +64,7 @@ export async function seed(db: Db, ledger: Ledger, { password, reset = false, lo
     if (s.status === 'Received') steps.push(['receive', receiver, s.receivedQty!]);
     for (const [op, user, qty] of steps) {
       const result = await operate(db, ledger, user, op, id, qty, 'Seeded demonstration history', { adjustInventory: false });
-      if (!result.passed) throw new Error(`Seeding ${id} ${op} was rejected: ${result.reason}`);
+      if (result.status !== 200) throw new Error(`Seeding ${id} ${op} was not accepted (HTTP ${result.status}): ${String(result.body.reason ?? result.body.message ?? '')}`);
     }
     replayed += 1 + steps.length;
   };
@@ -75,8 +77,12 @@ export async function seed(db: Db, ledger: Ledger, { password, reset = false, lo
 
   // Shortage and delay alerts from the dashboard's demonstration data (discrepancies come from the replay).
   for (const a of demo.alerts.filter(a => a.type === 'Shortage' || a.type === 'Delay')) {
-    await db.query('INSERT INTO alerts (alert_id, type, severity, title, detail, part_id, shipment_id, at, acknowledged) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
-      [a.id, a.type, a.severity, a.title, a.detail, a.partId ?? null, a.shipmentId ?? null, a.at, a.acknowledged]);
+    // Shortage alerts use the same key as the live shortage check, so it does not raise a second open alert.
+    const location = a.type === 'Shortage' ? LOCATIONS.find(l => a.detail.includes(l.name))?.name : undefined;
+    const key = a.type === 'Shortage' && a.partId && location ? `shortage:${a.partId}:${location}` : `seed:${a.id}`;
+    await db.query(`INSERT INTO alerts (alert_id, type, severity, title, detail, part_id, shipment_id, at, acknowledged, dedupe_key) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      ON CONFLICT DO NOTHING`,
+      [a.id, a.type, a.severity, a.title, a.detail, a.partId ?? null, a.shipmentId ?? null, a.at, a.acknowledged, key]);
   }
   return true;
 }

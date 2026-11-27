@@ -15,11 +15,13 @@
     "setup": "npm run migrate && npm run seed",
     "test": "vitest run",
     "check": "tsc --noEmit",
-    "nfr": "tsx src/cli/nfr.ts"
+    "nfr": "tsx src/cli/nfr.ts",
+    "test:fabric": "FABRIC_IT=1 vitest run test/fabric.integration.test.ts"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.7",
     "@hyperledger/fabric-gateway": "^1.13.0",
+    "@hyperledger/fabric-protos": "^0.3.7",
     "bcryptjs": "^3.0.2",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",

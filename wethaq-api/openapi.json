@@ -1,0 +1,1953 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Wethaq API",
+    "version": "0.2.0",
+    "description": "Application service for Wethaq (GP482): Express + PostgreSQL, with shipment rules enforced by the Hyperledger Fabric chaincode (or, in development, by the local development ledger, which is not Fabric). All routes are under /api."
+  },
+  "servers": [
+    {
+      "url": "/api"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "ledgerFailure": {
+            "type": "string",
+            "enum": [
+              "unavailable",
+              "endorsement",
+              "invalid",
+              "error"
+            ]
+          },
+          "ledgerState": {
+            "type": "string",
+            "enum": [
+              "failed"
+            ]
+          },
+          "txId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "Session": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "user": {
+            "type": "object"
+          },
+          "demoRoleSwitch": {
+            "type": "boolean"
+          },
+          "ledger": {
+            "type": "string",
+            "enum": [
+              "local",
+              "fabric"
+            ]
+          }
+        }
+      },
+      "LedgerResult": {
+        "type": "object",
+        "properties": {
+          "passed": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "chaincode",
+              "application"
+            ]
+          },
+          "failure": {
+            "type": "string"
+          },
+          "failedRule": {
+            "type": "string",
+            "enum": [
+              "authorizedOrg",
+              "validReference",
+              "noDuplicate",
+              "validQuantity",
+              "validTransition"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "transactionId": {
+            "type": "string"
+          },
+          "txId": {
+            "type": "string",
+            "description": "64-hex ledger transaction id (absent for application-level rejections)"
+          },
+          "block": {
+            "type": "integer"
+          },
+          "ledgerState": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "passed",
+          "transactionId"
+        ]
+      },
+      "Pending": {
+        "type": "object",
+        "properties": {
+          "pending": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "ledgerState": {
+            "type": "string",
+            "enum": [
+              "pending"
+            ]
+          },
+          "operationId": {
+            "type": "string"
+          },
+          "txId": {
+            "type": "string"
+          },
+          "transactionId": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pending",
+          "operationId"
+        ]
+      },
+      "Created": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "txId": {
+            "type": "string"
+          },
+          "transactionId": {
+            "type": "string"
+          },
+          "block": {
+            "type": "integer"
+          },
+          "ledgerState": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "Verify": {
+        "type": "object",
+        "properties": {
+          "shipmentId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "mismatch",
+              "not_found",
+              "pending",
+              "ledger_unavailable",
+              "failed"
+            ]
+          },
+          "onLedger": {
+            "type": "boolean"
+          },
+          "match": {
+            "type": "boolean"
+          },
+          "differences": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "lastTxId": {
+            "type": "string",
+            "nullable": true
+          },
+          "ledgerState": {
+            "type": "string"
+          },
+          "ledgerKind": {
+            "type": "string"
+          },
+          "checkedAt": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "ledger": {
+            "type": "object"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "shipmentId",
+          "status",
+          "match",
+          "differences"
+        ]
+      },
+      "InventoryPosition": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "partId": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "onHand": {
+            "type": "integer"
+          },
+          "inTransit": {
+            "type": "integer"
+          },
+          "monthlyDemand": {
+            "type": "number"
+          },
+          "leadDays": {
+            "type": "integer"
+          },
+          "safetyStock": {
+            "type": "integer"
+          },
+          "reorderPoint": {
+            "type": "integer"
+          },
+          "leadDemand": {
+            "type": "number"
+          },
+          "daysCover": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Healthy",
+              "Watch",
+              "Below reorder point",
+              "Stockout risk"
+            ]
+          },
+          "recommended": {
+            "type": "integer"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        }
+      },
+      "Analytics": {
+        "type": "object",
+        "properties": {
+          "data": {},
+          "provenance": {
+            "type": "object",
+            "properties": {
+              "artifact": {
+                "type": "string"
+              },
+              "file": {
+                "type": "string"
+              },
+              "script": {
+                "type": "string"
+              },
+              "dataset": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "generatedAt": {
+                "type": "string"
+              },
+              "sha256": {
+                "type": "string"
+              },
+              "bytes": {
+                "type": "integer"
+              },
+              "note": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "Ready": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "ledger": {
+            "type": "string"
+          },
+          "database": {
+            "type": "object",
+            "properties": {
+              "ok": {
+                "type": "boolean"
+              },
+              "detail": {
+                "type": "string"
+              }
+            }
+          },
+          "ledgerHealth": {
+            "type": "object",
+            "properties": {
+              "ok": {
+                "type": "boolean"
+              },
+              "detail": {
+                "type": "string"
+              },
+              "identities": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "msp": {
+                      "type": "string"
+                    },
+                    "subject": {
+                      "type": "string"
+                    },
+                    "expires": {
+                      "type": "string"
+                    },
+                    "daysLeft": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "SyncStatus": {
+        "type": "object",
+        "properties": {
+          "ledger": {
+            "type": "string"
+          },
+          "checkpoint": {
+            "type": "object",
+            "nullable": true
+          },
+          "operations": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            }
+          },
+          "open": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "lastReconcile": {
+            "type": "object",
+            "nullable": true
+          },
+          "consumer": {
+            "type": "object",
+            "properties": {
+              "running": {
+                "type": "boolean"
+              },
+              "lastEventAt": {
+                "type": "string",
+                "nullable": true
+              },
+              "lastError": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          }
+        }
+      },
+      "Reconcile": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "checked": {
+            "type": "integer"
+          },
+          "applied": {
+            "type": "integer"
+          },
+          "failed": {
+            "type": "integer"
+          },
+          "stillPending": {
+            "type": "integer"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "LiveEvent": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "ledger",
+              "app"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "shipmentId": {
+            "type": "string"
+          },
+          "txId": {
+            "type": "string"
+          },
+          "block": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "operation": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Basic health",
+        "tags": [
+          "Health"
+        ],
+        "responses": {
+          "200": {
+            "description": "Database reachable"
+          }
+        }
+      }
+    },
+    "/health/live": {
+      "get": {
+        "summary": "Liveness",
+        "tags": [
+          "Health"
+        ],
+        "responses": {
+          "200": {
+            "description": "Process running"
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "summary": "Readiness: database and ledger",
+        "tags": [
+          "Health"
+        ],
+        "responses": {
+          "200": {
+            "description": "Ready",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ready"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Not ready",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ready"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "summary": "This document",
+        "tags": [
+          "Health"
+        ],
+        "responses": {
+          "200": {
+            "description": "OpenAPI 3 document"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Sign in",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Session"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "10 attempts per minute per client.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "summary": "Current user",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "User"
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/auth/password": {
+      "post": {
+        "summary": "Change own password",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "New session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Session"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentPassword": {
+                    "type": "string"
+                  },
+                  "newPassword": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "currentPassword",
+                  "newPassword"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/switch": {
+      "post": {
+        "summary": "Switch to a demonstration account (development only)",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Session"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Always disabled when NODE_ENV=production.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "Planner",
+                      "Dispatcher",
+                      "Receiver",
+                      "Admin"
+                    ]
+                  }
+                },
+                "required": [
+                  "role"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events": {
+      "get": {
+        "summary": "Live changes (server-sent events)",
+        "tags": [
+          "Live"
+        ],
+        "responses": {
+          "200": {
+            "description": "text/event-stream of change events",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveEvent"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/state": {
+      "get": {
+        "summary": "Dashboard state",
+        "tags": [
+          "Data"
+        ],
+        "responses": {
+          "200": {
+            "description": "Shipments, transactions, alerts, users and inventory positions"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/inventory": {
+      "get": {
+        "summary": "Inventory positions from PostgreSQL",
+        "tags": [
+          "Data"
+        ],
+        "responses": {
+          "200": {
+            "description": "Positions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventoryPosition"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "partId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "location",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "LOC-CW",
+                "LOC-DC",
+                "LOC-DS"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "/analytics": {
+      "get": {
+        "summary": "List analysis results and their provenance",
+        "tags": [
+          "Analytics"
+        ],
+        "responses": {
+          "200": {
+            "description": "List"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/analytics/{name}": {
+      "get": {
+        "summary": "One analysis result, unchanged, with provenance",
+        "tags": [
+          "Analytics"
+        ],
+        "responses": {
+          "200": {
+            "description": "Result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Analytics"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "assessment",
+                "forecasts",
+                "raf-parts",
+                "rolling",
+                "inventory-simulation"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "/shipments": {
+      "post": {
+        "summary": "Create a shipment request (Planner); registered on the ledger",
+        "tags": [
+          "Shipments"
+        ],
+        "responses": {
+          "201": {
+            "description": "Registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Created"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Case C (unknown): submitted, the ledger has not confirmed it yet; applied automatically later",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pending"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: invalidated by the peers (for example MVCC), or the shipment's registration is still pending",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Case C (definite): the peers did not endorse it; nothing was recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Case C (definite): the ledger is not reachable; nothing was recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._:-]{8,128}$"
+            },
+            "description": "Repeating a request with the same key returns the stored result instead of submitting again."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "partId": {
+                    "type": "string",
+                    "pattern": "^SP-\\d{3}$"
+                  },
+                  "location": {
+                    "type": "string",
+                    "enum": [
+                      "Central Warehouse",
+                      "Distribution Center",
+                      "Deployment Site"
+                    ]
+                  },
+                  "qty": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100000
+                  },
+                  "month": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}$"
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "partId",
+                  "location",
+                  "qty",
+                  "month",
+                  "note"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/{id}/dispatch": {
+      "post": {
+        "summary": "Record a dispatch \u2014 Dispatcher (Org1)",
+        "tags": [
+          "Shipments"
+        ],
+        "responses": {
+          "200": {
+            "description": "Case A: committed and accepted by the chaincode",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerResult"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Case C (unknown): submitted, the ledger has not confirmed it yet; applied automatically later",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pending"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: invalidated by the peers (for example MVCC), or the shipment's registration is still pending",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Case B: rejected by the chaincode (recorded on the ledger) or by the application role check (off-chain)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerResult"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Case C (definite): the peers did not endorse it; nothing was recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Case C (definite): the ledger is not reachable; nothing was recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9-]{1,64}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._:-]{8,128}$"
+            },
+            "description": "Repeating a request with the same key returns the stored result instead of submitting again."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "qty": {
+                    "type": "integer"
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/{id}/transit": {
+      "post": {
+        "summary": "Record a transit \u2014 Dispatcher (Org1)",
+        "tags": [
+          "Shipments"
+        ],
+        "responses": {
+          "200": {
+            "description": "Case A: committed and accepted by the chaincode",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerResult"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Case C (unknown): submitted, the ledger has not confirmed it yet; applied automatically later",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pending"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: invalidated by the peers (for example MVCC), or the shipment's registration is still pending",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Case B: rejected by the chaincode (recorded on the ledger) or by the application role check (off-chain)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerResult"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Case C (definite): the peers did not endorse it; nothing was recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Case C (definite): the ledger is not reachable; nothing was recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9-]{1,64}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._:-]{8,128}$"
+            },
+            "description": "Repeating a request with the same key returns the stored result instead of submitting again."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "qty": {
+                    "type": "integer"
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/{id}/receive": {
+      "post": {
+        "summary": "Record a receive \u2014 Receiver (Org2)",
+        "tags": [
+          "Shipments"
+        ],
+        "responses": {
+          "200": {
+            "description": "Case A: committed and accepted by the chaincode",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerResult"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Case C (unknown): submitted, the ledger has not confirmed it yet; applied automatically later",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pending"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: invalidated by the peers (for example MVCC), or the shipment's registration is still pending",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Case B: rejected by the chaincode (recorded on the ledger) or by the application role check (off-chain)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerResult"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Case C (definite): the peers did not endorse it; nothing was recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Case C (definite): the ledger is not reachable; nothing was recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9-]{1,64}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._:-]{8,128}$"
+            },
+            "description": "Repeating a request with the same key returns the stored result instead of submitting again."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "qty": {
+                    "type": "integer"
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/{id}/verify": {
+      "get": {
+        "summary": "Compare the PostgreSQL copy with the ledger (VerifyShipment on the peer in Fabric mode)",
+        "tags": [
+          "Shipments"
+        ],
+        "responses": {
+          "200": {
+            "description": "Verification",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Verify"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9-]{1,64}$"
+            }
+          }
+        ]
+      }
+    },
+    "/demo/invalid": {
+      "post": {
+        "summary": "Run a rejection demonstration against the chaincode (development only)",
+        "tags": [
+          "Demo"
+        ],
+        "responses": {
+          "422": {
+            "description": "Rejected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Disabled when NODE_ENV=production or DEMO_TOOLS=false.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "scenario": {
+                    "type": "string",
+                    "enum": [
+                      "Duplicate receipt",
+                      "Unauthorized organization",
+                      "Invalid status transition",
+                      "Quantity exceeds dispatched",
+                      "Unknown shipment reference"
+                    ]
+                  },
+                  "shipmentId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "scenario"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alerts/{id}/ack": {
+      "post": {
+        "summary": "Acknowledge an alert",
+        "tags": [
+          "Alerts"
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "note": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users": {
+      "post": {
+        "summary": "Add a user (Admin); returns a one-time temporary password",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "201": {
+            "description": "User"
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/users/{id}": {
+      "patch": {
+        "summary": "Change a user's role or active flag (Admin)",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "User"
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/users/{id}/reset-password": {
+      "post": {
+        "summary": "Issue a new temporary password (Admin)",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "User"
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/admin/sync-status": {
+      "get": {
+        "summary": "Ledger synchronization status (Admin)",
+        "tags": [
+          "Admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "Status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatus"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/admin/reconcile": {
+      "post": {
+        "summary": "Reconcile pending ledger operations now (Admin)",
+        "tags": [
+          "Admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "Report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Reconcile"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/admin/audit": {
+      "get": {
+        "summary": "Application audit log (Admin)",
+        "tags": [
+          "Admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "Entries"
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            }
+          }
+        ]
+      }
+    }
+  }
+}

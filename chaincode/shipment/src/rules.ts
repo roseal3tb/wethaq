@@ -25,6 +25,10 @@ export interface RuleResult { key: RuleKey; label: string; passed: boolean; deta
 export type RuleKey = 'authorizedOrg' | 'validReference' | 'validQuantity' | 'validTransition' | 'noDuplicate';
 export interface RuleCheck { passed: boolean; rules: RuleResult[]; failedRule?: RuleKey; failure?: string; reason?: string; }
 
+export const RULE_LABELS: Record<RuleKey, string> = {
+  authorizedOrg: 'Authorized organization', validReference: 'Valid shipment reference', noDuplicate: 'No duplicate receipt',
+  validQuantity: 'Valid quantity', validTransition: 'Valid status transition'
+};
 export const RULE_PRIORITY: RuleKey[] = ['authorizedOrg', 'validReference', 'noDuplicate', 'validQuantity', 'validTransition'];
 export const REQUIRED_MSP: Record<LedgerOperation, OrgMsp> = { dispatch: 'Org1MSP', transit: 'Org1MSP', receive: 'Org2MSP' };
 export const NEXT_STATUS: Record<LedgerOperation, LedgerStatus> = { dispatch: 'Dispatched', transit: 'In Transit', receive: 'Received' };
@@ -77,4 +81,17 @@ export interface LedgerRecord {
   failedRule?: RuleKey;
   reason?: string;
   timestamp: string;
+}
+
+/** Fields of the on-chain shipment state that an off-chain copy can be checked against. */
+export const VERIFIED_FIELDS = ['partId', 'requestedQty', 'dispatchedQty', 'receivedQty', 'status', 'lastTxId'] as const;
+export type VerifiedField = typeof VERIFIED_FIELDS[number];
+const FIELD_LABELS: Record<VerifiedField, string> = {
+  partId: 'Part', requestedQty: 'Requested quantity', dispatchedQty: 'Dispatched quantity', receivedQty: 'Received quantity', status: 'Status', lastTxId: 'Last transaction'
+};
+
+/** Lists the fields where an off-chain copy differs from the ledger state (only the fields the copy states). */
+export function compareShipment(expected: Partial<Record<VerifiedField, unknown>>, ledger: LedgerShipment): string[] {
+  return VERIFIED_FIELDS.filter(f => f in expected && (expected[f] ?? null) !== (ledger[f] ?? null))
+    .map(f => `${FIELD_LABELS[f]}: database ${expected[f] ?? '—'}, ledger ${ledger[f] ?? '—'}`);
 }

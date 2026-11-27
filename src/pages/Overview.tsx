@@ -21,7 +21,7 @@ export default function Overview() {
   const { data, role, ack, live, ledger } = useStore();
   const onLedger = ledger === 'local' ? 'local development ledger' : 'Fabric';
   const [part, setPart] = useState(rafDefaultPart.id);
-  const inventory = useMemo(() => computeInventory(data.shipments), [data.shipments]);
+  const inventory = useMemo(() => live ? (data.inventory ?? []) : computeInventory(data.shipments), [live, data.inventory, data.shipments]);
   const rafPart = raf.parts.find(p => p.id === part) ?? rafDefaultPart;
   const forecastPoints = useMemo(() => rafPoints(rafPart), [rafPart]);
   const risk = inventory.filter(row => row.status !== 'Healthy').sort((a, b) => a.daysCover - b.daysCover).slice(0, 5);

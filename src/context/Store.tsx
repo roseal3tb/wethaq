@@ -157,7 +157,7 @@ export function Provider({ children }: { children: React.ReactNode; }) {
       const result = await liveApi.createShipment({ partId, location, qty, month, note });
       mine(result.txId);
       await refresh();
-      notify(`${result.id} — shipment request created`);
+      notify(result.pending ? `${result.id} — request submitted; waiting for the ledger to confirm it` : `${result.id} — shipment request created`);
       return result.id;
     }
     const id = `SHP-2026-${String(Math.max(48, ...data.shipments.map(s => Number(s.id.split('-').slice(-1)[0]) || 0)) + 1).padStart(4, '0')}`; const now = new Date().toISOString(); const actor = identities.Planner;
@@ -171,6 +171,7 @@ export function Provider({ children }: { children: React.ReactNode; }) {
       try {
         const result = await liveApi.operate(operation, shipmentId, qty, note); mine(result.txId); await refresh();
         const label = operation === 'dispatch' ? 'Dispatch' : operation === 'transit' ? 'In-transit update' : 'Receipt';
+        if (result.pending) { notify(`${label} submitted — waiting for the ledger to confirm transaction ${result.transactionId}`); return { passed: true, pending: true, rules: v.rules }; }
         notify(result.passed ? `${label} committed on ${ledger === 'local' ? 'the local development ledger' : 'Fabric'} · block ${result.block}` : `Rejected by ${result.source === 'application' ? 'the application' : 'the smart contract'}: ${result.reason}`);
         return ledgerCheck(result, v);
       } catch (e) { failure(e); return { passed: false, rules: v.rules, failure: e instanceof Error ? e.message : 'Request failed' }; }
@@ -201,6 +202,7 @@ export function Provider({ children }: { children: React.ReactNode; }) {
   const invalidDemo = async (scenario: string, shipmentId?: string): Promise<CheckResult & { transactionId: string }> => {
     if (LIVE) {
       const result = await liveApi.invalid(scenario, shipmentId); mine(result.txId); await refresh();
+      if (result.pending) { notify(`Submitted — waiting for the ledger to confirm transaction ${result.transactionId}`); return { passed: false, pending: true, rules: [], failure: result.message, transactionId: result.transactionId }; }
       notify(result.passed ? 'Unexpected: the operation was accepted by the smart contract' : `Smart contract rejected the operation: ${result.reason}`);
       return { ...ledgerCheck(result), transactionId: result.transactionId };
     }

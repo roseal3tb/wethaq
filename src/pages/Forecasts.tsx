@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { LIVE, liveApi } from '../api/live';
 import { useSearchParams } from 'react-router-dom';
 import { Download, Info, ChevronDown } from 'lucide-react';
 import { NiceSelect } from '../components/NiceSelect';
@@ -44,7 +45,25 @@ export default function Forecasts() {
   </>;
 }
 
+/**
+ * Live mode: checks that the RAF results shown here are the ones the API serves from analysis/results.
+ * The page keeps showing the bundled copy; a difference is reported, never hidden or replaced.
+ */
+function useRafProvenance() {
+  const [state, setState] = useState<{ status: 'checking' | 'match' | 'differs' | 'unavailable'; file?: string; sha?: string }>({ status: 'checking' });
+  useEffect(() => {
+    if (!LIVE) return;
+    let cancelled = false;
+    liveApi.analytics('raf-parts').then(r => {
+      if (!cancelled) setState({ status: JSON.stringify(r.data) === JSON.stringify(raf) ? 'match' : 'differs', file: r.provenance.file, sha: r.provenance.sha256 });
+    }, () => { if (!cancelled) setState({ status: 'unavailable' }); });
+    return () => { cancelled = true; };
+  }, []);
+  return LIVE ? state : null;
+}
+
 function RafForecasts() {
+  const provenance = useRafProvenance();
   const [params, setParams] = useSearchParams();
   const [query, setQuery] = useState('');
   const [classFilter, setClassFilter] = useState('All classes');
@@ -72,6 +91,7 @@ function RafForecasts() {
       <h1>Demand <em>forecasting</em></h1>
       <p>Public RAF spare-parts demand · offline forecasting analysis · historical 1996–2002</p></div>
       <div className="page-title-side"><Badge tone="olive">5,000-series benchmark</Badge>
+        {provenance && provenance.status !== 'checking' && <Badge tone={provenance.status === 'match' ? 'success' : 'warning'}>{provenance.status === 'match' ? `Matches ${provenance.file} · ${provenance.sha!.slice(0, 8)}` : provenance.status === 'differs' ? 'Differs from the API analysis results' : 'Analysis results not available from the API'}</Badge>}
         <Button variant="secondary" onClick={exportData}><Download size={16}/> Download CSV</Button></div>
     </div>
     <InfoBanner>Published RAF benchmark results are precomputed from the offline analysis. The 40-part interactive sample is not linked to synthetic SP-series inventory, replenishment, or shipments. Projection dates are illustrative future periods relative to the historical 2002 dataset.</InfoBanner>
