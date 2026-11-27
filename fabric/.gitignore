@@ -1,3 +1,4 @@
-fabric-samples/
+fabric-samples
 install-fabric.sh
 identities/
+backups/

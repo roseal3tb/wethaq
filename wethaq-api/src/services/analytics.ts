@@ -9,6 +9,7 @@ import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express, { type Request, type Response } from 'express';
+import { logger } from '../logger.js';
 
 export const ANALYTICS_DIR = process.env.ANALYTICS_DIR || path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../analysis/results');
 
@@ -22,24 +23,67 @@ export const ARTIFACTS = {
 } as const;
 export type ArtifactName = keyof typeof ARTIFACTS;
 
-const cache = new Map<string, { mtimeMs: number; value: { data: unknown; provenance: Record<string, unknown> } }>();
+/** Thrown when a result file exists but cannot be read as JSON. */
+export class DamagedArtifact extends Error {}
 
-export async function loadArtifact(name: ArtifactName, dir = ANALYTICS_DIR) {
+interface Manifest { writtenAt?: string; scripts?: Record<string, string>; results?: Record<string, { sha256: string; scripts?: string[] }>; datasets?: { file: string; sha256: string }[]; packages?: Record<string, string | null>; python?: string }
+
+/**
+ * How far a result file can be trusted, from analysis/results/MANIFEST.json (written by analysis/scripts/write_manifest.py):
+ *   verified    the file's SHA-256 matches the manifest, and so do the scripts that produced it (when they are present)
+ *   modified    the file changed after the manifest was written
+ *   outdated    a script that produced it changed after it was produced, so the file may not match the current code
+ *   unverified  there is no manifest entry to check against
+ */
+export type ArtifactCheck = 'verified' | 'modified' | 'outdated' | 'unverified';
+
+const sha256 = (data: Buffer | string) => createHash('sha256').update(data).digest('hex');
+
+async function readManifest(dir: string): Promise<Manifest | null> {
+  try { return JSON.parse(await readFile(path.join(dir, 'MANIFEST.json'), 'utf8')) as Manifest; } catch { return null; }
+}
+
+async function checkArtifact(file: string, digest: string, manifest: Manifest | null, scriptsDir: string): Promise<{ check: ArtifactCheck; warnings: string[]; scriptsChecked: boolean }> {
+  const entry = manifest?.results?.[file];
+  if (!entry) return { check: 'unverified', warnings: ['No checksum manifest entry for this file (analysis/results/MANIFEST.json); its origin cannot be checked.'], scriptsChecked: false };
+  if (entry.sha256 !== digest) return { check: 'modified', warnings: ['This file differs from the checksum recorded when the results were produced: it was changed or replaced afterwards.'], scriptsChecked: false };
+  const warnings: string[] = [];
+  let scriptsChecked = false;
+  for (const script of entry.scripts ?? []) {
+    let current: string;
+    try { current = sha256(await readFile(path.join(scriptsDir, script))); } catch { continue; }   // scripts not deployed with this server
+    scriptsChecked = true;
+    if (manifest?.scripts?.[script] && manifest.scripts[script] !== current) warnings.push(`analysis/scripts/${script} changed after these results were produced; run analysis/run_all.sh again.`);
+  }
+  return { check: warnings.length ? 'outdated' : 'verified', warnings, scriptsChecked };
+}
+
+const cache = new Map<string, { key: string; value: { data: unknown; provenance: Record<string, unknown> } }>();
+
+export async function loadArtifact(name: ArtifactName, dir = ANALYTICS_DIR, scriptsDir = path.resolve(dir, '../scripts')) {
   const meta = ARTIFACTS[name];
   const file = path.join(dir, meta.file);
   const info = await stat(file);
+  const manifestInfo = await stat(path.join(dir, 'MANIFEST.json')).catch(() => null);
+  const key = `${info.mtimeMs}:${info.size}:${manifestInfo?.mtimeMs ?? 0}`;
   const hit = cache.get(file);
-  if (hit && hit.mtimeMs === info.mtimeMs) return hit.value;
+  if (hit && hit.key === key) return hit.value;
   const raw = await readFile(file);
+  let data: unknown;
+  try { data = JSON.parse(raw.toString('utf8')); } catch { throw new DamagedArtifact(`analysis/results/${meta.file} is damaged (not valid JSON)`); }
+  const digest = sha256(raw);
+  const manifest = await readManifest(dir);
+  const { check, warnings, scriptsChecked } = await checkArtifact(meta.file, digest, manifest, scriptsDir);
   const value = {
-    data: JSON.parse(raw.toString('utf8')) as unknown,
+    data,
     provenance: {
       artifact: name, file: `analysis/results/${meta.file}`, script: meta.script, dataset: meta.dataset, description: meta.description,
-      generatedAt: info.mtime.toISOString(), sha256: createHash('sha256').update(raw).digest('hex'), bytes: raw.length,
-      note: 'Produced offline by the analysis scripts; served unchanged. Results apply only to these datasets and assumptions.'
+      generatedAt: info.mtime.toISOString(), sha256: digest, bytes: raw.length,
+      check, warnings, scriptsChecked, manifestWrittenAt: manifest?.writtenAt ?? null,
+      note: 'Produced offline by the analysis scripts; served unchanged. These are research results computed in advance, not live forecasts. Results apply only to these datasets and assumptions.'
     }
   };
-  cache.set(file, { mtimeMs: info.mtimeMs, value });
+  cache.set(file, { key, value });
   return value;
 }
 
@@ -48,7 +92,7 @@ export function analyticsRouter(dir = ANALYTICS_DIR) {
   router.get('/', async (_req: Request, res: Response) => {
     const list = await Promise.all((Object.keys(ARTIFACTS) as ArtifactName[]).map(async name => {
       try { return { name, available: true, ...(await loadArtifact(name, dir)).provenance }; }
-      catch { return { name, available: false, file: `analysis/results/${ARTIFACTS[name].file}` }; }
+      catch (err) { return { name, available: false, reason: err instanceof DamagedArtifact ? 'damaged' : 'missing', file: `analysis/results/${ARTIFACTS[name].file}` }; }
     }));
     res.json(list);
   });
@@ -58,9 +102,10 @@ export function analyticsRouter(dir = ANALYTICS_DIR) {
     try {
       res.setHeader('Cache-Control', 'private, max-age=60');
       res.json(await loadArtifact(name, dir));
-    } catch {
-      // Never substitute other data: say plainly that the result file is not available.
-      res.status(503).json({ error: `The ${name} result (analysis/results/${ARTIFACTS[name].file}) is not available on this server. Run analysis/run_all.sh to produce it.` });
+    } catch (err) {
+      // Never substitute other data: say plainly that the result file is damaged or not available.
+      if (err instanceof DamagedArtifact) return res.status(503).json({ error: `${err.message}. Run analysis/run_all.sh to produce it again.`, artifact: name, reason: 'damaged' });
+      res.status(503).json({ error: `The ${name} result (analysis/results/${ARTIFACTS[name].file}) is not available on this server. Run analysis/run_all.sh to produce it.`, artifact: name, reason: 'missing' });
     }
   });
   return router;
@@ -105,7 +150,11 @@ export function analyticsV1Router(dir = ANALYTICS_DIR) {
     catch (err) {
       if (err instanceof BadRequest) return res.status(400).json({ error: err.message });
       if (err instanceof NotFound) return res.status(404).json({ error: err.message });
-      res.status(503).json({ error: 'An analysis result file is not available on this server. Run analysis/run_all.sh to produce it.' });
+      if (err instanceof DamagedArtifact) return res.status(503).json({ error: `${err.message}. Run analysis/run_all.sh to produce it again.`, reason: 'damaged' });
+      if ((err as NodeJS.ErrnoException)?.code === 'ENOENT') return res.status(503).json({ error: 'An analysis result file is not available on this server. Run analysis/run_all.sh to produce it.', reason: 'missing' });
+      // Valid JSON in an unexpected shape (for example a file from another version of the scripts): never guess.
+      logger.warn('analytics_result_unreadable', { path: req.path, error: String(err) });
+      res.status(503).json({ error: 'An analysis result file does not have the structure this server expects (it may come from another version of the analysis scripts). Run analysis/run_all.sh again.', reason: 'invalid' });
     }
   };
 
@@ -223,7 +272,7 @@ export function analyticsV1Router(dir = ANALYTICS_DIR) {
   router.get('/provenance', handle(async (_req, res) => {
     const list = await Promise.all((Object.keys(ARTIFACTS) as ArtifactName[]).map(async name => {
       try { return { name, available: true, ...(await load(name)).provenance }; }
-      catch { return { name, available: false, file: `analysis/results/${ARTIFACTS[name].file}` }; }
+      catch (err) { return { name, available: false, reason: err instanceof DamagedArtifact ? 'damaged' : 'missing', file: `analysis/results/${ARTIFACTS[name].file}` }; }
     }));
     send(res, list, [], { reproduce: 'bash analysis/run_all.sh <path to Wethaq_Datasets> (the datasets are not in the repository; see analysis/README.md)', limitations: LIMITATIONS });
   }));

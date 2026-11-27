@@ -76,7 +76,20 @@ export async function migrate(db: Db): Promise<string[]> {
   return applied;
 }
 
-/** Splits a migration file into statements. Migrations must not use '--' or ';' inside string literals or function bodies. */
-function splitSql(sql: string): string[] {
-  return sql.split('\n').map(line => line.replace(/--.*$/, '')).join('\n').split(';').map(s => s.trim()).filter(Boolean);
+/**
+ * Splits a migration file into statements on ';'. A dollar-quoted body ($$ ... $$, for a PL/pgSQL function) is
+ * kept whole. Migrations must not use '--' inside string literals or bodies, or ';' inside string literals.
+ */
+export function splitSql(sql: string): string[] {
+  const text = sql.split('\n').map(line => line.replace(/--.*$/, '')).join('\n');
+  const statements: string[] = [];
+  let current = '';
+  let quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    if (text.startsWith('$$', i)) { quoted = !quoted; current += '$$'; i++; continue; }
+    if (text[i] === ';' && !quoted) { statements.push(current); current = ''; continue; }
+    current += text[i];
+  }
+  statements.push(current);
+  return statements.map(s => s.trim()).filter(Boolean);
 }

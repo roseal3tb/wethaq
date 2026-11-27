@@ -1,3 +1,61 @@
+# Change log — final completion (branch `gp482-final`, from `b92b950`)
+
+## Fabric
+* `revoke-identity.sh`: revokes a client identity, or one superseded certificate, and writes the CRL into the
+  organization's MSP definition on the channel. Refuses admin, peer, orderer and registrar identities. Has `--dry-run`
+  and asks for confirmation. `revocation-drill.sh` runs a drill with a disposable identity.
+* `backup.sh` and `restore.sh`: consistent backup of the whole test network (mode 600, optional encryption), and a
+  restore that touches only Fabric resources.
+* `lib.sh` `wait_for_orderer`, used by `start.sh` and `restore.sh`. The chaincode and its deploy script accept a
+  base image (`NODE_IMAGE`, `WETHAQ_NODE_IMAGE`). `fabric/backups/` is git-ignored.
+
+## API
+* Migration 004: CHECK constraints on quantities and statuses, indexes, and an append-only trigger on `audit_log`.
+  The SQL splitter keeps `$$` bodies whole.
+* Migration 005 and `POST /auth/logout`: server-side sign-out. A password change or reset ends the user's other
+  sessions.
+* `GET /shipments`, `/shipments/:id` (trace), `/ledger/records`, `/alerts`: paged and filtered. `/admin/audit` now
+  has filters and a cursor.
+* `GET /admin/consistency`: read-only comparison of PostgreSQL with the ledger. On start, the API detects a
+  checkpoint that is ahead of a restored ledger: it raises an alert, writes an audit row and resets the checkpoint.
+  `Ledger.height()` was added for this.
+* Analytics: result files are checked against `MANIFEST.json` (verified, modified, outdated, unverified). Missing,
+  damaged or invalid files answer 503 with a reason. The provenance says the results are precomputed.
+* `npm run bootstrap`: the first administrator of a real installation. The seed's reference data is shared through
+  `insertReferenceData`.
+* NFR script: the simulated tampering now stays within migration 004's constraints.
+* OpenAPI 0.4.0; `.env.example` lists every setting.
+
+## Analysis
+* `write_manifest.py`, `check_manifest.py`, `compare_results.py`; `run_all.sh` writes the manifest (step 8).
+  The results themselves are unchanged.
+
+## Dashboard (live mode only; demo mode and design unchanged)
+* Sign-out also ends the session on the server. Comments in empty `catch` blocks; `let` → `const` in `mock.ts`.
+* Three new live-mode browser tests: server sign-out, an ended session, the API unreachable.
+
+## Deployment
+* `deploy/compose.yml`, `Caddyfile` (HTTPS, security headers, CSP) and `production.env.example` for one server,
+  checked locally; `deploy/check-csp-hash.mjs`; `e2e-deploy/` CSP browser check. The root `.env.example` covers the
+  dashboard settings. `.env` files, `deploy/production.env` and `dist-live/` are git-ignored.
+
+## CI
+* `checks.yml` rewritten:
+  * jobs for lint, migrations (applied twice, seed, constraints, dump and restore), analysis manifest, Docker images
+    (mirror base images, three attempts, optional Docker Hub login) and secrets with more patterns;
+  * the CSP hash step and the OpenAPI freshness check.
+* `browser-qa.yml` gains a live-mode job. `fabric.yml` uses the mirror images.
+* None of these has run on GitHub yet.
+
+## Docs
+* Renamed:
+  * `FINAL_REPORT.md` → `FINAL_COMPLETION_REPORT.md`;
+  * `STATUS_MATRIX.md` → `REQUIREMENTS_TRACEABILITY.md`;
+  * `TEST_EVIDENCE.md` → `FINAL_TEST_REPORT.md`;
+  * `DEPLOYMENT.md` → `DEPLOYMENT_GUIDE.md`.
+* New: `SECURITY_AUDIT.md`, `BACKUP_AND_RECOVERY.md`, `REPORT_DISCREPANCIES.md`, `REMAINING_BLOCKERS.md`.
+* Evidence is in `evidence/completion-2026-11-27/`. Older evidence files keep the old file names.
+
 # Change log — GP482 completion (branch `gp482-completion`)
 
 ## Fabric network

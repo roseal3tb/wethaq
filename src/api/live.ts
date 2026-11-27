@@ -9,7 +9,7 @@ export const LIVE = import.meta.env.VITE_WETHAQ_LIVE === 'true';
 /**
  * Where the Wethaq API is. Empty (the default): the same origin, through the Vite proxy in development or a
  * rewrite on the host. A full origin such as https://api.example.edu when the API is on another host; the API
- * must then allow the dashboard's origin (CORS_ORIGIN). See docs/gp482/DEPLOYMENT.md.
+ * must then allow the dashboard's origin (CORS_ORIGIN). See docs/gp482/DEPLOYMENT_GUIDE.md.
  */
 const API_BASE = String(import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
 
@@ -80,6 +80,8 @@ async function request<T>(method: string, path: string, body?: unknown, idempote
 export const liveApi = {
   login: (email: string, password: string) => request<AuthResponse>('POST', '/auth/login', { email, password }),
   me: () => request<{ user: LiveUser; demoRoleSwitch: boolean; ledger?: LedgerKind }>('GET', '/auth/me'),
+  /** Ends this session on the server: the token is refused from then on. */
+  logout: () => request<{ ok: true }>('POST', '/auth/logout'),
   switchRole: (role: Role) => request<AuthResponse>('POST', '/auth/switch', { role }),
   state: () => request<LiveState>('GET', '/state'),
   analytics: <T = unknown>(name: string) => request<AnalyticsResult<T>>('GET', `/analytics/${encodeURIComponent(name)}`),

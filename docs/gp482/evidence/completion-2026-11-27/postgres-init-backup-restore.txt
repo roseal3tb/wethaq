@@ -1,0 +1,55 @@
+# PostgreSQL clean initialisation and isolated backup/restore test
+# 2026-11-27T19:52:36Z  PostgreSQL: 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)
+
+## 1. Clean initialisation in a new, empty database (wethaq_cleaninit)
+NOTICE:  database "wethaq_cleaninit" does not exist, skipping
+$ npm run migrate
+Applied: 001_init.sql, 002_password_policy.sql, 003_ledger_sync.sql, 004_integrity.sql
+$ npm run migrate   (second run: nothing to do)
+Database is up to date
+$ LEDGER_MODE=local npm run seed
+Seeded 4 organizations, 8 users, 60 parts and 180 inventory positions
+Replayed 48 shipments through the local ledger (120 transactions)
+Recorded 5 rejected demonstration attempts
+tables|17
+migrations|001_init.sql, 002_password_policy.sql, 003_ledger_sync.sql, 004_integrity.sql
+constraints (check/fk/pk/unique)|63
+indexes|40
+triggers|audit_log_no_update
+shipments|48
+ledger_records|125
+users|8
+
+## 2. Backup of the development database (wethaq) with pg_dump, restored into a separate database (wethaq_restoretest)
+$ pg_dump --format=custom --no-owner "$SRC" -f wethaq.dump
+93725 bytes
+NOTICE:  database "wethaq_restoretest" does not exist, skipping
+$ pg_restore --no-owner --exit-on-error -d wethaq_restoretest wethaq.dump
+pg_restore exit 0
+### Row counts and content checksums, source vs restored
+users                source      8 rows md5 d23c5ca8cbef | restored      8 rows md5 d23c5ca8cbef | MATCH
+organizations        source      4 rows md5 0a14e841c1fb | restored      4 rows md5 0a14e841c1fb | MATCH
+roles                source      4 rows md5 40229d8f6dbf | restored      4 rows md5 40229d8f6dbf | MATCH
+parts                source     60 rows md5 f83bb14d3fd4 | restored     60 rows md5 f83bb14d3fd4 | MATCH
+locations            source      3 rows md5 d69d0da4e7f1 | restored      3 rows md5 d69d0da4e7f1 | MATCH
+inventory            source    180 rows md5 af10f391215f | restored    180 rows md5 af10f391215f | MATCH
+shipments            source     86 rows md5 dc3af5daaccb | restored     86 rows md5 dc3af5daaccb | MATCH
+shipment_events      source    209 rows md5 b0e2436d73e5 | restored    209 rows md5 b0e2436d73e5 | MATCH
+ledger_records       source    233 rows md5 a6b09f132870 | restored    233 rows md5 a6b09f132870 | MATCH
+alerts               source     43 rows md5 5036825718be | restored     43 rows md5 5036825718be | MATCH
+ledger_operations    source    224 rows md5 5d5361e9bb3c | restored    224 rows md5 5d5361e9bb3c | MATCH
+event_checkpoints    source      1 rows md5 edaaa423f992 | restored      1 rows md5 edaaa423f992 | MATCH
+audit_log            source     39 rows md5 c73bca61fbaf | restored     39 rows md5 c73bca61fbaf | MATCH
+local_ledger_state   source      0 rows md5 d41d8cd98f00 | restored      0 rows md5 d41d8cd98f00 | MATCH
+local_ledger_blocks  source      0 rows md5 d41d8cd98f00 | restored      0 rows md5 d41d8cd98f00 | MATCH
+schema_migrations    source      4 rows md5 a2c762964f0f | restored      4 rows md5 a2c762964f0f | MATCH
+RESULT: every table identical after restore
+### The restored copy keeps its rules
+ERROR:  audit_log is append-only (UPDATE is not allowed)
+ERROR:  new row for relation "shipments" violates check constraint "shipments_dispatched_le_requested"
+### API against the restored copy (local ledger mode, port 4100)
+{"ok":true,"ledger":"local","database":{"ok":true,"detail":"PostgreSQL reachable"},"ledgerHealth":{"ok":true,"detail":"Local development ledger in PostgreSQL (not Hyperledger Fabric)"}}
+(the restored database is a copy of the Fabric-mode development database, so in local ledger mode its consistency check is not meaningful; it is run in Fabric mode in fabric-backup-restore.txt)
+
+## 3. Clean-up of the test databases (the development database wethaq is not changed)
+dropped wethaq_cleaninit and wethaq_restoretest

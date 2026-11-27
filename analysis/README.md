@@ -12,7 +12,16 @@ These scripts produce the forecasting and inventory results that the dashboard s
    ```
    bash run_all.sh ~/path/to/Wethaq_Datasets
    ```
-3. Results are written to `out/`. They should match the reference copies in `results/`.
+3. Results are written to `out/`, with `out/MANIFEST.json` (SHA-256 of every result, of the scripts that produced it and of the input datasets, plus the Python and package versions). Compare them with the reference copies in `results/`:
+   ```
+   python3 scripts/compare_results.py results out
+   ```
+   It compares every number and exits with code 1 if anything differs. On 27 November 2026 a full run (Python 3.13, pandas 3.1, NumPy 2.5, scikit-learn 1.9) reproduced every file in `results/` exactly; see `docs/gp482/evidence/completion-2026-11-27/python-reproduction.txt`.
+
+`results/MANIFEST.json` describes the reference copies. The API reads it and labels each result it serves as `verified`, `modified` (the file changed after the manifest was written), `outdated` (a script that produced it changed since) or `unverified` (no manifest entry). A missing result file is answered with HTTP 503 (`reason: missing`), a file that is not valid JSON with 503 (`reason: damaged`) and a file with an unexpected structure with 503 (`reason: invalid`); the API never substitutes other data. After running the scripts again and copying `out/` into `results/`, write the manifest again:
+   ```
+   python3 scripts/write_manifest.py results ~/path/to/Wethaq_Datasets scripts
+   ```
 
 The datasets are not stored in this repository. The scripts read:
 
@@ -32,6 +41,9 @@ The datasets are not stored in this repository. The scripts read:
 | `raf_export.py` | Exports 40 RAF parts with their forecasts for the dashboard's forecasting page | `raf-forecasts.json` |
 | `rolling_raf.py` | Rolling-origin evaluation of the RAF forecasts over four windows | `sprint4/raf_rolling.json` |
 | `inventory_sim.py` | Monthly periodic-review simulation comparing the current policy, a fixed threshold and forecast-based reorder points (2022 warm-up, 2023 measured, z = 1.645) | `sprint4/inventory_sim.json` |
+| `inventory_export.py` | Exports the simulation results for the dashboard | `inventory-sim.json` |
+| `write_manifest.py` | Records the checksums of the results, scripts and datasets | `MANIFEST.json` |
+| `compare_results.py` | Compares a new run with the reference copies (not part of `run_all.sh`) | — |
 
 ## Differences from the proposal
 

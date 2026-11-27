@@ -36,6 +36,18 @@ peer_env() {
   set -u
 }
 
+# Waits until the orderer has elected a Raft leader for the channel after a (re)start, so new transactions can be
+# ordered (a submission sent before that fails with "no orderers could successfully process transaction").
+wait_for_orderer() {
+  local since; since=$(docker inspect -f '{{.State.StartedAt}}' orderer.example.com)
+  for _ in $(seq 1 60); do
+    if docker logs --since "$since" orderer.example.com 2>&1 | grep -q "Raft leader changed: 0 -> [0-9]* channel=$CHANNEL"; then return 0; fi
+    sleep 1
+  done
+  echo "The orderer has not elected a Raft leader for channel $CHANNEL within 60 s" >&2
+  return 1
+}
+
 orderer_args() { echo "-o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile $NET/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem"; }
 
 # The chaincode package id the peers have installed for the committed definition.

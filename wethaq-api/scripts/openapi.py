@@ -34,6 +34,7 @@ paths={
  "/auth/login":{"post":op("Sign in","Auth",{"200":resp("Session",ref("Session")),"400":err,"401":err,"429":err},False,body=obj({"email":S,"password":S},["email","password"]),desc="10 attempts per minute per client.")},
  "/auth/me":{"get":op("Current user","Auth",{"200":resp("User"),"401":err})},
  "/auth/password":{"post":op("Change own password","Auth",{"200":resp("New session",ref("Session")),"400":err,"401":err},body=obj({"currentPassword":S,"newPassword":S},["currentPassword","newPassword"]))},
+ "/auth/logout":{"post":op("Sign out: the token used is refused from then on (a password change or reset ends every session)","Auth",{"200":resp("Signed out"),"401":err})},
  "/auth/switch":{"post":op("Switch to a demonstration account (development only)","Auth",{"200":resp("Session",ref("Session")),"403":err},body=obj({"role":{"type":"string","enum":["Planner","Dispatcher","Receiver","Admin"]}},["role"]),desc="Always disabled when NODE_ENV=production.")},
  "/events":{"get":op("Live changes (server-sent events)","Live",{"200":{"description":"text/event-stream of change events","content":{"text/event-stream":{"schema":ref("LiveEvent")}}}})},
  "/state":{"get":op("Dashboard state","Data",{"200":resp("Shipments, transactions, alerts, users and inventory positions")})},
@@ -52,7 +53,19 @@ paths["/users/{id}"]={"patch":op("Change a user's role or active flag (Admin)","
 paths["/users/{id}/reset-password"]={"post":op("Issue a new temporary password (Admin)","Users",{"200":resp("User"),"403":err,"404":err},params=[{"name":"id","in":"path","required":True,"schema":S}])}
 paths["/admin/sync-status"]={"get":op("Ledger synchronization status (Admin)","Admin",{"200":resp("Status",ref("SyncStatus")),"403":err})}
 paths["/admin/reconcile"]={"post":op("Reconcile pending ledger operations now (Admin)","Admin",{"200":resp("Report",ref("Reconcile")),"403":err})}
-paths["/admin/audit"]={"get":op("Application audit log (Admin)","Admin",{"200":resp("Entries"),"403":err},params=[{"name":"limit","in":"query","schema":{"type":"integer","minimum":1,"maximum":500}}])}
+qp=lambda n,schema,desc=None:{"name":n,"in":"query","required":False,"schema":schema,**({"description":desc} if desc else {})}
+en=lambda *v:{"type":"string","enum":list(v)}
+page_params=[qp("limit",{"type":"integer","minimum":1,"maximum":200,"default":50},"Page size"),qp("offset",{"type":"integer","minimum":0,"default":0},"Entries to skip")]
+page=lambda desc:{"200":resp(desc,ref("Page")),"400":err,"401":err}
+paths["/shipments"]["get"]=op("List shipments, newest first (paginated)","Shipments",page("A page of shipments (dashboard Shipment objects with their timeline)"),
+  params=[qp("status",en("Requested","Dispatched","In Transit","Received")),qp("partId",{"type":"string","pattern":"^SP-\\d{3}$"}),qp("location",S,"Destination name or id"),qp("ledgerState",en("pending","confirmed","failed"))]+page_params)
+paths["/shipments/{id}"]={"get":op("Traceability of one shipment: timeline, ledger records, rejected attempts, alerts, ledger operations and the ledger's own history","Shipments",{"200":resp("Shipment trace"),"400":err,"401":err,"404":err},params=[sid,qp("ledger",en("true","false"),"false skips reading the history from the ledger")])}
+paths["/ledger/records"]={"get":op("Reporting copy of ledger records and application-level rejections, newest first (paginated)","Ledger",page("A page of ledger records"),
+  params=[qp("shipmentId",S),qp("type",en("REQUEST","DISPATCH","STATUS_CHANGE","RECEIPT","ATTEMPT")),qp("status",en("Committed","Rejected")),qp("source",en("chaincode","application")),qp("from",{"type":"string","format":"date-time"},"On or after (ISO 8601)"),qp("to",{"type":"string","format":"date-time"},"Before (ISO 8601)")]+page_params)}
+paths["/alerts"]={"get":op("List alerts, newest first (paginated)","Alerts",page("A page of alerts"),
+  params=[qp("acknowledged",en("true","false")),qp("type",en("Shortage","Discrepancy","Delay","Rejected attempt","Ledger sync","Pending transaction")),qp("severity",en("Critical","High","Medium","Low")),qp("shipmentId",S),qp("partId",S)]+page_params)}
+paths["/admin/audit"]={"get":op("Application audit log, newest first (Admin); append-only in the database","Admin",{"200":resp("Entries"),"400":err,"403":err},params=[qp("limit",{"type":"integer","minimum":1,"maximum":500,"default":100}),qp("before",{"type":"integer","minimum":1},"Id of the last entry of the previous page"),qp("action",S,"For example auth.login"),qp("outcome",en("ok","denied","rejected","failed","pending")),qp("userId",S),qp("target",S)])}
+paths["/admin/consistency"]={"get":op("Compare every shipment in PostgreSQL with the ledger, and the event checkpoint with the ledger height (Admin, read-only)","Admin",{"200":resp("Consistency report",ref("Consistency")),"401":err,"403":err})}
 schemas={
  "Error":obj({"error":S,"ledgerFailure":{"type":"string","enum":["unavailable","endorsement","invalid","error"]},"ledgerState":{"type":"string","enum":["failed"]},"txId":S},["error"]),
  "Session":obj({"token":S,"user":{"type":"object"},"demoRoleSwitch":B,"ledger":{"type":"string","enum":["local","fabric"]}}),
@@ -63,7 +76,13 @@ schemas={
  "InventoryPosition":obj({"id":S,"partId":S,"location":S,"onHand":I,"inTransit":I,"monthlyDemand":{"type":"number"},"leadDays":I,"safetyStock":I,"reorderPoint":I,"leadDemand":{"type":"number"},"daysCover":{"type":"number"},"status":{"type":"string","enum":["Healthy","Watch","Below reorder point","Stockout risk"]},"recommended":I,"updatedAt":S}),
  "Analytics":obj({"data":{},"provenance":obj({"artifact":S,"file":S,"script":S,"dataset":S,"description":S,"generatedAt":S,"sha256":S,"bytes":I,"note":S})}),
  "Ready":obj({"ok":B,"ledger":S,"database":obj({"ok":B,"detail":S}),"ledgerHealth":obj({"ok":B,"detail":S,"identities":{"type":"array","items":obj({"msp":S,"subject":S,"expires":S,"daysLeft":I})}})}),
- "SyncStatus":obj({"ledger":S,"checkpoint":{"type":"object","nullable":True},"operations":{"type":"object","additionalProperties":I},"open":{"type":"array","items":{"type":"object"}},"lastReconcile":{"type":"object","nullable":True},"consumer":obj({"running":B,"lastEventAt":{"type":"string","nullable":True},"lastError":{"type":"string","nullable":True}})}),
+ "SyncStatus":obj({"ledger":S,"checkpoint":{"type":"object","nullable":True},"operations":{"type":"object","additionalProperties":I},"open":{"type":"array","items":{"type":"object"}},"lastReconcile":{"type":"object","nullable":True},"consumer":obj({"running":B,"lastEventAt":{"type":"string","nullable":True},"lastError":{"type":"string","nullable":True},"checkpointReset":{"type":"object","nullable":True,"description":"Set when the checkpoint was found ahead of the ledger at startup","properties":{"at":S,"fromBlock":I,"toBlock":I,"ledgerHeight":I,"reason":S}}})}),
+ "Page":obj({"items":{"type":"array","items":{"type":"object"}},"total":{"type":"integer","description":"Entries matching the filters"},"limit":I,"offset":I},["items","total","limit","offset"]),
+ "Consistency":obj({"checkedAt":S,"ledger":{"type":"string","enum":["local","fabric"]},"ledgerHeight":{"type":"integer","nullable":True},
+   "checkpoint":{"type":"object","nullable":True,"properties":{"block":I,"txId":{"type":"string","nullable":True},"aheadOfLedger":B}},"consistent":B,
+   "summary":obj({k:I for k in ["shipments","verified","mismatch","notFound","pending","failed","unavailable","recordsMissingOnLedger","recordsMissingInDatabase","orphanRecordsChecked","orphanRecordsMissingOnLedger"]}),
+   "problems":{"type":"array","items":obj({"shipmentId":S,"status":S,"differences":{"type":"array","items":S},"missingOnLedger":{"type":"array","items":S},"missingInDatabase":{"type":"array","items":S}})},
+   "orphanRecordsMissingOnLedger":{"type":"array","items":S},"truncated":B}),
  "Reconcile":obj({"at":S,"checked":I,"applied":I,"failed":I,"stillPending":I,"errors":{"type":"array","items":S}}),
  "LiveEvent":obj({"kind":{"type":"string","enum":["ledger","app"]},"name":S,"shipmentId":S,"txId":S,"block":I,"status":S,"operation":S,"at":S}),
 }
@@ -82,7 +101,7 @@ paths["/analytics/v1/inventory-policies"]=v1("Headline result per inventory poli
 paths["/analytics/v1/provenance"]=v1("Provenance of every result file")
 schemas["AnalyticsV1"]=obj({"version":{"type":"string","enum":["v1"]},"data":{},"sources":{"type":"array","items":{"type":"object"}},"limitations":{"type":"array","items":S}},["version","data","sources"])
 
-doc={"openapi":"3.0.3","info":{"title":"Wethaq API","version":"0.3.0","description":"Application service for Wethaq (GP482): Express + PostgreSQL, with shipment rules enforced by the Hyperledger Fabric chaincode (or, in development, by the local development ledger, which is not Fabric). All routes are under /api."},
+doc={"openapi":"3.0.3","info":{"title":"Wethaq API","version":"0.4.0","description":"Application service for Wethaq (GP482): Express + PostgreSQL, with shipment rules enforced by the Hyperledger Fabric chaincode (or, in development, by the local development ledger, which is not Fabric). All routes are under /api."},
  "servers":[{"url":"/api"}],"components":{"securitySchemes":{"bearerAuth":{"type":"http","scheme":"bearer","bearerFormat":"JWT"}},"schemas":schemas},"paths":paths}
 import os
 json.dump(doc,open(os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','openapi.json'),'w'),indent=2)

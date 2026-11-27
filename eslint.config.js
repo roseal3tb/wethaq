@@ -37,4 +37,11 @@ export default tseslint.config(
     },
   },
   eslintPluginPrettier,
+  {
+    // Project settings (GP482): the code base is not Prettier-formatted, so formatting is not enforced, and `any`
+    // (used for database rows and in tests) is reported as a warning. CI runs ESLint with these settings.
+    rules: { "prettier/prettier": "off" },
+  },
+  { files: ["**/*.{ts,tsx}"], rules: { "@typescript-eslint/no-explicit-any": "warn" } },
+  { ignores: ["**/node_modules", "**/dist", "fabric", "playwright-report", "test-results", "wethaq-api/nfr-results"] },
 );

@@ -1,0 +1,33 @@
+$ ./fabric/revocation-drill.sh   (exit 0)
+Revocation drill on channel wethaq with the disposable identity wethaq-revoke-drill-20261127194120
+  enrolled, certificate serial 024BD21FC7D547253234E4CDACE81FF4B3DD67
+  PASS before: the new identity can query
+  PASS before: the new identity can submit (committed; the chaincode recorded a rejected attempt for the unknown shipment)
+  re-enrolled, second certificate serial 61CC60980F0F7356E6737C3AC1346B2525FC9953
+  Org1MSP: revoked certificate 024bd21fc7d547253234e4cdace81ff4b3dd67 of 'wethaq-revoke-drill-20261127194120' (superseded); CRL with 3 revoked certificate(s) is in the channel configuration (channel height 114).
+  PASS first certificate (superseded) refused
+  PASS second certificate of the same identity still works
+  Org1MSP: revoked every certificate of 'wethaq-revoke-drill-20261127194120' (keycompromise); CRL with 4 revoked certificate(s) is in the channel configuration (channel height 115).
+  PASS after: query refused (access denied)
+  PASS after: transaction refused (access denied)
+  PASS peer0.org1 log gives the reason: 'The certificate has been revoked' (5 refusal(s) for CN=wethaq-revoke-drill-20261127194120)
+  PASS after: wethaq-app (Org1) still queries
+  PASS after: the Org2 admin still queries (3 record(s) for SHP-REVOKE-DRILL)
+Revocation drill passed.
+
+$ for id in admin peer0 org1admin wethaq-app nobody-here; do ./fabric/revoke-identity.sh 1 $id --dry-run; done
+Org1MSP: admin can register or revoke identities (a CA registrar); it is not revoked by this script
+  exit=1
+Org1MSP: peer0 is a 'peer' identity; only client identities are revoked by this script
+  exit=1
+Org1MSP: org1admin is a 'admin' identity; only client identities are revoked by this script
+  exit=1
+Org1MSP: would revoke every certificate of 'wethaq-app' (reason keycompromise); nothing changed (--dry-run)
+  exit=0
+Org1MSP: no identity named nobody-here at ca-org1
+  exit=1
+
+$ fabric/identities/revocations.log (private file, last 3 lines; identities are disposable drill identities)
+{"at":"2026-11-27T19:40:13Z","org":"Org1MSP","identity":"wethaq-revoke-drill-20261127194011","reason":"keycompromise","revokedSerials":"","channel":"wethaq","channelHeightAfterUpdate":112,"by":"unknown"}
+{"at":"2026-11-27T19:41:21Z","org":"Org1MSP","identity":"wethaq-revoke-drill-20261127194120","reason":"superseded","revokedSerials":"024bd21fc7d547253234e4cdace81ff4b3dd67","channel":"wethaq","channelHeightAfterUpdate":114,"by":"unknown"}
+{"at":"2026-11-27T19:41:24Z","org":"Org1MSP","identity":"wethaq-revoke-drill-20261127194120","reason":"keycompromise","revokedSerials":"24bd21fc7d547253234e4cdace81ff4b3dd67 61cc60980f0f7356e6737c3ac1346b2525fc9953","channel":"wethaq","channelHeightAfterUpdate":115,"by":"unknown"}

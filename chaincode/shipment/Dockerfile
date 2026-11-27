@@ -1,13 +1,16 @@
 # Chaincode-as-a-service image: the chaincode runs in its own container and the peers connect to it,
 # so the peers never have to build chaincode images themselves (used by fabric/up.sh).
-FROM node:20-bookworm-slim AS build
+# NODE_IMAGE can point at a mirror of the official image, for example
+# public.ecr.aws/docker/library/node:20-bookworm-slim, when Docker Hub rate-limits anonymous pulls.
+ARG NODE_IMAGE=node:20-bookworm-slim
+FROM ${NODE_IMAGE} AS build
 WORKDIR /app
 COPY package.json package-lock.json tsconfig.json ./
 RUN npm ci
 COPY src ./src
 RUN npm run build && npm prune --omit=dev
 
-FROM node:20-bookworm-slim
+FROM ${NODE_IMAGE}
 WORKDIR /app
 COPY --from=build /app/package.json ./
 COPY --from=build /app/node_modules ./node_modules

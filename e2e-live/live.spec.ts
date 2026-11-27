@@ -125,3 +125,33 @@ test('The forecasting page reads the analysis results from the API, with their c
   await expect(page.getByText(`From the API · analysis/results/raf-forecasts.json · ${sha.slice(0, 8)}`)).toBeVisible();
   await expect(page.getByText('could not be loaded from the Wethaq API')).toHaveCount(0);
 });
+
+test('Signing out ends the session on the server, not only in the browser', async ({ page, request }) => {
+  await signIn(page, 'receiver');
+  await expect(page).toHaveURL(/\/overview/);
+  const token = await page.evaluate(() => sessionStorage.getItem('wethaq.token'));
+  expect(token).toBeTruthy();
+  expect((await request.get('http://127.0.0.1:4000/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })).status()).toBe(200);
+  await page.getByRole('button', { name: 'Sign out' }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  expect(await page.evaluate(() => sessionStorage.getItem('wethaq.token'))).toBeNull();
+  await expect.poll(async () => (await request.get('http://127.0.0.1:4000/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })).status()).toBe(401);
+});
+
+test('An expired or ended session returns to the sign-in page and shows no data', async ({ page }) => {
+  await page.goto('/login');
+  await page.evaluate(() => sessionStorage.setItem('wethaq.token', 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJVU1ItMDAxIiwiZXhwIjoxfQ.expired'));
+  await page.goto('/shipments');
+  await expect(page).toHaveURL(/\/login/);
+  expect(await page.evaluate(() => sessionStorage.getItem('wethaq.token'))).toBeNull();
+  await expect(page.getByText('SHP-2026-0001')).toHaveCount(0);
+});
+
+test('When the API cannot be reached, the dashboard says so and shows no demonstration data', async ({ page }) => {
+  // Only the API (/api/...), not the dashboard's own modules such as /src/api/live.ts.
+  await page.route(url => url.pathname.startsWith('/api/'), route => route.abort('connectionrefused'));
+  await signIn(page, 'planner');
+  await expect(page.getByRole('alert')).toContainText('Wethaq API is not reachable');
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByText('SHP-2026-0001')).toHaveCount(0);
+});

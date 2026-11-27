@@ -1,0 +1,22 @@
+Content-Security-Policy for the deployed dashboard (deploy/Caddyfile) — 2026-11-27 (UTC), sandbox machine
+
+Setup: VITE_WETHAQ_LIVE=true npx vite build --outDir dist-live; caddy:2 on the host network serving dist-live
+with deploy/Caddyfile (WETHAQ_SITE_ADDRESS=http://:8089, WETHAQ_API_UPSTREAM=127.0.0.1:4000); the API running
+in Fabric mode against the seeded development database. Browser check: e2e-deploy/csp.spec.ts (Chromium,
+Playwright), signing in as the demonstration Planner and opening Overview, Demand Forecasting, Inventory and
+Shipments while listening for securitypolicyviolation events and "Refused to" console messages.
+
+caddy validate --config /etc/caddy/Caddyfile            -> Valid configuration
+curl -sI http://127.0.0.1:8089/ | grep content-security  -> header present (default-src 'self'; script-src 'self' 'sha256-…'; …)
+
+With the policy as committed:
+  pages visited, CSP violations: 0
+  ✓ the dashboard runs under the Caddy Content-Security-Policy with no violations (7.3s)
+  1 passed
+
+Negative control (the same policy without the sha256 of the inline theme script), to show the check detects violations:
+  pages visited, CSP violations: 10
+  ✘ … "Refused to load (CSP) script-src-elem inline", …
+  1 failed
+
+node deploy/check-csp-hash.mjs -> deploy/Caddyfile CSP allows the 1 inline script(s) in index.html (also a CI step now)

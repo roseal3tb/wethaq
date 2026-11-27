@@ -1,0 +1,71 @@
+{
+  "writtenAt": "2026-11-27T20:09:30Z",
+  "python": "3.13.18",
+  "packages": {
+    "pandas": "3.1.1",
+    "numpy": "2.5.5",
+    "scikit-learn": "1.9.1",
+    "openpyxl": "3.1.5"
+  },
+  "datasets": [
+    {
+      "file": "01_RAF_Spare_Parts_Demand/Data/RAF_long.csv",
+      "sha256": "2b1feca45522625758670a161ad4a976082087072843bd465c08e3e3d6e6e589"
+    },
+    {
+      "file": "04_Optional_Extras/A_Synthetic_Aviation_Demand_12960/obj1_synthetic_demand.csv",
+      "sha256": "570ec2bcecf8e8e756e5cc5ab4645652a680a7943d6a0341c6370405e023c64b"
+    },
+    {
+      "file": "04_Optional_Extras/A_Synthetic_Aviation_Demand_12960/generate_obj1_synthetic_demand.py",
+      "sha256": "6dba4f3f6f89e77d2287f9cf4e142666f2de1aa9ed6a4a2252c1642623d285ae"
+    }
+  ],
+  "scripts": {
+    "assess.py": "394a960034d0a4daa7c6415ef222f3a8552476892ea0e62d57850b1f42437f44",
+    "forecast.py": "570741d1f24016fc5097d8a12366f3a0ca26a98b3507a2fbc979eb0682b1ff9e",
+    "inventory_sim.py": "b2ea636bec15ec897f4cfda9f3337a2b325a76e47ea313f6625356bed219ce0a",
+    "raf_export.py": "e76e786e91839777adea7172fea92171b19d37dcaf2c0ed054fcda503348f885",
+    "rolling_raf.py": "c50d3f2ed569975e919d2bba23b3d72b92b9fa1703fd85a0b210c626e1a232b5"
+  },
+  "results": {
+    "assessment.json": {
+      "sha256": "a011614377742906487e7f62ea5d47f3c2bb97e767f9159c72b4d52948552fa8",
+      "bytes": 2058,
+      "scripts": [
+        "assess.py"
+      ]
+    },
+    "forecast_results.json": {
+      "sha256": "230ee44bc35f2b2d0e51478f5b1ebcabe76a3c41407e10d959a29e46578eab4a",
+      "bytes": 9017,
+      "scripts": [
+        "forecast.py"
+      ]
+    },
+    "raf-forecasts.json": {
+      "sha256": "108e1679838403400cba3bd0489db2cdfe2eaca6a0761d1c389c07bae293ab1b",
+      "bytes": 36874,
+      "scripts": [
+        "raf_export.py",
+        "forecast.py"
+      ]
+    },
+    "raf_rolling.json": {
+      "sha256": "00058f2c71274f0c3815ed6f5cdd67e0430731ca851fa0d658a6e083025a8cb8",
+      "bytes": 8203,
+      "scripts": [
+        "rolling_raf.py",
+        "forecast.py"
+      ]
+    },
+    "inventory_sim.json": {
+      "sha256": "cec6788035c43bcd60f131887bf83d02e921c7cb679eb4a45f9a1c935c5eb015",
+      "bytes": 10001,
+      "scripts": [
+        "inventory_sim.py",
+        "forecast.py"
+      ]
+    }
+  }
+}

@@ -204,6 +204,15 @@ export async function fabricLedger(cfg: FabricConfig): Promise<Ledger> {
       return JSON.parse(await evaluate('VerifyShipment', [shipmentId, JSON.stringify(expected)])) as VerifyOutcome;
     },
     onCommit(listener, options = {}) { return listen(listener, options.fromBlock); },
+    async height() {
+      try {
+        const info = common.BlockchainInfo.deserializeBinary(await qscc.evaluateTransaction('GetChainInfo', cfg.channel));
+        return Number(info.getHeight());
+      } catch (err) {
+        if (isUnavailable(err)) throw new LedgerError('unavailable', `Fabric peers are not reachable (${(err as Error).message})`);
+        throw err;
+      }
+    },
     async health(): Promise<LedgerHealth> {
       const identities = Object.values(orgs).map(o => ({
         msp: o.identity.msp, subject: o.identity.subject, expires: o.identity.validTo.toISOString(),

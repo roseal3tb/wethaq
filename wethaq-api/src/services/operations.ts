@@ -305,7 +305,46 @@ export interface SyncStatus {
   operations: Record<string, number>;
   open: { operationId: string; kind: string; shipmentId: string; state: string; failure: string | null; attempts: number; createdAt: string }[];
   lastReconcile: ReconcileReport | null;
-  consumer: { running: boolean; lastEventAt: string | null; lastError: string | null };
+  consumer: { running: boolean; lastEventAt: string | null; lastError: string | null; checkpointReset: CheckpointReset | null };
+}
+
+/** Set when the stored checkpoint was found ahead of the ledger at startup (see checkpointBehindLedger). */
+export interface CheckpointReset { at: string; fromBlock: number; toBlock: number; ledgerHeight: number; reason: string; }
+
+/**
+ * Checks, once at startup, that the ledger still contains the last block PostgreSQL applied. After the ledger is
+ * restored from an older backup (or replaced by a new network), the stored checkpoint can point past the end of the
+ * ledger: the consumer would then wait for a block number that is reused by new transactions and miss them. In that
+ * case the checkpoint is moved to the current end of the ledger, so new transactions are applied, and a critical
+ * alert asks an administrator to run the consistency check. Nothing else is changed: PostgreSQL may now hold
+ * transactions the ledger does not have, and deciding what to do about them is left to the administrator.
+ */
+async function checkpointBehindLedger(db: Db, ledger: Ledger, checkpoint: { block: number; tx_id: string | null }): Promise<CheckpointReset | null> {
+  let height: number;
+  try { height = await ledger.height(); } catch (err) {
+    logger.warn('ledger_checkpoint_check_skipped', { error: String(err) });
+    return null;
+  }
+  const block = Number(checkpoint.block);
+  let reason: string | null = null;
+  if (block >= height) reason = `the last applied block ${block} is beyond the ledger height ${height}`;
+  else if (checkpoint.tx_id) {
+    const status = await ledger.transactionStatus(checkpoint.tx_id).catch(() => null);
+    if (status && status.state === 'not_found') reason = `the last applied transaction ${checkpoint.tx_id.slice(0, 12)} is not on the ledger`;
+  }
+  if (!reason) return null;
+  const reset: CheckpointReset = { at: new Date().toISOString(), fromBlock: block, toBlock: Math.max(0, height - 1), ledgerHeight: height, reason };
+  await db.transaction(async q => {
+    await q.query('UPDATE event_checkpoints SET block = $2, tx_id = NULL, updated_at = now() WHERE name = $1', [CHECKPOINT, reset.toBlock]);
+    await raiseAlert(q, {
+      type: 'Ledger sync', severity: 'Critical', title: 'The ledger is behind the database',
+      detail: `PostgreSQL has applied ledger transactions that the ledger does not contain (${reason}). The ledger may have been restored from an older backup or replaced. New transactions are followed from block ${height}. Run the consistency check (Admin, GET /api/admin/consistency) before relying on the reporting copy.`,
+      at: reset.at, dedupeKey: 'ledger-sync:checkpoint-ahead'
+    });
+  });
+  await audit(db, { action: 'ledger.checkpoint_reset', outcome: 'ok', detail: { ...reset } });
+  logger.error('ledger_checkpoint_ahead', { ...reset });
+  return reset;
 }
 
 export interface ReconcileReport { at: string; checked: number; applied: number; failed: number; stillPending: number; errors: string[]; }
@@ -316,7 +355,8 @@ export interface ReconcileReport { at: string; checked: number; applied: number;
  *  - reconciles operations whose outcome is unknown, or that were interrupted by a restart.
  */
 export function startSync({ db, ledger, bus, intervalMs, pendingExpiryMs, submittingGraceMs = 120_000, resyncDelayMs = 5_000 }: { db: Db; ledger: Ledger; bus?: EventBus; intervalMs: number; pendingExpiryMs: number; submittingGraceMs?: number; resyncDelayMs?: number }) {
-  const consumer = { running: true, lastEventAt: null as string | null, lastError: null as string | null };
+  const consumer = { running: true, lastEventAt: null as string | null, lastError: null as string | null, checkpointReset: null as CheckpointReset | null };
+  let checkedCheckpoint = false;
   let lastReconcile: ReconcileReport | null = null;
   let stopEvents: (() => void) | undefined;
   let stopped = false;
@@ -329,7 +369,12 @@ export function startSync({ db, ledger, bus, intervalMs, pendingExpiryMs, submit
   const subscribe = async () => {
     // No checkpoint yet (a new database): follow new events only. Earlier transactions were applied when
     // they were submitted, or are found by verify and the reconciler.
-    const checkpoint = (await db.query<{ block: number }>('SELECT block FROM event_checkpoints WHERE name = $1', [CHECKPOINT])).rows[0];
+    let checkpoint = (await db.query<{ block: number; tx_id: string | null }>('SELECT block, tx_id FROM event_checkpoints WHERE name = $1', [CHECKPOINT])).rows[0];
+    if (checkpoint && !checkedCheckpoint) {
+      checkedCheckpoint = true;
+      const reset = await checkpointBehindLedger(db, ledger, checkpoint);
+      if (reset) { consumer.checkpointReset = reset; checkpoint = { block: reset.toBlock, tx_id: null }; }
+    }
     if (stopped) return;
     const mine = ++generation;
     stopEvents = ledger.onCommit(e => (mine === generation ? onEvent(e, mine) : Promise.resolve()), checkpoint ? { fromBlock: Number(checkpoint.block) } : {});

@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 40
     services:
       postgres:
-        image: postgres:16-alpine
+        image: public.ecr.aws/docker/library/postgres:16-alpine
         env:
           POSTGRES_USER: wethaq
           POSTGRES_PASSWORD: wethaq
@@ -22,11 +22,31 @@ jobs:
       DATABASE_URL: postgres://wethaq:wethaq@127.0.0.1:5432/wethaq
       LEDGER_MODE: fabric
       DEMO_PASSWORD: ci-demo-password-1
+      # The chaincode image's Node.js base image comes from the ECR Public mirror of Docker Hub's library.
+      WETHAQ_NODE_IMAGE: public.ecr.aws/docker/library/node:20-bookworm-slim
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
+      - name: Sign in to Docker Hub when credentials are configured (the Fabric images come from Docker Hub)
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ]; then
+            echo "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
+          else
+            echo "No Docker Hub credentials configured: anonymous pulls (rate-limited by Docker Hub)"
+          fi
+      - name: Set up Node.js with the npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            wethaq-api/package-lock.json
       - name: Install dependencies
         run: |
           npm install --no-audit --no-fund

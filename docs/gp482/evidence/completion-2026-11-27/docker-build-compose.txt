@@ -1,0 +1,52 @@
+# Docker: API image build and docker compose run — 2026-11-27T20:13:40Z
+# Docker 29.9.3, Compose 5.7.1
+
+## 1. Plain build: docker build -f wethaq-api/Dockerfile -t wethaq-api:test .
+The base image node:22-bookworm-slim was pulled from Docker Hub without a rate-limit error in this environment.
+npm ci inside the build failed because this sandbox's build containers cannot reach the npm registry directly (sandbox network policy, not a Dockerfile problem):
+    #7 70.82 npm error Exit handler never called!
+    70.82 npm error Exit handler never called!
+
+## 2. Build with a sandbox-only harness: the same Dockerfile plus the sandbox proxy's CA for npm (not committed)
+Difference from wethaq-api/Dockerfile:
+    10c10,12
+    < RUN cd wethaq-api && npm ci --omit=dev --no-audit --no-fund
+    ---
+    > # [sandbox harness only] trust the sandbox egress proxy for npm
+    > COPY --from=ccr ca-bundle.crt /tmp/ccr-ca.crt
+    > RUN cd wethaq-api && npm_config_cafile=/tmp/ccr-ca.crt npm ci --omit=dev --no-audit --no-fund && rm /tmp/ccr-ca.crt
+Command: docker build --network host --build-arg HTTPS_PROXY=<sandbox proxy> --build-context ccr=<sandbox CA folder> -f Dockerfile.sandbox -t wethaq-api:test .
+    #11 2.945 added 140 packages in 3s
+    #23 naming to docker.io/library/wethaq-api:test done
+Image: sha256:baf6b80d30440f3a5edb1769ceee78fb21817dae2b8b2d6bb8929d9c15821d0f 400079592 bytes, user node, healthcheck ["CMD-SHELL","node -e \"fetch('http://127.0.0.1:4000/api/health/live').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))\""]
+
+## 3. docker compose --profile api up -d (wethaq-api/docker-compose.yml; JWT_SECRET from openssl rand -hex 32, NODE_ENV=production, LEDGER_MODE=local)
+wethaq-api  wethaq-api-api  Up 20 seconds (healthy)
+wethaq-api-db  postgres:16-alpine  Up 25 seconds (healthy)
+--- migrations applied by the container at start
+Applied: 002_password_policy.sql, 003_ledger_sync.sql, 004_integrity.sql
+--- GET /api/health/ready
+{"ok":true,"ledger":"local","database":{"ok":true,"detail":"PostgreSQL reachable"},"ledgerHealth":{"ok":true,"detail":"Local development ledger in PostgreSQL (not Hyperledger Fabric)"}}
+--- GET /api/openapi.json version
+0.4.0
+--- unauthenticated request
+GET /api/state -> 401
+--- security headers
+Content-Security-Policy: default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+--- the audit log trigger and quantity checks exist in the compose database
+audit_log_no_update
+shipments_dispatched_le_requested
+shipments_ledger_state_check
+shipments_received_le_dispatched
+shipments_status_quantities
+--- the container runs as a non-root user: node
+--- analysis results in the image are checked against MANIFEST.json
+assessment verified scriptsChecked=true
+forecasts verified scriptsChecked=true
+raf-parts verified scriptsChecked=true
+rolling verified scriptsChecked=true
+inventory-simulation verified scriptsChecked=true
+--- container health: healthy

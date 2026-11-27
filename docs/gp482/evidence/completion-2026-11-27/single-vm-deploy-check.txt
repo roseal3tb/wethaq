@@ -1,0 +1,61 @@
+Single-VM deployment configuration (deploy/compose.yml) — local check on the development machine
+Date: 2026-11-27 (UTC). This is NOT a cloud deployment: nothing was deployed to a hosted server and no paid
+resources were created. The stack ran on the sandbox machine next to the local Fabric test network.
+
+Setup
+- Fresh Fabric test network: ./fabric/reset.sh --yes, then WETHAQ_SKIP_CC_BUILD=1 ./fabric/up.sh (exit 0;
+  the chaincode image from the earlier build was reused because npm cannot reach the registry from build
+  containers in this sandbox; the chaincode source is unchanged).
+- API image: wethaq-api/Dockerfile built with a sandbox-only npm proxy/CA step (not committed), tagged wethaq-api:test.
+- Dashboard: VITE_WETHAQ_LIVE=true npx vite build --outDir dist-live.
+- deploy/production.env: scratch values generated with openssl rand (outside the repository, deleted afterwards),
+  WETHAQ_SITE_ADDRESS=http://:80 published on 127.0.0.1:8088 (plain HTTP: no domain, so no certificate).
+- The enrolled identities were copied to a scratch folder owned by uid 1000 (the container user).
+- docker compose -f deploy/compose.yml --env-file <scratch env> config --quiet  -> OK
+- docker compose ... up -d --no-build  -> postgres healthy, api healthy, web up
+- bootstrap: docker compose exec api tsx src/cli/bootstrap.ts --admin-email ops@example.org
+  --admin-name "Operations Admin" --demo-catalogue  -> exit 0 (temporary password printed once; not recorded here)
+
+First attempt (finding, kept on purpose)
+- Mounting the whole test-network organizations folder failed with EACCES: its folders are mode 700 and hold
+  the peers' and orderers' private keys. compose.yml now mounts only the two peers' TLS CA certificates.
+- Against the Fabric network that already held the development data, the new database numbered its first
+  shipment SHP-2026-0001, which already existed on the ledger. The chaincode refused it ("Shipment
+  SHP-2026-0001 already exists") and the API answered 502 with nothing written to PostgreSQL. A new
+  installation therefore needs a new channel (or network); see DEPLOYMENT_GUIDE.md. The check was repeated on
+  a fresh network.
+
+Flow through Caddy (http://127.0.0.1:8088), on the fresh network
+  admin signs in with the temporary password: 200 | mustChangePassword = True
+  GET /state before the password change: 403
+  password change: 200
+  admin signs in with the new password: 200
+  POST /auth/switch (demonstration role switching, refused in production): 403
+  POST /demo/invalid (demonstration tool, refused in production): 403
+  admin creates a Planner account: 201
+  planner signs in: 200
+  planner creates a shipment, committed on Fabric: 201 | id SHP-2026-0001 | ledger {'txId': 'f04cd17386add76d77682988ed5cd76f6c058502314eb34b87725034c067f951', 'block': 6}
+  live updates (/api/events) through Caddy: ['HTTP 200 text/event-stream', 'event: ready', 'event: change']
+  GET /shipments/:id: 200 | ledger state confirmed
+  GET /admin/consistency: 200 | consistent = True | summary {'shipments': 1, 'verified': 1, 'mismatch': 0, 'notFound': 0, 'pending': 0, 'failed': 0, 'unavailable': 0, 'recordsMissingOnLedger': 0, 'recordsMissingInDatabase': 0, 'orphanRecordsChecked': 0, 'orphanRecordsMissingOnLedger': 0}
+  sign-out: 200 | token afterwards: 401
+
+Isolation, user and persistence
+  published ports:
+  wethaq-web-1: 443/udp, 2019/tcp, 127.0.0.1:8088->80/tcp, 127.0.0.1:8443->443/tcp
+  wethaq-api-1: 4000/tcp
+  wethaq-postgres-1: 5432/tcp
+  api user: 1000:1000
+  identity files visible to api: IssuerPublicKey
+  IssuerRevocationPublicKey
+  cacerts
+  config.yaml
+  keystore
+  signcerts
+  user
+  organizations folder mounted in api (only the two TLS CA certs): /fabric/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt
+  /fabric/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt
+  after restart: ok True ledger fabric
+  rows after restart: 1
+
+Headers on / (curl -sI): Referrer-Policy, Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options present; the SPA fallback answers 200 for /shipments.

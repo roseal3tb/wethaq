@@ -12,6 +12,7 @@
     "db:down": "docker compose down",
     "migrate": "tsx src/cli/migrate.ts",
     "seed": "tsx src/cli/seed.ts",
+    "bootstrap": "tsx src/cli/bootstrap.ts",
     "setup": "npm run migrate && npm run seed",
     "test": "vitest run",
     "check": "tsc --noEmit",

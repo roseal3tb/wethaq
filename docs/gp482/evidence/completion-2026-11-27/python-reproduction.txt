@@ -1,0 +1,384 @@
+# Reproduction of the Python analysis results — 2026-11-27T20:10:15Z
+# Python 3.13.18 in a fresh virtual environment from analysis/requirements.txt: pandas 3.1.1 numpy 2.5.5 scikit-learn 1.9.1 openpyxl 3.1.5
+# Datasets: Wethaq_Datasets.zip (supplied by the supervisor; not in the repository). Only the three input files were extracted, into a separate temporary folder; the originals were not changed.
+
+## Input checksums compared with the dataset's own MANIFEST_SHA256.csv
+01_RAF_Spare_Parts_Demand/Data/RAF_long.csv  2b1feca45522625758670a161ad4a976082087072843bd465c08e3e3d6e6e589  matches the manifest
+04_Optional_Extras/A_Synthetic_Aviation_Demand_12960/obj1_synthetic_demand.csv  570ec2bcecf8e8e756e5cc5ab4645652a680a7943d6a0341c6370405e023c64b  matches the manifest
+04_Optional_Extras/A_Synthetic_Aviation_Demand_12960/generate_obj1_synthetic_demand.py  6dba4f3f6f89e77d2287f9cf4e142666f2de1aa9ed6a4a2252c1642623d285ae  matches the manifest
+
+## Full run of analysis/run_all.sh in a copy of analysis/ (output folder outside the repository), then compare_results.py against analysis/results
+2026-11-27T20:06:58Z
+1/8 Dataset assessment and demand classes
+2/8 Forecasting: Naive, MA12, SES, Croston, SBA, TSB, gradient boosting
+
+===== RAF test
+                     method   MAE   RMSE  MASE  RMSSE  Bias (ME)  Forecast/Actual total  Coverage % (sum fcst >= sum demand)
+            Zero (always 0) 1.275 16.787 0.578  0.452     -1.275                  0.000                                61.48
+         Naive (last month) 2.536 24.292 0.925  0.560      0.049                  1.039                                63.98
+         Moving average 12m 2.284 16.974 0.979  0.552     -0.098                  0.923                                68.88
+                        SES 2.284 16.817 0.975  0.547     -0.084                  0.934                                70.46
+                    Croston 2.790 16.617 1.169  0.586      0.549                  1.431                                77.44
+                        SBA 2.713 16.590 1.139  0.579      0.458                  1.359                                76.64
+                        TSB 2.317 16.641 0.982  0.547     -0.033                  0.974                                72.12
+Gradient boosting (Poisson) 2.407 16.704 1.287  0.611      0.089                  1.070                                80.92
+
+===== RAF validation
+                     method   MAE   RMSE  MASE  RMSSE  Bias (ME)  Forecast/Actual total  Coverage % (sum fcst >= sum demand)
+            Zero (always 0) 1.069 12.158 0.499  0.396     -1.069                  0.000                                60.02
+         Naive (last month) 1.735 13.883 0.895  0.517     -0.337                  0.684                                62.34
+         Moving average 12m 2.195 12.313 0.946  0.507      0.247                  1.231                                68.50
+                        SES 2.170 12.065 0.936  0.497      0.240                  1.225                                70.32
+                    Croston 2.638 12.336 1.090  0.528      0.796                  1.745                                76.94
+                        SBA 2.558 12.276 1.060  0.520      0.703                  1.658                                75.94
+                        TSB 2.199 11.961 0.943  0.498      0.285                  1.267                                71.92
+Gradient boosting (Poisson) 2.201 11.964 1.198  0.550      0.291                  1.272                                80.94
+
+===== SYN test
+                                      method   MAE  RMSE  MASE  RMSSE  Bias (ME)  Forecast/Actual total  Coverage % (sum fcst >= sum demand)
+                             Zero (always 0) 3.296 5.056 1.309  1.216     -3.296                  0.000                                6.111
+                          Naive (last month) 2.166 3.231 1.206  1.006      0.604                  1.183                               49.444
+                          Moving average 12m 1.579 2.248 0.886  0.746      0.073                  1.022                               52.222
+                                         SES 1.570 2.233 0.891  0.742      0.109                  1.033                               52.222
+                                     Croston 1.576 2.228 0.912  0.739      0.131                  1.040                               53.889
+                                         SBA 1.565 2.214 0.903  0.735     -0.041                  0.988                               45.000
+                                         TSB 1.565 2.229 0.887  0.738      0.106                  1.032                               51.111
+                        Seasonal naive (12m) 2.023 3.049 1.057  1.013      0.073                  1.022                               52.222
+                 Gradient boosting (Poisson) 1.538 2.182 0.900  0.728      0.030                  1.009                               53.333
+Oracle (true generator mean; reference only) 1.536 2.177 0.900  0.723     -0.008                  0.998                               49.444
+
+===== SYN validation
+                                      method   MAE  RMSE  MASE  RMSSE  Bias (ME)  Forecast/Actual total  Coverage % (sum fcst >= sum demand)
+                             Zero (always 0) 3.369 5.183 1.279  1.202     -3.369                  0.000                                6.667
+                          Naive (last month) 2.031 3.060 1.041  0.925      0.364                  1.108                               50.000
+                          Moving average 12m 1.530 2.212 0.841  0.715     -0.027                  0.992                               49.444
+                                         SES 1.519 2.187 0.841  0.709     -0.004                  0.999                               50.000
+                                     Croston 1.536 2.183 0.869  0.717      0.027                  1.008                               51.111
+                                         SBA 1.532 2.192 0.860  0.717     -0.143                  0.958                               47.222
+                                         TSB 1.518 2.186 0.841  0.710     -0.005                  0.999                               48.333
+                        Seasonal naive (12m) 2.028 3.061 1.044  0.983     -0.027                  0.992                               50.000
+                 Gradient boosting (Poisson) 1.494 2.127 0.862  0.712     -0.083                  0.975                               48.889
+Oracle (true generator mean; reference only) 1.472 2.098 0.852  0.698     -0.073                  0.978                               43.889
+
+===== RAF test by SBC class
+       group                      method   MAE   RMSE  MASE  RMSSE  Bias (ME)  Forecast/Actual total  Coverage % (sum fcst >= sum demand)
+Intermittent             Zero (always 0) 0.671  8.209 0.440  0.360     -0.671                  0.000                               64.854
+Intermittent          Naive (last month) 1.181  9.511 0.743  0.467     -0.125                  0.813                               67.091
+Intermittent          Moving average 12m 1.276  8.109 0.849  0.470      0.050                  1.075                               70.499
+Intermittent                         SES 1.290  8.101 0.848  0.466      0.061                  1.092                               71.050
+Intermittent                     Croston 1.621  8.124 1.029  0.507      0.462                  1.688                               76.007
+Intermittent                         SBA 1.574  8.093 0.999  0.499      0.405                  1.604                               75.181
+Intermittent                         TSB 1.314  8.149 0.854  0.467      0.083                  1.124                               71.704
+Intermittent Gradient boosting (Poisson) 1.547  8.589 1.272  0.563      0.368                  1.548                               82.341
+       Lumpy             Zero (always 0) 2.112 24.064 0.770  0.580     -2.112                  0.000                               56.802
+       Lumpy          Naive (last month) 4.415 35.818 1.177  0.689      0.291                  1.138                               59.666
+       Lumpy          Moving average 12m 3.681 24.423 1.159  0.667     -0.305                  0.856                               66.635
+       Lumpy                         SES 3.663 24.166 1.149  0.658     -0.286                  0.864                               69.642
+       Lumpy                     Croston 4.410 23.821 1.362  0.697      0.670                  1.317                               79.427
+       Lumpy                         SBA 4.292 23.791 1.332  0.690      0.531                  1.251                               78.663
+       Lumpy                         TSB 3.709 23.850 1.159  0.658     -0.194                  0.908                               72.697
+       Lumpy Gradient boosting (Poisson) 3.600 23.742 1.307  0.677     -0.296                  0.860                               78.950
+
+===== SYN test by part class
+       group                                       method   MAE  RMSE  MASE  RMSSE  Bias (ME)  Forecast/Actual total  Coverage % (sum fcst >= sum demand)
+ fast_moving                              Zero (always 0) 7.643 8.286 2.215  1.870     -7.643                  0.000                                0.000
+ fast_moving                           Naive (last month) 3.712 4.669 1.081  1.003      1.590                  1.208                               68.333
+ fast_moving                           Moving average 12m 2.583 3.262 0.752  0.724      0.325                  1.043                               65.000
+ fast_moving                                          SES 2.566 3.243 0.746  0.719      0.408                  1.053                               65.000
+ fast_moving                                      Croston 2.564 3.241 0.746  0.719      0.390                  1.051                               63.333
+ fast_moving                                          SBA 2.545 3.213 0.741  0.713     -0.011                  0.999                               45.000
+ fast_moving                                          TSB 2.565 3.242 0.746  0.719      0.405                  1.053                               65.000
+ fast_moving                         Seasonal naive (12m) 3.461 4.374 1.004  0.979      0.325                  1.043                               65.000
+ fast_moving                  Gradient boosting (Poisson) 2.479 3.154 0.721  0.698      0.171                  1.022                               58.333
+ fast_moving Oracle (true generator mean; reference only) 2.492 3.157 0.725  0.699      0.083                  1.011                               51.667
+intermittent                              Zero (always 0) 0.333 0.949 0.716  0.736     -0.333                  0.000                               18.333
+intermittent                           Naive (last month) 0.692 1.321 1.448  0.993      0.117                  1.350                               36.667
+intermittent                           Moving average 12m 0.546 0.927 1.073  0.765     -0.022                  0.933                               50.000
+intermittent                                          SES 0.554 0.922 1.101  0.765     -0.016                  0.953                               46.667
+intermittent                                      Croston 0.576 0.905 1.166  0.759      0.025                  1.074                               55.000
+intermittent                                          SBA 0.564 0.903 1.144  0.754      0.007                  1.020                               55.000
+intermittent                                          TSB 0.548 0.913 1.094  0.757     -0.020                  0.939                               46.667
+intermittent                         Seasonal naive (12m) 0.581 1.264 1.129  1.040     -0.022                  0.933                               50.000
+intermittent                  Gradient boosting (Poisson) 0.551 0.893 1.157  0.748     -0.007                  0.978                               56.667
+intermittent Oracle (true generator mean; reference only) 0.541 0.887 1.159  0.742     -0.023                  0.931                               55.000
+ slow_moving                              Zero (always 0) 1.912 2.668 0.997  1.041     -1.912                  0.000                                0.000
+ slow_moving                           Naive (last month) 2.093 2.788 1.089  1.022      0.104                  1.054                               43.333
+ slow_moving                           Moving average 12m 1.607 1.913 0.834  0.748     -0.083                  0.956                               41.667
+ slow_moving                                          SES 1.588 1.895 0.825  0.741     -0.066                  0.965                               45.000
+ slow_moving                                      Croston 1.589 1.888 0.825  0.739     -0.023                  0.988                               43.333
+ slow_moving                                          SBA 1.587 1.888 0.824  0.739     -0.118                  0.938                               35.000
+ slow_moving                                          TSB 1.583 1.887 0.823  0.739     -0.067                  0.965                               41.667
+ slow_moving                         Seasonal naive (12m) 2.028 2.676 1.039  1.021     -0.083                  0.956                               41.667
+ slow_moving                  Gradient boosting (Poisson) 1.584 1.883 0.822  0.737     -0.073                  0.962                               45.000
+ slow_moving Oracle (true generator mean; reference only) 1.575 1.862 0.817  0.729     -0.083                  0.957                               41.667
+
+GBM choice: {'gbm_val_RMSSE_per_setting': [np.float64(0.5520230003461711), np.float64(0.5501585577086359)], 'gbm_chosen': {'max_iter': 400, 'learning_rate': 0.03, 'max_leaf_nodes': 31, 'min_samples_leaf': 100, 'l2_regularization': 1.0}} {'gbm_val_RMSSE_per_setting': [np.float64(0.7119718123571803), np.float64(0.722875890961269)], 'gbm_chosen': {'max_iter': 150, 'learning_rate': 0.05, 'max_leaf_nodes': 15, 'min_samples_leaf': 200, 'l2_regularization': 1.0}}
+3/8 Ablation: gradient boosting without flight cycles
+
+===== RAF test
+                     method   MAE   RMSE  MASE  RMSSE  Bias (ME)  Forecast/Actual total  Coverage % (sum fcst >= sum demand)
+            Zero (always 0) 1.275 16.787 0.578  0.452     -1.275                  0.000                                61.48
+         Naive (last month) 2.536 24.292 0.925  0.560      0.049                  1.039                                63.98
+         Moving average 12m 2.284 16.974 0.979  0.552     -0.098                  0.923                                68.88
+                        SES 2.284 16.817 0.975  0.547     -0.084                  0.934                                70.46
+                    Croston 2.790 16.617 1.169  0.586      0.549                  1.431                                77.44
+                        SBA 2.713 16.590 1.139  0.579      0.458                  1.359                                76.64
+                        TSB 2.317 16.641 0.982  0.547     -0.033                  0.974                                72.12
+Gradient boosting (Poisson) 2.407 16.704 1.287  0.611      0.089                  1.070                                80.92
+
+===== RAF validation
+                     method   MAE   RMSE  MASE  RMSSE  Bias (ME)  Forecast/Actual total  Coverage % (sum fcst >= sum demand)
+            Zero (always 0) 1.069 12.158 0.499  0.396     -1.069                  0.000                                60.02
+         Naive (last month) 1.735 13.883 0.895  0.517     -0.337                  0.684                                62.34
+         Moving average 12m 2.195 12.313 0.946  0.507      0.247                  1.231                                68.50
+                        SES 2.170 12.065 0.936  0.497      0.240                  1.225                                70.32
+                    Croston 2.638 12.336 1.090  0.528      0.796                  1.745                                76.94
+                        SBA 2.558 12.276 1.060  0.520      0.703                  1.658                                75.94
+                        TSB 2.199 11.961 0.943  0.498      0.285                  1.267                                71.92
+Gradient boosting (Poisson) 2.201 11.964 1.198  0.550      0.291                  1.272                                80.94
+
+===== SYN test
+                                      method   MAE  RMSE  MASE  RMSSE  Bias (ME)  Forecast/Actual total  Coverage % (sum fcst >= sum demand)
+                             Zero (always 0) 3.296 5.056 1.309  1.216     -3.296                  0.000                                6.111
+                          Naive (last month) 2.166 3.231 1.206  1.006      0.604                  1.183                               49.444
+                          Moving average 12m 1.579 2.248 0.886  0.746      0.073                  1.022                               52.222
+                                         SES 1.570 2.233 0.891  0.742      0.109                  1.033                               52.222
+                                     Croston 1.576 2.228 0.912  0.739      0.131                  1.040                               53.889
+                                         SBA 1.565 2.214 0.903  0.735     -0.041                  0.988                               45.000
+                                         TSB 1.565 2.229 0.887  0.738      0.106                  1.032                               51.111
+                        Seasonal naive (12m) 2.023 3.049 1.057  1.013      0.073                  1.022                               52.222
+                 Gradient boosting (Poisson) 1.544 2.186 0.903  0.728      0.040                  1.012                               56.667
+Oracle (true generator mean; reference only) 1.536 2.177 0.900  0.723     -0.008                  0.998                               49.444
+
+===== SYN validation
+                                      method   MAE  RMSE  MASE  RMSSE  Bias (ME)  Forecast/Actual total  Coverage % (sum fcst >= sum demand)
+                             Zero (always 0) 3.369 5.183 1.279  1.202     -3.369                  0.000                                6.667
+                          Naive (last month) 2.031 3.060 1.041  0.925      0.364                  1.108                               50.000
+                          Moving average 12m 1.530 2.212 0.841  0.715     -0.027                  0.992                               49.444
+                                         SES 1.519 2.187 0.841  0.709     -0.004                  0.999                               50.000
+                                     Croston 1.536 2.183 0.869  0.717      0.027                  1.008                               51.111
+                                         SBA 1.532 2.192 0.860  0.717     -0.143                  0.958                               47.222
+                                         TSB 1.518 2.186 0.841  0.710     -0.005                  0.999                               48.333
+                        Seasonal naive (12m) 2.028 3.061 1.044  0.983     -0.027                  0.992                               50.000
+                 Gradient boosting (Poisson) 1.487 2.118 0.861  0.708     -0.062                  0.982                               47.778
+Oracle (true generator mean; reference only) 1.472 2.098 0.852  0.698     -0.073                  0.978                               43.889
+
+===== RAF test by SBC class
+       group                      method   MAE   RMSE  MASE  RMSSE  Bias (ME)  Forecast/Actual total  Coverage % (sum fcst >= sum demand)
+Intermittent             Zero (always 0) 0.671  8.209 0.440  0.360     -0.671                  0.000                               64.854
+Intermittent          Naive (last month) 1.181  9.511 0.743  0.467     -0.125                  0.813                               67.091
+Intermittent          Moving average 12m 1.276  8.109 0.849  0.470      0.050                  1.075                               70.499
+Intermittent                         SES 1.290  8.101 0.848  0.466      0.061                  1.092                               71.050
+Intermittent                     Croston 1.621  8.124 1.029  0.507      0.462                  1.688                               76.007
+Intermittent                         SBA 1.574  8.093 0.999  0.499      0.405                  1.604                               75.181
+Intermittent                         TSB 1.314  8.149 0.854  0.467      0.083                  1.124                               71.704
+Intermittent Gradient boosting (Poisson) 1.547  8.589 1.272  0.563      0.368                  1.548                               82.341
+       Lumpy             Zero (always 0) 2.112 24.064 0.770  0.580     -2.112                  0.000                               56.802
+       Lumpy          Naive (last month) 4.415 35.818 1.177  0.689      0.291                  1.138                               59.666
+       Lumpy          Moving average 12m 3.681 24.423 1.159  0.667     -0.305                  0.856                               66.635
+       Lumpy                         SES 3.663 24.166 1.149  0.658     -0.286                  0.864                               69.642
+       Lumpy                     Croston 4.410 23.821 1.362  0.697      0.670                  1.317                               79.427
+       Lumpy                         SBA 4.292 23.791 1.332  0.690      0.531                  1.251                               78.663
+       Lumpy                         TSB 3.709 23.850 1.159  0.658     -0.194                  0.908                               72.697
+       Lumpy Gradient boosting (Poisson) 3.600 23.742 1.307  0.677     -0.296                  0.860                               78.950
+
+===== SYN test by part class
+       group                                       method   MAE  RMSE  MASE  RMSSE  Bias (ME)  Forecast/Actual total  Coverage % (sum fcst >= sum demand)
+ fast_moving                              Zero (always 0) 7.643 8.286 2.215  1.870     -7.643                  0.000                                0.000
+ fast_moving                           Naive (last month) 3.712 4.669 1.081  1.003      1.590                  1.208                               68.333
+ fast_moving                           Moving average 12m 2.583 3.262 0.752  0.724      0.325                  1.043                               65.000
+ fast_moving                                          SES 2.566 3.243 0.746  0.719      0.408                  1.053                               65.000
+ fast_moving                                      Croston 2.564 3.241 0.746  0.719      0.390                  1.051                               63.333
+ fast_moving                                          SBA 2.545 3.213 0.741  0.713     -0.011                  0.999                               45.000
+ fast_moving                                          TSB 2.565 3.242 0.746  0.719      0.405                  1.053                               65.000
+ fast_moving                         Seasonal naive (12m) 3.461 4.374 1.004  0.979      0.325                  1.043                               65.000
+ fast_moving                  Gradient boosting (Poisson) 2.494 3.164 0.725  0.701      0.202                  1.026                               60.000
+ fast_moving Oracle (true generator mean; reference only) 2.492 3.157 0.725  0.699      0.083                  1.011                               51.667
+intermittent                              Zero (always 0) 0.333 0.949 0.716  0.736     -0.333                  0.000                               18.333
+intermittent                           Naive (last month) 0.692 1.321 1.448  0.993      0.117                  1.350                               36.667
+intermittent                           Moving average 12m 0.546 0.927 1.073  0.765     -0.022                  0.933                               50.000
+intermittent                                          SES 0.554 0.922 1.101  0.765     -0.016                  0.953                               46.667
+intermittent                                      Croston 0.576 0.905 1.166  0.759      0.025                  1.074                               55.000
+intermittent                                          SBA 0.564 0.903 1.144  0.754      0.007                  1.020                               55.000
+intermittent                                          TSB 0.548 0.913 1.094  0.757     -0.020                  0.939                               46.667
+intermittent                         Seasonal naive (12m) 0.581 1.264 1.129  1.040     -0.022                  0.933                               50.000
+intermittent                  Gradient boosting (Poisson) 0.554 0.891 1.162  0.748     -0.003                  0.990                               63.333
+intermittent Oracle (true generator mean; reference only) 0.541 0.887 1.159  0.742     -0.023                  0.931                               55.000
+ slow_moving                              Zero (always 0) 1.912 2.668 0.997  1.041     -1.912                  0.000                                0.000
+ slow_moving                           Naive (last month) 2.093 2.788 1.089  1.022      0.104                  1.054                               43.333
+ slow_moving                           Moving average 12m 1.607 1.913 0.834  0.748     -0.083                  0.956                               41.667
+ slow_moving                                          SES 1.588 1.895 0.825  0.741     -0.066                  0.965                               45.000
+ slow_moving                                      Croston 1.589 1.888 0.825  0.739     -0.023                  0.988                               43.333
+ slow_moving                                          SBA 1.587 1.888 0.824  0.739     -0.118                  0.938                               35.000
+ slow_moving                                          TSB 1.583 1.887 0.823  0.739     -0.067                  0.965                               41.667
+ slow_moving                         Seasonal naive (12m) 2.028 2.676 1.039  1.021     -0.083                  0.956                               41.667
+ slow_moving                  Gradient boosting (Poisson) 1.585 1.878 0.822  0.735     -0.078                  0.959                               46.667
+ slow_moving Oracle (true generator mean; reference only) 1.575 1.862 0.817  0.729     -0.083                  0.957                               41.667
+
+GBM choice: {'gbm_val_RMSSE_per_setting': [np.float64(0.5520230003461711), np.float64(0.5501585577086359)], 'gbm_chosen': {'max_iter': 400, 'learning_rate': 0.03, 'max_leaf_nodes': 31, 'min_samples_leaf': 100, 'l2_regularization': 1.0}} {'gbm_val_RMSSE_per_setting': [np.float64(0.7076305565961181), np.float64(0.7139804319720948)], 'gbm_chosen': {'max_iter': 150, 'learning_rate': 0.05, 'max_leaf_nodes': 15, 'min_samples_leaf': 200, 'l2_regularization': 1.0}}
+4/8 Export RAF forecasts for the dashboard
+parts 40 bytes 36874
+sample ids ['RAF0000', 'RAF0002', 'RAF0008', 'RAF0013', 'RAF0362', 'RAF0394', 'RAF0616', 'RAF0757'] ...
+first part projection RAF0000 {'naive': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 'croston': [0.6, 0.6, 0.6, 0.6, 0.6, 0.6], 'tsb': [0.08, 0.08, 0.08, 0.08, 0.08, 0.08], 'gbm': [0.23, 0.23, 0.23, 0.23, 0.23, 0.23]}
+check: GBM test MAE all parts 2.4073 (forecast.py reported 2.4073 )
+check: TSB test MAE all parts 2.3173
+5/8 Rolling-origin RAF evaluation (Sprint 4)
+origin 60 done
+origin 66 done
+origin 72 done
+origin 78 done
+                      MAE    RMSE   MASE  RMSSE  Bias (ME)  Forecast/Actual total  Coverage % (sum fcst >= sum demand)
+method                                                                                                                
+Croston             2.835  14.458  1.230  0.627      0.674                  1.551                               73.940
+Gradient boosting   2.378  14.143  1.335  0.642      0.144                  1.123                               78.710
+Moving average 12m  2.327  14.453  1.054  0.602      0.036                  1.038                               64.525
+Naive               2.250  18.633  1.024  0.626     -0.154                  0.872                               58.110
+SBA                 2.754  14.400  1.200  0.620      0.578                  1.474                               72.970
+SES                 2.333  14.277  1.052  0.594      0.058                  1.054                               66.610
+TSB                 2.365  14.193  1.059  0.595      0.103                  1.091                               68.130
+Zero (always 0)     1.244  14.284  0.637  0.504     -1.244                  0.000                               55.190
+
+best alpha {'Croston': 0.3, 'SBA': 0.3, 'SES': 0.05, 'TSB': 0.05}
+ method   setting  alpha   MAE  RMSSE  Bias (ME)  Forecast/Actual total  Coverage % (sum fcst >= sum demand)
+    SES alpha 0.1   0.10 2.284  0.547     -0.084                  0.934                                70.46
+    SES     tuned   0.05 2.368  0.550      0.029                  1.023                                72.42
+Croston alpha 0.1   0.10 2.790  0.586      0.549                  1.431                                77.44
+Croston     tuned   0.30 2.616  0.568      0.337                  1.264                                75.82
+    SBA alpha 0.1   0.10 2.713  0.579      0.458                  1.359                                76.64
+    SBA     tuned   0.30 2.412  0.548      0.095                  1.075                                73.46
+    TSB alpha 0.1   0.10 2.317  0.547     -0.033                  0.974                                72.12
+    TSB     tuned   0.05 2.384  0.550      0.056                  1.044                                73.06
+
+RMSSE rank per window
+ origin               60   66   72   78
+method                                
+Croston             6.0  5.0  6.0  6.0
+Gradient boosting   7.0  6.0  7.0  7.0
+Moving average 12m  3.0  3.0  3.0  3.0
+Naive               4.0  7.0  4.0  4.0
+SBA                 5.0  4.0  5.0  5.0
+SES                 1.0  1.0  1.0  1.0
+TSB                 2.0  2.0  2.0  2.0
+
+coverage rank per window
+ origin               60   66   72   78
+method                                
+Croston             2.0  2.0  2.0  2.0
+Gradient boosting   1.0  1.0  1.0  1.0
+Moving average 12m  6.0  6.0  6.0  6.0
+Naive               7.0  7.0  7.0  7.0
+SBA                 3.0  3.0  3.0  3.0
+SES                 5.0  5.0  5.0  5.0
+TSB                 4.0  4.0  4.0  4.0
+
+per-window table
+ origin             method   MAE  RMSSE  Forecast/Actual total  Coverage % (sum fcst >= sum demand)
+     60    Zero (always 0) 1.347  0.563                  0.000                                48.68
+     60              Naive 2.018  0.655                  0.556                                51.84
+     60 Moving average 12m 2.438  0.643                  0.990                                60.36
+     60  Gradient boosting 2.509  0.686                  1.073                                75.38
+     60                SES 2.453  0.637                  1.009                                63.08
+     60            Croston 3.012  0.678                  1.504                                70.10
+     60                SBA 2.927  0.671                  1.429                                69.20
+     60                TSB 2.484  0.637                  1.038                                64.50
+     66    Zero (always 0) 1.284  0.606                  0.000                                50.58
+     66              Naive 2.710  0.771                  1.210                                54.28
+     66 Moving average 12m 2.390  0.703                  1.008                                60.36
+     66  Gradient boosting 2.394  0.723                  1.075                                77.60
+     66                SES 2.424  0.697                  1.049                                62.58
+     66            Croston 2.902  0.715                  1.524                                71.28
+     66                SBA 2.819  0.708                  1.448                                70.10
+     66                TSB 2.461  0.698                  1.086                                63.98
+     72    Zero (always 0) 1.069  0.396                  0.000                                60.02
+     72              Naive 1.735  0.517                  0.684                                62.34
+     72 Moving average 12m 2.195  0.507                  1.231                                68.50
+     72  Gradient boosting 2.201  0.550                  1.272                                80.94
+     72                SES 2.170  0.497                  1.225                                70.32
+     72            Croston 2.638  0.528                  1.745                                76.94
+     72                SBA 2.558  0.520                  1.658                                75.94
+     72                TSB 2.199  0.498                  1.267                                71.92
+     78    Zero (always 0) 1.275  0.452                  0.000                                61.48
+     78              Naive 2.536  0.560                  1.039                                63.98
+     78 Moving average 12m 2.284  0.552                  0.923                                68.88
+     78  Gradient boosting 2.407  0.611                  1.070                                80.92
+     78                SES 2.284  0.547                  0.934                                70.46
+     78            Croston 2.790  0.586                  1.431                                77.44
+     78                SBA 2.713  0.579                  1.359                                76.64
+     78                TSB 2.317  0.547                  0.974                                72.12
+6/8 Inventory policy simulation (Sprint 4)
+                 policy  fill_rate_pct  stockout_months_pct  avg_stock_units  orders_per_series_year  lost_units
+         Current policy          82.57                12.50             8.35                    3.18      1241.0
+        Fixed threshold          99.87                 0.23            13.90                    4.49         9.0
+          Forecast: TSB          99.89                 0.23            14.16                    4.28         8.0
+           Forecast: GB          99.89                 0.23            13.93                    4.52         8.0
+Oracle mean (reference)          99.87                 0.28            13.77                    4.57         9.0
+                 policy        class  fill_rate_pct  stockout_months_pct  avg_stock_units  orders_per_series_year  lost_units
+         Current policy  fast_moving          78.50                33.33             3.10                    7.17      1183.0
+         Current policy  slow_moving          95.79                 4.17             5.83                    2.15        58.0
+         Current policy intermittent         100.00                 0.00            16.14                    0.23         0.0
+        Fixed threshold  fast_moving         100.00                 0.00            22.44                    7.25         0.0
+        Fixed threshold  slow_moving          99.85                 0.14             8.56                    5.53         2.0
+        Fixed threshold intermittent          97.08                 0.56            10.71                    0.70         7.0
+          Forecast: TSB  fast_moving         100.00                 0.00            22.73                    7.12         0.0
+          Forecast: TSB  slow_moving          99.93                 0.14             8.85                    5.12         1.0
+          Forecast: TSB intermittent          97.08                 0.56            10.90                    0.60         7.0
+           Forecast: GB  fast_moving         100.00                 0.00            22.53                    7.22         0.0
+           Forecast: GB  slow_moving          99.85                 0.14             8.53                    5.65         2.0
+           Forecast: GB intermittent          97.50                 0.56            10.73                    0.70         6.0
+Oracle mean (reference)  fast_moving          99.98                 0.14            22.16                    7.25         1.0
+Oracle mean (reference)  slow_moving          99.93                 0.14             8.44                    5.77         1.0
+Oracle mean (reference) intermittent          97.08                 0.56            10.70                    0.68         7.0
+                 policy    z  fill_rate_pct  stockout_months_pct  avg_stock_units  orders_per_series_year  lost_units
+        Fixed threshold 0.00          98.23                 3.06             9.47                    4.28       126.0
+        Fixed threshold 0.50          99.16                 1.57            10.79                    4.50        60.0
+        Fixed threshold 1.00          99.54                 0.88            12.14                    4.44        33.0
+        Fixed threshold 1.28          99.80                 0.42            12.95                    4.49        14.0
+        Fixed threshold 1.64          99.87                 0.23            13.90                    4.49         9.0
+        Fixed threshold 2.00          99.87                 0.23            14.86                    4.46         9.0
+        Fixed threshold 2.50          99.94                 0.09            16.25                    4.55         4.0
+          Forecast: TSB 0.00          98.12                 3.29             9.65                    4.07       134.0
+          Forecast: TSB 0.50          99.28                 1.44            11.02                    4.17        51.0
+          Forecast: TSB 1.00          99.68                 0.83            12.38                    4.23        23.0
+          Forecast: TSB 1.28          99.80                 0.46            13.13                    4.23        14.0
+          Forecast: TSB 1.64          99.89                 0.23            14.16                    4.28         8.0
+          Forecast: TSB 2.00          99.92                 0.14            15.11                    4.28         6.0
+          Forecast: TSB 2.50          99.96                 0.09            16.57                    4.28         3.0
+           Forecast: GB 0.00          98.29                 2.87             9.49                    4.37       122.0
+           Forecast: GB 0.50          99.13                 1.62            10.83                    4.43        62.0
+           Forecast: GB 1.00          99.66                 0.69            12.19                    4.47        24.0
+           Forecast: GB 1.28          99.76                 0.51            12.93                    4.48        17.0
+           Forecast: GB 1.64          99.89                 0.23            13.93                    4.52         8.0
+           Forecast: GB 2.00          99.92                 0.23            14.91                    4.59         6.0
+           Forecast: GB 2.50          99.97                 0.05            16.30                    4.54         2.0
+Oracle mean (reference) 0.00          98.26                 3.01             9.42                    4.36       124.0
+Oracle mean (reference) 0.50          99.16                 1.39            10.64                    4.46        60.0
+Oracle mean (reference) 1.00          99.65                 0.69            12.00                    4.55        25.0
+Oracle mean (reference) 1.28          99.76                 0.51            12.76                    4.58        17.0
+Oracle mean (reference) 1.64          99.87                 0.28            13.77                    4.57         9.0
+Oracle mean (reference) 2.00          99.94                 0.14            14.78                    4.57         4.0
+Oracle mean (reference) 2.50          99.97                 0.05            16.11                    4.62         2.0
+recorded 2023 stockout months % in panel: 14.17  mean P 2.5
+7/8 Export inventory results for the dashboard
+policies 5 class rows 15 curve rows 28
+8/8 Checksums of the results, scripts and datasets (MANIFEST.json)
+wrote <copy of analysis>/out/MANIFEST.json
+Done. Results are in <copy of analysis>/out. Compare them with the reference copies:
+  python3 <copy of analysis>/scripts/compare_results.py <copy of analysis>/results <copy of analysis>/out
+
+real	1m57.456s
+user	5m49.718s
+sys	0m4.382s
+run_all exit 0
+== assessment.json: 59 numbers, 59 identical, 0 within 1e-6 relative, 0 differ; structure differences 0; other differences 0
+== forecast_results.json: 266 numbers, 266 identical, 0 within 1e-6 relative, 0 differ; structure differences 0; other differences 0
+== raf-forecasts.json: 6001 numbers, 6001 identical, 0 within 1e-6 relative, 0 differ; structure differences 0; other differences 0
+== raf_rolling.json: 280 numbers, 280 identical, 0 within 1e-6 relative, 0 differ; structure differences 0; other differences 0
+== inventory_sim.json: 270 numbers, 270 identical, 0 within 1e-6 relative, 0 differ; structure differences 0; other differences 0
+RESULT: the reproduced results match the reference copies
+compare exit 0
+
+## The dashboard's copies of the exported results (src/data) compared byte for byte
+src/data/inventory-sim.json  identical to the reproduced file (99c6781a3ecce6263aaeb4dbd12825652093339b8929177bea40b17ea68850c7)
+src/data/raf-forecasts.json  identical to the reproduced file (108e1679838403400cba3bd0489db2cdfe2eaca6a0761d1c389c07bae293ab1b)
+
+## analysis/results/MANIFEST.json was written with write_manifest.py from the same inputs; its result, script and dataset checksums equal those of the reproduced run's MANIFEST.json

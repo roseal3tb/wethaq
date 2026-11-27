@@ -9,7 +9,8 @@ SEQUENCE="${2:-1}"
 # The chaincode runs as a service in its own container, built here from chaincode/shipment/Dockerfile. This avoids
 # the peers building chaincode images through the Docker socket (unreliable on Docker Desktop for macOS).
 if [ "${WETHAQ_SKIP_CC_BUILD:-}" != "1" ]; then
-  docker build -t "${CC_NAME}_ccaas_image:latest" --build-arg CC_SERVER_PORT=9999 "$CC_SRC"
+  # WETHAQ_NODE_IMAGE: an alternative registry for the Node.js base image (see chaincode/shipment/Dockerfile).
+  docker build -t "${CC_NAME}_ccaas_image:latest" --build-arg CC_SERVER_PORT=9999 ${WETHAQ_NODE_IMAGE:+--build-arg NODE_IMAGE="$WETHAQ_NODE_IMAGE"} "$CC_SRC"
 fi
 # network.sh packages, installs, approves (both organizations) and commits the definition; the containers are
 # started below (-ccaasdocker false) so that Docker restarts them and stop.sh/start.sh keep working.

@@ -1,0 +1,95 @@
+# NOTE (added after the run): second run of the drill. Right after backup.sh restarted the network, the API's first submission failed with '14 UNAVAILABLE: no orderers could successfully process transaction': the orderer had not yet elected its Raft leader (it took about 7 s). The API handled it as designed (Case C, unknown outcome, HTTP 202, request kept pending), but it showed that start.sh and restore.sh returned before the network could order transactions. Fixed by wait_for_orderer in fabric/lib.sh (used by start.sh and restore.sh). The network was then recreated (reset.sh, up.sh, seed --reset) and the drill run a third time: fabric-backup-restore.txt.
+
+# Fabric backup and restore drill — 2026-11-27T19:55:45Z
+# Network: Hyperledger Fabric test-network (local, disposable). Channel wethaq, chaincode wethaq (CCAAS).
+
+## 0. State before the backup
+API started in Fabric mode
+channel height: 118
+consistency check before the backup:
+{"consistent":false,"ledgerHeight":118,"checkpoint":{"block":117,"txId":"324b367d1dd869ce2e1899641ffb21ff4cd001b1c11afda5e3c1f25e3fb28263","aheadOfLedger":false},"summary":{"shipments":88,"verified":87,"mismatch":0,"notFound":1,"pending":0,"failed":0,"unavailable":0,"recordsMissingOnLedger":2,"recordsMissingInDatabase":0,"orphanRecordsChecked":5,"orphanRecordsMissingOnLedger":0},"problems":[{"shipmentId":"SHP-2026-0087","status":"not_found","differences":["The shipment has no ledger record"],"missingOnLedger":2,"missingInDatabase":0}]}
+shipments in PostgreSQL: 88
+
+## 1. Encrypted backup (./fabric/backup.sh with WETHAQ_BACKUP_PASSPHRASE set)
+Stopping the network for a consistent copy (channel wethaq at height 118)
+Network started again
+Backup written: /tmp/br/archives/wethaq-fabric-20261127T195552Z.tar.enc (1.1M), channel height 118, chaincode wethaq 1.0 (sequence 1)
+sha256 6d46484b94e7373d3fa393596f7f34a98b61a63341a73c73ba38be71d164cc0c
+archive mode: 600
+the archive is encrypted:  S a l t e d _ _
+channel height after the backup (network started again): 118
+
+## 2. Transactions after the backup (these will not be in the restored ledger)
+request: {"id":"SHP-2026-0089","block":null,"ledgerState":"pending"}
+dispatch: {"passed":null,"block":null,"ledgerState":null}
+channel height now: 118
+event checkpoint in PostgreSQL: 117
+
+## 3. Restore from the backup (./fabric/restore.sh <archive> --yes)
+Archive: {"createdAt":"20261127T195552Z","channel":"wethaq","chaincode":"wethaq","chaincodeVersion":"1.0","chaincodeSequence":1,"channelHeight":118,"fabricVersion":"v2.5.12"}
+Removing the current network
+Restoring crypto material, CAs and identities
+Recreating the containers and restoring the ledger volumes
+Wethaq Fabric network (wethaq / wethaq)
+  ok   container orderer.example.com
+  ok   container peer0.org1.example.com
+  ok   container peer0.org2.example.com
+  ok   container ca_org1
+  ok   container ca_org2
+  ok   container ca_orderer
+  ok   container peer0org1_wethaq_ccaas
+  ok   container peer0org2_wethaq_ccaas
+  ok   peer0.org1 joined wethaq
+  ok   peer0.org2 joined wethaq
+  ok   chaincode definition sequence 1, version 1.0, approved by Org1MSP and Org2MSP
+  ok   chaincode answers queries
+  ok   Org1MSP wethaq-app certificate valid for 30+ days
+  ok   Org2MSP wethaq-app certificate valid for 30+ days
+Channel height after restore: 118 (backup: 118)
+
+real	0m26.435s
+user	0m1.863s
+sys	0m0.891s
+
+## 4. Checks on the restored network
+channel height: 118 (backup: 118)
+--- docker containers
+ca_orderer	Up 9 seconds
+ca_org1	Up 9 seconds
+ca_org2	Up 10 seconds
+orderer.example.com	Up 10 seconds
+peer0.org1.example.com	Up 9 seconds
+peer0.org2.example.com	Up 10 seconds
+peer0org1_wethaq_ccaas	Up 4 seconds
+peer0org2_wethaq_ccaas	Up 3 seconds
+--- committed chaincode definition
+{"version":"1.0","sequence":1,"endorsement_plugin":"escc","approvals":{"Org1MSP":true,"Org2MSP":true}}
+--- a ledger record from before the backup: SHP-2026-0001 history
+{"operation":"request","status":"Committed","quantity":5,"org":"Org1MSP","txId":"f9fd5552d214"}
+{"operation":"dispatch","status":"Rejected","quantity":5,"org":"Org2MSP","txId":"75eb2d99448b"}
+{"operation":"dispatch","status":"Committed","quantity":5,"org":"Org1MSP","txId":"a6d303d36f93"}
+--- the shipment created after the backup is not on the restored ledger: SHP-2026-0089
+
+(empty = not found)
+
+## 5. API restarted on the restored ledger: checkpoint check
+{"checkpoint":{"block":117,"txId":"324b367d1dd869ce2e1899641ffb21ff4cd001b1c11afda5e3c1f25e3fb28263","updatedAt":"2026-11-27T19:56:43.657Z"},"checkpointReset":null}
+alert: Critical | The ledger is behind the database
+{"ok":true,"ledger":"fabric","database":{"ok":true,"detail":"PostgreSQL reachable"},"ledgerHealth":{"ok":true,"detail":"Connected to channel wethaq, chaincode wethaq","identities":[{"msp":"Org1MSP","subject":"OU=client, CN=wethaq-app","expires":"2027-11-27T18:40:00.000Z","daysLeft":364},{"msp":"Org2MSP","subject":"OU=client, CN=wethaq-app","expires":"2027-11-27T18:40:00.000Z","daysLeft":364}]}}
+
+## 6. Consistency check after the restore (read-only)
+{"consistent":false,"ledgerHeight":118,"checkpoint":{"block":117,"txId":"324b367d1dd869ce2e1899641ffb21ff4cd001b1c11afda5e3c1f25e3fb28263","aheadOfLedger":false},"summary":{"shipments":89,"verified":87,"mismatch":0,"notFound":1,"pending":1,"failed":0,"unavailable":0,"recordsMissingOnLedger":2,"recordsMissingInDatabase":0,"orphanRecordsChecked":5,"orphanRecordsMissingOnLedger":0},"problems":[{"shipmentId":"SHP-2026-0087","status":"not_found","differences":["The shipment has no ledger record"],"missingOnLedger":2,"missingInDatabase":0},{"shipmentId":"SHP-2026-0089","status":"pending","differences":["A ledger transaction for this shipment is waiting for confirmation"],"missingOnLedger":0,"missingInDatabase":0}]}
+--- verify of the shipment created after the backup
+{"status":"pending","onLedger":false,"differences":["A ledger transaction for this shipment is waiting for confirmation"]}
+
+## 7. New transactions on the restored ledger
+request: {"id":"SHP-2026-0090","block":118,"ledgerState":"confirmed"}
+dispatch: {"passed":true,"block":119,"ledgerState":"confirmed"}
+rejected (quantity above requested): {"passed":false,"failedRule":"validQuantity","block":120}
+verify: {"status":"verified","onLedger":true,"match":true}
+event checkpoint: 120 ; channel height: 121
+
+## 8. Consistency check after the new transactions
+{"consistent":false,"ledgerHeight":121,"checkpoint":{"block":120,"txId":"d3cf23a4f66381a40cc6e2efefd3ad333609d1db5e5200da038628c032247102","aheadOfLedger":false},"summary":{"shipments":90,"verified":88,"mismatch":0,"notFound":1,"pending":1,"failed":0,"unavailable":0,"recordsMissingOnLedger":2,"recordsMissingInDatabase":0,"orphanRecordsChecked":5,"orphanRecordsMissingOnLedger":0},"problems":[{"shipmentId":"SHP-2026-0087","status":"not_found","differences":["The shipment has no ledger record"],"missingOnLedger":2,"missingInDatabase":0},{"shipmentId":"SHP-2026-0089","status":"pending","differences":["A ledger transaction for this shipment is waiting for confirmation"],"missingOnLedger":0,"missingInDatabase":0}]}
+
+DONE 2026-11-27T19:56:52Z
