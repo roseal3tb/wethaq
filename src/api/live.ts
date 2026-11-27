@@ -6,6 +6,12 @@
 import type { AppData, Role, DemoUser, Inventory } from '../types';
 
 export const LIVE = import.meta.env.VITE_WETHAQ_LIVE === 'true';
+/**
+ * Where the Wethaq API is. Empty (the default): the same origin, through the Vite proxy in development or a
+ * rewrite on the host. A full origin such as https://api.example.edu when the API is on another host; the API
+ * must then allow the dashboard's origin (CORS_ORIGIN). See docs/gp482/DEPLOYMENT.md.
+ */
+const API_BASE = String(import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
 
 const TOKEN_KEY = 'wethaq.token';
 export const session = {
@@ -50,7 +56,7 @@ async function request<T>(method: string, path: string, body?: unknown, idempote
   const token = session.get();
   let res: Response;
   try {
-    res = await fetch(`/api${path}`, {
+    res = await fetch(`${API_BASE}/api${path}`, {
       method,
       headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}) },
       body: body === undefined ? undefined : JSON.stringify(body)
@@ -96,7 +102,7 @@ export const liveApi = {
 export async function followEvents(onEvent: (event: LiveEvent) => void, signal: AbortSignal): Promise<void> {
   const token = session.get();
   if (!token) return;
-  const res = await fetch('/api/events', { headers: { Authorization: `Bearer ${token}`, Accept: 'text/event-stream' }, signal });
+  const res = await fetch(`${API_BASE}/api/events`, { headers: { Authorization: `Bearer ${token}`, Accept: 'text/event-stream' }, signal });
   if (!res.ok || !res.body) throw new ApiError(res.status, `Live updates unavailable (${res.status})`);
   const reader = res.body.getReader(); const decoder = new TextDecoder();
   let buffer = '';

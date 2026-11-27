@@ -108,11 +108,11 @@ sequenceDiagram
     A->>F: endorse → submit → commit status
     alt Case A — valid, rules passed
       F-->>A: committed, block N
-      A->>DB: one transaction: record + shipment + event + inventory + alerts; op=committed
+      A->>DB: one transaction: record + shipment + event + inventory + alerts, op=committed
       A-->>U: 200 {passed:true, txId, block}
     else Case B — valid, rule failed
       F-->>A: committed (record status=Rejected)
-      A->>DB: record (ATTEMPT) + rejection alert; op=rejected
+      A->>DB: record (ATTEMPT) + rejection alert, op=rejected
       A-->>U: 422 {passed:false, source:"chaincode", failedRule}
     else Case C definite — unavailable / not endorsed / invalidated
       F--xA: error
@@ -201,6 +201,14 @@ In Fabric mode the comparison runs on the peer (`VerifyShipment`).
   script that produced it, the dataset, the modification time and the SHA-256. The forecasting model is scikit-learn's
   `HistGradientBoostingRegressor` (Poisson loss); XGBoost was not used. The inventory simulation runs on the
   synthetic panel and does not show real-world savings.
+* `GET /api/analytics/v1/*` reads the same files and returns filtered views, each with the provenance of the files
+  it used: `datasets` (RAF real and synthetic, kept apart), `methods`, `parts?class=&q=`,
+  `parts/:id/forecast?method=&horizon=1..6`, `metrics?dataset=&split=&method=`, `classification`,
+  `model-comparison`, `rolling?method=`, `inventory-simulation?policy=&class=`, `inventory-policies`, `provenance`.
+  Invalid filters answer 400, a part without exported forecasts 404.
+* In live mode the Forecasts and Overview pages load the RAF results from the API (`src/data/useRafData.ts`), show a
+  loading state, and show an error rather than the bundled copy when the API cannot provide them. The page shows the
+  file name and the first 8 characters of its SHA-256.
 
 ## 8. Security
 
@@ -224,3 +232,7 @@ In Fabric mode the comparison runs on the peer (`VerifyShipment`).
   signed envelope, so it cannot commit later through this API.
 * The local development ledger is for development and tests only and is not Hyperledger Fabric.
 * No IoT, GPS or sensor data; a committed transaction records a permitted workflow step, not physical delivery.
+* Identity renewal is scripted and was run; revocation (a CRL in the channel's MSP definition) is documented in
+  [DEPLOYMENT.md](DEPLOYMENT.md) but was not executed.
+* Diagrams for components, sign-in, data flow, Fabric topology and the shipment lifecycle are in [DIAGRAMS.md](DIAGRAMS.md);
+  deployment, backup, rollback and troubleshooting in [DEPLOYMENT.md](DEPLOYMENT.md).

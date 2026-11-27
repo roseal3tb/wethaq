@@ -34,6 +34,8 @@ PostgreSQL and the ledger in step.
 | `deploy-chaincode.sh [version] [sequence]` | Builds the chaincode image and deploys it (used by `up.sh`) |
 | `upgrade-chaincode.sh [version]` | Deploys changed chaincode as the next sequence, keeping the ledger |
 | `enroll-identities.sh` | Registers and enrolls the API's `wethaq-app` identity with each organization's CA (used by `up.sh`) |
+| `renew-identities.sh [1|2]` | Re-enrolls `wethaq-app` with its CA (new certificate and key); keeps the previous identity next to it. Restart the API afterwards |
+| `query.sh tx <txId>` · `history <shipmentId>` · `shipment <shipmentId>` | Reads the ledger directly from a peer with the peer CLI (no API, no PostgreSQL) |
 | `reset.sh` | Deletes the network, its ledger and the identities. Asks you to type `reset`; `down.sh` is the same without asking |
 
 `reset.sh` (and `up.sh`, which starts from a clean network) removes the Wethaq chaincode containers and runs the

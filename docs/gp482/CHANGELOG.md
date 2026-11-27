@@ -39,3 +39,48 @@
 ## CI
 * `checks.yml`: API typecheck and tests, chaincode build and tests, a secret scan.
 * `fabric.yml` (manual): full Fabric run on the runner (network, seed, integration tests, NFR).
+
+# Change log — remaining gaps (branch `gp482-gaps`, from `main` at dca1140)
+
+## Analytics
+* `/api/analytics/v1/*`: datasets (real RAF and synthetic kept apart), methods and their settings, parts with class
+  and text filters, per-part forecast by method and horizon (1–6), metrics by dataset/split/method, classification,
+  model comparison, rolling-origin results, inventory simulation and policies, provenance. Bad filters answer 400.
+* `wethaq-api/scripts/openapi.py` generates `openapi.json` (now 0.3.0) including these routes.
+* Live mode: the Forecasts and Overview pages load the RAF results from the API (`src/data/useRafData.ts`) with a
+  loading state and an error message; the bundled copy is used only in demo mode.
+
+## Reliability
+* PostgreSQL unreachable → HTTP 503 with a clear message (`isDatabaseUnavailable` in `db.ts`); nothing is sent to
+  the ledger. The pg pool now listens for connection errors: before, PostgreSQL stopping under a running API ended
+  the API process.
+* A transaction committed on the ledger while PostgreSQL went away answers 202 (pending) instead of 500.
+* The ledger event consumer re-subscribes from its stored checkpoint when an event cannot be applied (default after
+  5 s), so the checkpoint never moves past an unapplied transaction.
+
+## Fabric scripts
+* `fabric/renew-identities.sh`: re-enrolls the application identities, keeps the previous ones for rollback.
+* `fabric/query.sh`: reads a transaction record, a shipment's history or its state straight from a peer.
+
+## Dashboard (live mode only)
+* Ledger tab: the block column says BLOCK (not DEMO BLOCK), the hash column has a live tooltip, and the note under
+  the table describes Fabric or the local development ledger correctly. Demo wording unchanged.
+* `VITE_API_URL` (optional) for an API on another origin.
+
+## Dependencies
+* `vitest` ^2.1.8 → ^4.1.12 in all three projects; `react-router-dom` ^6.30.1 → ^7.18.7. `npm audit`: 0 vulnerabilities.
+
+## Tests
+* `test/failures.test.ts` (6): PostgreSQL down, PostgreSQL lost after commit, API restart mid-operation, two
+  concurrent dispatches, two concurrent receipts, the same Idempotency-Key at once.
+* `test/analytics.test.ts` (7): the v1 analytics routes and their validation.
+* `e2e-fabric/fabric.spec.ts` + `playwright.fabric.config.ts`: the 17-step workflow on real Fabric.
+* A live browser test for the Forecasts page reading from the API.
+
+## CI
+* `checks.yml`: `audit` job for the three projects. `fabric.yml`: runs the Fabric browser test too.
+
+## Docs
+* `DEPLOYMENT.md` (deployment, configuration, start/stop, backup/restore, rollback, troubleshooting, certificates),
+  `DIAGRAMS.md` (5 new diagrams; index of all 10), `FINAL_REPORT.md`, evidence files for the PostgreSQL outage,
+  backup/restore/renewal and npm audit. A sequence diagram in `ARCHITECTURE.md` that did not parse was fixed.

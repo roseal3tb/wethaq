@@ -129,4 +129,5 @@ completes real shipments (review note "NFR test run"), so run it on demonstratio
 | POST | `/api/users` · PATCH `/api/users/:id` · POST `/api/users/:id/reset-password` | Admin |
 | GET | `/api/health` · `/api/health/live` · `/api/health/ready` · `/api/openapi.json` | anyone |
 | GET | `/api/analytics` · `/api/analytics/:name` | signed in |
+| GET | `/api/analytics/v1/datasets` · `/methods` · `/parts` · `/parts/:id/forecast` · `/metrics` · `/classification` · `/model-comparison` · `/rolling` · `/inventory-simulation` · `/inventory-policies` · `/provenance` (filters in `openapi.json`) | signed in |
 | GET | `/api/admin/sync-status` · `/api/admin/audit` · POST `/api/admin/reconcile` | Admin |

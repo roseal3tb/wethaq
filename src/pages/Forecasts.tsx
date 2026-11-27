@@ -1,29 +1,32 @@
 import { useEffect, useMemo, useState } from 'react';
-import { LIVE, liveApi } from '../api/live';
+import type { AnalyticsResult } from '../api/live';
 import { useSearchParams } from 'react-router-dom';
 import { Download, Info, ChevronDown } from 'lucide-react';
 import { NiceSelect } from '../components/NiceSelect';
 import { downloadCSV, nf } from '../utils/core';
-import { raf, rafDefaultPart, rafMethodology, rafModelColor, rafModelLabel, rafModels, rafPoints, type RafModel } from '../data/raf';
+import { defaultRafPart, rafDefaultPart, rafMethodology, rafModelColor, rafModelLabel, rafModels, rafPoints, type RafData, type RafModel } from '../data/raf';
+import { useRafData, type RollingData } from '../data/useRafData';
 import { RafForecastChart } from '../components/RafChart';
 import { SmallBarChart } from '../components/Charts';
 import { Badge, Button, Field, InfoBanner, Panel } from '../components/UI';
 import ForecastsSynthetic from './ForecastsSynthetic';
-import rolling from '../data/raf-rolling.json';
 
 const demandClasses = ['Intermittent', 'Lumpy'] as const;
 
 type RollingMetrics = Record<string, number>;
-const rollingMean = rolling.summary_mean as Record<string, RollingMetrics>;
-const rollingMin = rolling.summary_min as Record<string, RollingMetrics>;
-const rollingMax = rolling.summary_max as Record<string, RollingMetrics>;
-const rollingRanks = rolling.rmsse_rank_per_window as Record<string, Record<string, number>>;
-const rollingOrigins = rolling.origins.map(String);
-/** Methods ranked in every window, sorted by mean RMSSE; the zero forecast is a reference and is not ranked. */
-const rollingRanked = Object.keys(rollingMean)
-  .filter(method => rollingOrigins.every(origin => rollingRanks[origin]?.[method] !== undefined))
-  .sort((a, b) => rollingMean[a].RMSSE - rollingMean[b].RMSSE);
-const rollingReference = Object.keys(rollingMean).filter(method => !rollingRanked.includes(method));
+function rollingView(rolling: RollingData) {
+  const rollingMean = rolling.summary_mean as Record<string, RollingMetrics>;
+  const rollingMin = rolling.summary_min as Record<string, RollingMetrics>;
+  const rollingMax = rolling.summary_max as Record<string, RollingMetrics>;
+  const rollingRanks = rolling.rmsse_rank_per_window as Record<string, Record<string, number>>;
+  const rollingOrigins = rolling.origins.map(String);
+  /** Methods ranked in every window, sorted by mean RMSSE; the zero forecast is a reference and is not ranked. */
+  const rollingRanked = Object.keys(rollingMean)
+    .filter(method => rollingOrigins.every(origin => rollingRanks[origin]?.[method] !== undefined))
+    .sort((a, b) => rollingMean[a].RMSSE - rollingMean[b].RMSSE);
+  const rollingReference = Object.keys(rollingMean).filter(method => !rollingRanked.includes(method));
+  return { rollingMean, rollingMin, rollingMax, rollingRanks, rollingOrigins, rollingRanked, rollingReference };
+}
 const classMethods = [
   { key: 'Naive', label: 'Naive', color: rafModelColor.naive },
   { key: 'Croston', label: 'Croston', color: rafModelColor.croston },
@@ -45,25 +48,17 @@ export default function Forecasts() {
   </>;
 }
 
-/**
- * Live mode: checks that the RAF results shown here are the ones the API serves from analysis/results.
- * The page keeps showing the bundled copy; a difference is reported, never hidden or replaced.
- */
-function useRafProvenance() {
-  const [state, setState] = useState<{ status: 'checking' | 'match' | 'differs' | 'unavailable'; file?: string; sha?: string }>({ status: 'checking' });
-  useEffect(() => {
-    if (!LIVE) return;
-    let cancelled = false;
-    liveApi.analytics('raf-parts').then(r => {
-      if (!cancelled) setState({ status: JSON.stringify(r.data) === JSON.stringify(raf) ? 'match' : 'differs', file: r.provenance.file, sha: r.provenance.sha256 });
-    }, () => { if (!cancelled) setState({ status: 'unavailable' }); });
-    return () => { cancelled = true; };
-  }, []);
-  return LIVE ? state : null;
+/** Demo mode: the bundled results. Live mode: the same files from the API, with no fallback to the bundled copy. */
+function RafForecasts() {
+  const source = useRafData();
+  if (source.status === 'loading') return <div className="page"><Panel title="Demand forecasting" subtitle="Loading the analysis results from the Wethaq API…"><p className="subtle" role="status">Loading…</p></Panel></div>;
+  if (source.status === 'error' || !source.data || !source.rolling) return <div className="page"><InfoBanner variant="warning">The forecasting results could not be loaded from the Wethaq API ({source.error ?? 'unknown error'}). No other data is shown in their place.</InfoBanner></div>;
+  return <RafForecastsView raf={source.data} rolling={source.rolling} provenance={source.provenance} />;
 }
 
-function RafForecasts() {
-  const provenance = useRafProvenance();
+function RafForecastsView({ raf, rolling, provenance }: { raf: RafData; rolling: RollingData; provenance?: AnalyticsResult['provenance'][] }) {
+  const { rollingMean, rollingMin, rollingMax, rollingRanks, rollingOrigins, rollingRanked, rollingReference } = useMemo(() => rollingView(rolling), [rolling]);
+  const rafDefaultPart = useMemo(() => defaultRafPart(raf), [raf]);
   const [params, setParams] = useSearchParams();
   const [query, setQuery] = useState('');
   const [classFilter, setClassFilter] = useState('All classes');
@@ -74,8 +69,8 @@ function RafForecasts() {
   const eligible = useMemo(() => raf.parts.filter(part =>
     (classFilter === 'All classes' || part.demandClass === classFilter) &&
     (part.id.toLowerCase().includes(query.trim().toLowerCase()) || part.demandClass.toLowerCase().includes(query.trim().toLowerCase()))
-  ), [classFilter, query]);
-  const points = useMemo(() => rafPoints(selected), [selected]);
+  ), [raf, classFilter, query]);
+  const points = useMemo(() => rafPoints(selected, raf), [selected, raf]);
   const setPart = (id: string) => setParams({ part: id });
   const toggle = (model: RafModel) => setShow(prev => prev.includes(model) ? prev.filter(m => m !== model) : [...prev, model]);
   const selectSearch = () => {
@@ -91,7 +86,7 @@ function RafForecasts() {
       <h1>Demand <em>forecasting</em></h1>
       <p>Public RAF spare-parts demand · offline forecasting analysis · historical 1996–2002</p></div>
       <div className="page-title-side"><Badge tone="olive">5,000-series benchmark</Badge>
-        {provenance && provenance.status !== 'checking' && <Badge tone={provenance.status === 'match' ? 'success' : 'warning'}>{provenance.status === 'match' ? `Matches ${provenance.file} · ${provenance.sha!.slice(0, 8)}` : provenance.status === 'differs' ? 'Differs from the API analysis results' : 'Analysis results not available from the API'}</Badge>}
+        {provenance && <Badge tone="success">{`From the API · ${provenance[0].file} · ${provenance[0].sha256.slice(0, 8)}`}</Badge>}
         <Button variant="secondary" onClick={exportData}><Download size={16}/> Download CSV</Button></div>
     </div>
     <InfoBanner>Published RAF benchmark results are precomputed from the offline analysis. The 40-part interactive sample is not linked to synthetic SP-series inventory, replenishment, or shipments. Projection dates are illustrative future periods relative to the historical 2002 dataset.</InfoBanner>

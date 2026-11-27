@@ -49,6 +49,11 @@ jobs:
       - name: Non-functional checks
         working-directory: wethaq-api
         run: npm run nfr
+      - name: End-to-end browser test on Fabric (the test starts and restarts the API itself)
+        run: |
+          pkill -f "src/server.ts" || true
+          npx playwright install --with-deps chromium
+          npx playwright test -c playwright.fabric.config.ts
       - name: Store logs and the NFR report
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

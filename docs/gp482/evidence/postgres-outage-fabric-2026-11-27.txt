@@ -1,0 +1,14 @@
+PostgreSQL outage under a running API, Hyperledger Fabric mode (real test network), 2026-11-27.
+Script: PostgreSQL stopped with pg_ctl (fast), requests sent, PostgreSQL started again. Output unedited.
+Before the fix in wethaq-api/src/db.ts (pool error listener) the same stop ended the API process with an
+unhandled 'error' event from the pg pool; this run is after the fix.
+
+highest block in PostgreSQL before: 42
+--- PostgreSQL stopped (18:33:28 UTC)
+{"ok":true} HTTP 200
+ready: HTTP 503
+create request: {"error":"The database is not reachable; try again shortly."} HTTP 503
+--- PostgreSQL started (18:33:28 UTC)
+ready: HTTP 200
+create request: {"id":"SHP-2026-0053","txId":"ab40de5f060067191d9d4ae67f3a7e52d491ea5491819ebabec5d7ce1a2e884c","block":43,"ledgerState":"confirmed","transactionId":"TX-AB40DE5F0600"} HTTP 201
+API process still running: yes

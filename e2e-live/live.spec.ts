@@ -114,3 +114,14 @@ test('A change made by another user appears without reloading the page', async (
   await expect(page.getByText(new RegExp(`${created.id} · Requested on the local development ledger · block \\d+`))).toBeVisible();
   await expect(page.locator('tbody tr').filter({ hasText: created.id })).toContainText('Requested');
 });
+
+test('The forecasting page reads the analysis results from the API, with their checksum', async ({ page }) => {
+  const { createHash } = await import('node:crypto');
+  const { readFileSync } = await import('node:fs');
+  const sha = createHash('sha256').update(readFileSync('analysis/results/raf-forecasts.json')).digest('hex');
+  await signIn(page, 'planner');
+  await expect(page).toHaveURL(/\/overview/);
+  await page.goto('/forecasts');
+  await expect(page.getByText(`From the API · analysis/results/raf-forecasts.json · ${sha.slice(0, 8)}`)).toBeVisible();
+  await expect(page.getByText('could not be loaded from the Wethaq API')).toHaveCount(0);
+});

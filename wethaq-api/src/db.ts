@@ -2,6 +2,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import pg from 'pg';
+import { logger } from './logger.js';
 
 /** Minimal query interface shared by node-postgres (runtime) and PGlite (tests). */
 export interface Queryable {
@@ -18,6 +19,9 @@ pg.types.setTypeParser(1700, v => Number(v));
 
 export function postgres(connectionString: string): Db {
   const pool = new pg.Pool({ connectionString, max: 10 });
+  // An idle connection that PostgreSQL closes (restart, failover, administrator) is reported here. Without a
+  // listener Node would stop the whole API; the pool opens a new connection for the next query instead.
+  pool.on('error', err => logger.warn('database_connection_lost', { error: String(err) }));
   return {
     query: (text, params) => pool.query(text, params as unknown[]) as never,
     async transaction(fn) {
@@ -36,6 +40,20 @@ export function postgres(connectionString: string): Db {
     },
     close: () => pool.end()
   };
+}
+
+/**
+ * True when an error means PostgreSQL could not be reached or dropped the connection (not a query error).
+ * Such requests are answered 503 so that clients retry, instead of a generic 500.
+ */
+export function isDatabaseUnavailable(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const e = err as { code?: unknown; message?: unknown; cause?: unknown };
+  const code = typeof e.code === 'string' ? e.code : '';
+  if (['ECONNREFUSED', 'ECONNRESET', 'ENOTFOUND', 'ETIMEDOUT', 'EHOSTUNREACH', '57P01', '57P02', '57P03', '53300'].includes(code) || code.startsWith('08')) return true;
+  const message = typeof e.message === 'string' ? e.message : '';
+  if (/Connection terminated|connection timeout|Client has encountered a connection error|Cannot use a pool after calling end/i.test(message)) return true;
+  return e.cause ? isDatabaseUnavailable(e.cause) : false;
 }
 
 const MIGRATIONS = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../migrations');

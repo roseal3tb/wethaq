@@ -253,8 +253,9 @@ describe('OpenAPI document', () => {
       for (const layer of stack) {
         if (layer.route) for (const m of Object.keys(layer.route.methods)) routes.push(`${m.toUpperCase()} ${prefix}${layer.route.path}`);
         else if (layer.name === 'router' && layer.handle?.stack) {
-          const mount = layer.regexp?.source === '^\\/analytics\\/?(?=\\/|$)' ? '/analytics' : '';
-          walk(layer.handle.stack, prefix + mount);
+          const mount = String(layer.regexp?.source ?? '').replace(/^\^/, '').replace('\\/?(?=\\/|$)', '').replace(/\\\//g, '/');
+          const prefixPart = mount === '/api' ? '' : mount;
+          walk(layer.handle.stack, prefix + prefixPart);
         }
       }
     };

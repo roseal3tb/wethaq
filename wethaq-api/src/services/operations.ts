@@ -20,7 +20,7 @@
  * insert, only when that insert happened. The API's own response path, the chaincode event consumer
  * and the reconciler can therefore all see the same transaction without applying it twice.
  */
-import type { Db, Queryable } from '../db.js';
+import { isDatabaseUnavailable, type Db, type Queryable } from '../db.js';
 import type { EventBus } from '../events.js';
 import { logger } from '../logger.js';
 import { LedgerError, type Ledger, type LedgerCommitEvent, type LedgerOperation, type LedgerOutcome, type LedgerRecord, type OrgMsp, type PreparedTransaction } from '../ledger/types.js';
@@ -177,7 +177,15 @@ export async function executeOperation(db: Db, input: OperationInput, prepare: (
     throw await ledgerFailure(db, input, err, prepared.txId);
   }
 
-  return applyRecord(db, outcome.record, outcome.block);
+  try {
+    return await applyRecord(db, outcome.record, outcome.block);
+  } catch (err) {
+    if (!isDatabaseUnavailable(err)) throw err;
+    // Committed on the ledger, but PostgreSQL went away before it could be updated. The operation row stays
+    // 'submitting'; the event consumer or the reconciler applies the record once PostgreSQL is reachable again.
+    logger.error('ledger_apply_deferred', { txId: prepared.txId, kind: input.kind, shipmentId: input.shipmentId, block: outcome.block, error: String(err) });
+    return pendingResponse({ operation_id: prepared.txId, kind: input.kind, shipment_id: input.shipmentId });
+  }
 }
 
 /** Records a certain Case C failure in the audit log and turns it into a safe HTTP error. */
@@ -307,13 +315,38 @@ export interface ReconcileReport { at: string; checked: number; applied: number;
  *  - consumes chaincode events from the stored checkpoint (all clients' transactions, in block order);
  *  - reconciles operations whose outcome is unknown, or that were interrupted by a restart.
  */
-export function startSync({ db, ledger, bus, intervalMs, pendingExpiryMs, submittingGraceMs = 120_000 }: { db: Db; ledger: Ledger; bus?: EventBus; intervalMs: number; pendingExpiryMs: number; submittingGraceMs?: number }) {
+export function startSync({ db, ledger, bus, intervalMs, pendingExpiryMs, submittingGraceMs = 120_000, resyncDelayMs = 5_000 }: { db: Db; ledger: Ledger; bus?: EventBus; intervalMs: number; pendingExpiryMs: number; submittingGraceMs?: number; resyncDelayMs?: number }) {
   const consumer = { running: true, lastEventAt: null as string | null, lastError: null as string | null };
   let lastReconcile: ReconcileReport | null = null;
   let stopEvents: (() => void) | undefined;
   let stopped = false;
+  // Each subscription has a generation. When an event cannot be applied (for example PostgreSQL is down), the
+  // subscription is dropped, later events of it are ignored so the checkpoint does not move past the failed one,
+  // and the consumer subscribes again from the stored checkpoint after a delay. Applying is idempotent.
+  let generation = 0;
+  let resyncTimer: ReturnType<typeof setTimeout> | undefined;
 
-  const onEvent = async (e: LedgerCommitEvent) => {
+  const subscribe = async () => {
+    // No checkpoint yet (a new database): follow new events only. Earlier transactions were applied when
+    // they were submitted, or are found by verify and the reconciler.
+    const checkpoint = (await db.query<{ block: number }>('SELECT block FROM event_checkpoints WHERE name = $1', [CHECKPOINT])).rows[0];
+    if (stopped) return;
+    const mine = ++generation;
+    stopEvents = ledger.onCommit(e => (mine === generation ? onEvent(e, mine) : Promise.resolve()), checkpoint ? { fromBlock: Number(checkpoint.block) } : {});
+  };
+  const scheduleResync = () => {
+    generation++;
+    stopEvents?.(); stopEvents = undefined;
+    if (stopped || resyncTimer) return;
+    resyncTimer = setTimeout(() => {
+      resyncTimer = undefined;
+      subscribe().catch(err => { consumer.lastError = String(err); scheduleResync(); });
+    }, resyncDelayMs);
+    resyncTimer.unref?.();
+  };
+
+  const onEvent = async (e: LedgerCommitEvent, mine: number) => {
+    if (mine !== generation) return;
     try {
       await applyRecord(db, e.record, e.block);
       if (e.block !== undefined) {
@@ -324,17 +357,12 @@ export function startSync({ db, ledger, bus, intervalMs, pendingExpiryMs, submit
       bus?.emit({ kind: 'ledger', name: e.name, txId: e.txId, block: e.block, shipmentId: e.record.shipmentId, status: e.record.status === 'Rejected' ? 'Rejected' : e.record.toStatus, operation: e.record.operation });
     } catch (err) {
       consumer.lastError = String(err);
-      logger.error('ledger_event_apply_failed', { txId: e.txId, block: e.block, error: String(err) });
+      logger.error('ledger_event_apply_failed', { txId: e.txId, block: e.block, error: String(err), resyncInMs: resyncDelayMs });
+      if (mine === generation) scheduleResync();
     }
   };
 
-  const ready = (async () => {
-    // No checkpoint yet (a new database): follow new events only. Earlier transactions were applied when
-    // they were submitted, or are found by verify and the reconciler.
-    const checkpoint = (await db.query<{ block: number }>('SELECT block FROM event_checkpoints WHERE name = $1', [CHECKPOINT]).catch(() => ({ rows: [] as { block: number }[] }))).rows[0];
-    if (stopped) return;
-    stopEvents = ledger.onCommit(onEvent, checkpoint ? { fromBlock: Number(checkpoint.block) } : {});
-  })();
+  const ready = subscribe().catch(err => { consumer.lastError = String(err); logger.error('ledger_events_subscribe_failed', { error: String(err) }); scheduleResync(); });
 
   const reconcileNow = async () => {
     lastReconcile = await reconcile(db, ledger, { pendingExpiryMs, submittingGraceMs });
@@ -368,6 +396,7 @@ export function startSync({ db, ledger, bus, intervalMs, pendingExpiryMs, submit
     async stop() {
       stopped = true; consumer.running = false;
       if (timer) clearInterval(timer);
+      if (resyncTimer) clearTimeout(resyncTimer);
       await ready.catch(() => undefined);
       stopEvents?.();
       await running.catch(() => undefined);

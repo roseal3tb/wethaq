@@ -7,7 +7,8 @@ import {
 import { ShipmentDonut } from '../components/Charts';
 import { OrbitingCargo } from '../components/OrbitingCargo';
 import { RafForecastChart } from '../components/RafChart';
-import { raf, rafDefaultPart, rafPoints } from '../data/raf';
+import { rafDefaultPart, rafPoints } from '../data/raf';
+import { useRafData } from '../data/useRafData';
 import { NiceSelect } from '../components/NiceSelect';
 import { MiniStat, Panel, Status } from '../components/UI';
 import { useStore } from '../context/Store';
@@ -22,8 +23,11 @@ export default function Overview() {
   const onLedger = ledger === 'local' ? 'local development ledger' : 'Fabric';
   const [part, setPart] = useState(rafDefaultPart.id);
   const inventory = useMemo(() => live ? (data.inventory ?? []) : computeInventory(data.shipments), [live, data.inventory, data.shipments]);
-  const rafPart = raf.parts.find(p => p.id === part) ?? rafDefaultPart;
-  const forecastPoints = useMemo(() => rafPoints(rafPart), [rafPart]);
+  // Demo mode: bundled results; live mode: the same files from the API (no fallback to the bundled copy).
+  const rafSource = useRafData();
+  const raf = rafSource.data;
+  const rafPart = raf?.parts.find(p => p.id === part) ?? raf?.parts[0] ?? rafDefaultPart;
+  const forecastPoints = useMemo(() => raf ? rafPoints(rafPart, raf) : [], [rafPart, raf]);
   const risk = inventory.filter(row => row.status !== 'Healthy').sort((a, b) => a.daysCover - b.daysCover).slice(0, 5);
   const active = data.alerts.filter(alert => !alert.acknowledged);
   const recent = [...data.shipments].sort((a, b) => b.requestedAt.localeCompare(a.requestedAt)).slice(0, 4);
@@ -69,7 +73,7 @@ export default function Overview() {
         <Panel className="forecast-panel" title="Demand forecast" subtitle="Real RAF spare-parts demand with test-window forecasts">
           <div className="overview-chart-controls">
             <NiceSelect className="overview-part-select" value={part} onChange={event => setPart(event.target.value)} aria-label="Select forecast part">
-              {raf.parts.map(item => <option key={item.id} value={item.id}>{item.id} · {item.demandClass}</option>)}
+              {(raf?.parts ?? []).map(item => <option key={item.id} value={item.id}>{item.id} · {item.demandClass}</option>)}
             </NiceSelect>
           </div>
           <div className="chart-legend">
@@ -77,7 +81,8 @@ export default function Overview() {
             <span><i className="legend-line olive" /> TSB</span>
             <span><i className="legend-line" style={{ background: '#0F2A44' }} /> Gradient boosting</span>
           </div>
-          <RafForecastChart key={part} data={forecastPoints} show={['tsb', 'gbm']} testStart={raf.meta.testMonths[0]} projectionStart={raf.futureMonths[0]} compact />
+          {raf ? <RafForecastChart key={part} data={forecastPoints} show={['tsb', 'gbm']} testStart={raf.meta.testMonths[0]} projectionStart={raf.futureMonths[0]} compact />
+            : <p className="subtle" role="status">{rafSource.status === 'loading' ? 'Loading the forecasting results from the Wethaq API…' : `The forecasting results could not be loaded from the Wethaq API (${rafSource.error ?? 'unknown error'}).`}</p>}
           <div className="chart-foot">
             <span>RAF consumable parts · monthly units · test Jul–Dec 2002</span>
             {canForecast && <Link className="text-link" to={`/forecasts?part=${part}`}>Open forecast <ArrowUpRight size={15} aria-hidden="true" /></Link>}

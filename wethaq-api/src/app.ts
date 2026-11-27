@@ -5,7 +5,7 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import type { Config } from './config.js';
-import type { Db } from './db.js';
+import { isDatabaseUnavailable, type Db } from './db.js';
 import type { Ledger } from './ledger/types.js';
 import { checkPassword, findUser, publicUser, requireAuth, requireRole, ROLES, signToken, temporaryPasswordExpired, type AuthedRequest, type Role } from './auth.js';
 import { EventBus, type LiveEvent } from './events.js';
@@ -16,7 +16,7 @@ import { inventoryPositions } from './services/inventory.js';
 import { startSync } from './services/operations.js';
 import { createShipment, idempotencyKey, invalidDemo, operate, verifyShipment, type RequestContext } from './services/shipments.js';
 import { loadState } from './services/state.js';
-import { analyticsRouter } from './services/analytics.js';
+import { analyticsRouter, analyticsV1Router } from './services/analytics.js';
 import { addUser, changePassword, resetPassword, updateUser } from './services/users.js';
 
 /** The seeded account that /auth/switch signs in as for each demonstration role. */
@@ -25,7 +25,8 @@ export const DEMO_ACCOUNTS: Record<Role, string> = {
 };
 
 export type AppConfig = Pick<Config, 'jwtSecret' | 'jwtTtl' | 'demoRoleSwitch' | 'corsOrigin'>
-  & Partial<Pick<Config, 'tempPasswordHours' | 'demoTools' | 'production' | 'reconcileIntervalMs' | 'pendingExpiryMs'>>;
+  & Partial<Pick<Config, 'tempPasswordHours' | 'demoTools' | 'production' | 'reconcileIntervalMs' | 'pendingExpiryMs'>>
+  & { /** Delay before the event consumer subscribes again after an event could not be applied (tests shorten it). */ resyncDelayMs?: number };
 
 export function createApp({ db, ledger, config, bus = new EventBus() }: { db: Db; ledger: Ledger; config: AppConfig; bus?: EventBus }) {
   const app = express();
@@ -33,7 +34,7 @@ export function createApp({ db, ledger, config, bus = new EventBus() }: { db: Db
   const demoTools = config.demoTools ?? config.demoRoleSwitch;
   // Every transaction committed on the ledger, by this API or by any other client of the network, is applied
   // to PostgreSQL once (from a stored checkpoint) and announced to open dashboards; unknown outcomes are reconciled.
-  const sync = startSync({ db, ledger, bus, intervalMs: config.reconcileIntervalMs ?? 0, pendingExpiryMs: config.pendingExpiryMs ?? 5 * 60_000 });
+  const sync = startSync({ db, ledger, bus, intervalMs: config.reconcileIntervalMs ?? 0, pendingExpiryMs: config.pendingExpiryMs ?? 5 * 60_000, resyncDelayMs: config.resyncDelayMs });
   const stopLedgerEvents = () => { void sync.stop(); };
   /** Signals that the PostgreSQL copy changed, so open dashboards reload it. */
   const changed = (name: string, shipmentId?: string) => bus.emit({ kind: 'app', name, shipmentId });
@@ -140,6 +141,7 @@ export function createApp({ db, ledger, config, bus = new EventBus() }: { db: Db
     const location = typeof req.query.location === 'string' ? req.query.location : undefined;
     res.json(await inventoryPositions(db, { partId, location }));
   }));
+  api.use('/analytics/v1', auth, analyticsV1Router());
   api.use('/analytics', auth, analyticsRouter());
 
   api.post('/shipments', auth, requireRole('request'), wrap(async (req, res) => {
@@ -214,6 +216,10 @@ export function createApp({ db, ledger, config, bus = new EventBus() }: { db: Db
       return res.status(err.status).json({ error: err.message, ...(extra.ledgerFailure ? { ledgerFailure: extra.ledgerFailure, ledgerState: 'failed', txId: extra.txId } : {}) });
     }
     if (err && typeof err === 'object' && 'type' in err && (err as { type: string }).type === 'entity.parse.failed') return res.status(400).json({ error: 'Malformed JSON body' });
+    if (isDatabaseUnavailable(err)) {
+      logger.error('database_unavailable', { requestId: (_req as { requestId?: string }).requestId, error: String(err) });
+      return res.status(503).json({ error: 'The database is not reachable; try again shortly.' });
+    }
     logger.error('unhandled_error', { requestId: (_req as { requestId?: string }).requestId, error: err instanceof Error ? { name: err.name, message: err.message, stack: err.stack } : String(err) });
     res.status(500).json({ error: 'Internal server error' });
   });

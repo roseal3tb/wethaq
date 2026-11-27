@@ -1,0 +1,20 @@
+npx playwright test -c playwright.fabric.config.ts --reporter=json  (exit 0)
+result: passed, 27568 ms
+
+passed    1036 ms  1. The planner signs in
+passed    1007 ms  2. The planner reviews forecasts read from the API
+passed    1322 ms  3. The planner reviews inventory computed by the API
+passed    2487 ms  4. The planner creates a shipment request
+passed     220 ms  5. Fabric committed the request (read from the peer, not the API)
+passed      22 ms  6. PostgreSQL holds the same transaction
+passed    3783 ms  7. The dispatcher records the dispatch
+passed    3038 ms  8. The dispatcher marks the shipment in transit
+passed    4363 ms  9. The receiver confirms receipt of 3 of the 4 units
+passed     584 ms  10. Fabric and PostgreSQL agree on all four transactions
+passed      13 ms  11. Inventory changed by the dispatched and received quantities
+passed    1132 ms  12. The Ledger tab shows the Fabric transaction ids and blocks
+passed    1746 ms  13. Verification against the ledger succeeds
+passed     801 ms  14. Invalid operations are rejected: a second receipt by the chaincode, a dispatch by the receiver by the application
+passed    1142 ms  15. Alerts were created for the discrepancy and the rejected attempt
+passed     213 ms  16. The receiver acknowledges the discrepancy alert
+passed    4305 ms  17. After an API restart the data is still there and still verifies

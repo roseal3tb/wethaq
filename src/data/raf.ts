@@ -1,6 +1,7 @@
 /**
  * RAF spare-parts forecasting results (real data, Teunter & Duncan 2009), exported by
- * raf_export.py from the Sprint 3 evaluation. Static file: works in demo and live mode.
+ * raf_export.py from the Sprint 3 evaluation. Demo mode uses this bundled copy; live mode loads the same
+ * file from the API (analysis/results/raf-forecasts.json) through useRafData().
  * The synthetic forecast module (forecast.ts) still drives the Overview card and the
  * inventory policy comparison.
  */
@@ -23,17 +24,18 @@ export interface RafData {
 }
 export const raf = data as unknown as RafData;
 /** Part shown first: the first sample part (by id) with at least 5 units of test-window demand and no month above 20 units, so the chart opens on readable demand instead of an empty test window or one large spike. Chosen by demand only, not by forecast accuracy. */
-export const rafDefaultPart = raf.parts.find(part => part.testActualTotal >= 5 && Math.max(...part.history) <= 20) ?? raf.parts.find(part => part.testActualTotal >= 5) ?? raf.parts[0];
+export const defaultRafPart = (data: RafData) => data.parts.find(part => part.testActualTotal >= 5 && Math.max(...part.history) <= 20) ?? data.parts.find(part => part.testActualTotal >= 5) ?? data.parts[0];
+export const rafDefaultPart = defaultRafPart(raf);
 
 export interface RafPoint { month: string; zone: 'History' | 'Test' | 'Projection'; actual?: number; naive?: number; croston?: number; tsb?: number; gbm?: number; }
-export function rafPoints(part: RafPart): RafPoint[] {
-  const train = raf.meta.trainMonths;
-  const points: RafPoint[] = raf.months.map((month, i) => {
+export function rafPoints(part: RafPart, data: RafData = raf): RafPoint[] {
+  const train = data.meta.trainMonths;
+  const points: RafPoint[] = data.months.map((month, i) => {
     const point: RafPoint = { month, zone: i >= train ? 'Test' : 'History', actual: part.history[i] };
     if (i >= train) for (const m of rafModels) point[m] = part.test[m][i - train];
     return point;
   });
-  raf.futureMonths.forEach((month, k) => {
+  data.futureMonths.forEach((month, k) => {
     const point: RafPoint = { month, zone: 'Projection' };
     for (const m of rafModels) point[m] = part.projection[m][k];
     points.push(point);

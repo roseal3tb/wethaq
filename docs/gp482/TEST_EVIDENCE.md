@@ -1,22 +1,70 @@
 # GP482 test evidence
 
 Everything on this page was run on 2026-11-27 (UTC) in the development container used to build this work
-(Linux x64, Node 22.23, Docker 27, PostgreSQL 16). Numbers are copied from the actual output. Nothing has been
-run on Sara's Mac yet for this change set: the commands to do so are at the end.
+(Linux x64, Node 22.23, Docker 27, PostgreSQL 16). Numbers are copied from the actual output. The final run of every
+suite, with its commands, exit codes and logs, is in [evidence/final-run-2026-11-27/](evidence/final-run-2026-11-27/SUMMARY.md).
+The earlier change set (`a53f392`) was also run on Sara's Mac: API 58 passed / 7 skipped, Fabric integration 7 passed,
+NFR 31 of 31, `verify-network.sh` all ok.
 
-## Summary
+## Summary (final run, branch `gp482-gaps`)
 
 | Suite | Command | Ledger | Result |
 |---|---|---|---|
-| Chaincode unit tests | `cd chaincode/shipment && npx vitest run` | in-memory stub | **24 passed** |
-| API tests | `cd wethaq-api && npx vitest run` | local development ledger + PGlite | **58 passed**, 7 skipped (the Fabric suite, which needs `FABRIC_IT=1`) |
-| Fabric integration | `cd wethaq-api && FABRIC_IT=1 npx vitest run test/fabric.integration.test.ts` | **Hyperledger Fabric 2.5.12** | **7 passed** |
-| NFR measurements | `cd wethaq-api && npm run nfr` | **Hyperledger Fabric 2.5.12** | **31 of 31 passed** ([report](evidence/nfr-fabric-2026-11-27.md)) |
-| Fabric network checks | `./fabric/verify-network.sh` (run by `up.sh`) | Fabric | **13 of 13 ok** ([output](evidence/verify-network-2026-11-27.txt)) |
-| Dashboard unit tests | `npx vitest run` | — | **20 passed** |
-| Dashboard type check / build | `npx tsc --noEmit -p .` · `npx vite build` | — | pass / pass |
-| Demo-mode browser tests (design unchanged) | `npx playwright test` | none (demo mode) | **54 passed**, 2 skipped |
-| Live-mode browser tests | `npx playwright test -c playwright.live.config.ts` | local development ledger | **5 passed** |
+| Chaincode unit tests | `cd chaincode/shipment && npm test` | in-memory stub | **24 passed** |
+| API tests | `cd wethaq-api && npm test` | local development ledger + PGlite | **71 passed**, 7 skipped (the Fabric suite, which needs `FABRIC_IT=1`) |
+| Fabric integration | `cd wethaq-api && npm run test:fabric` | **Hyperledger Fabric 2.5.12** | **7 passed** |
+| NFR measurements | `cd wethaq-api && npm run nfr` | **Hyperledger Fabric 2.5.12** | **31 of 31 passed** ([report](evidence/final-run-2026-11-27/nfr-report.md)) |
+| Fabric network checks | `./fabric/verify-network.sh` | Fabric | **14 of 14 ok** |
+| Fabric browser test, 17 steps | `npx playwright test -c playwright.fabric.config.ts` | **Hyperledger Fabric 2.5.12** | **1 passed** ([steps](evidence/final-run-2026-11-27/ui-fabric-steps.txt)) |
+| Dashboard unit tests | `npm test` | — | **20 passed** |
+| Dashboard type check / build | `npm run check` · `npm run build` | — | pass / pass |
+| Demo-mode browser tests (design unchanged) | `npx playwright test` | none (demo mode) | **54 passed**, 2 skipped (mobile-only test on wider viewports) |
+| Live-mode browser tests | `npx playwright test -c playwright.live.config.ts` | local development ledger | **6 passed** |
+| Dependency audit | `npm audit` in the three projects | — | **0 vulnerabilities** each ([review](evidence/npm-audit-2026-11-27.md)) |
+
+## Fabric browser test (`e2e-fabric/fabric.spec.ts`)
+
+One Playwright test drives the dashboard in live mode against the API in Fabric mode, and checks every result
+independently: on the peer with the peer CLI (`fabric/query.sh`, not the API) and in PostgreSQL with direct queries.
+The test starts the API itself so that it can restart it.
+
+1. The planner signs in. 2. The Forecasts page shows the RAF results from the API with the file's SHA-256.
+3. Inventory is shown. 4. The planner requests 4 units. 5. The peer has the shipment and one `request` record.
+6. PostgreSQL has the same transaction id, `ledger_state = confirmed` and a block number. 7–9. Dispatcher dispatches
+and marks in transit; the receiver confirms 3 units (toasts say "committed on Fabric · block N").
+10. The peer's history has request, dispatch, transit and receive, each with a 64-hex transaction id that
+`ReadTransactionRecord` finds; PostgreSQL has exactly those ids; shipment state matches. 11. Origin stock −4,
+destination +3. 12. The Ledger tab lists the three movement transactions with their Fabric ids and blocks.
+13. Verify → "matches the ledger". 14. A second receipt is rejected by the chaincode (422, `source: chaincode`) and a
+dispatch by the receiver by the application (422, `source: application`); nothing changes on the peer or in
+PostgreSQL. 15. A *Receipt quantity mismatch* and a *Rejected attempt* alert exist. 16. The receiver acknowledges the
+mismatch alert (stored in PostgreSQL). 17. The API is stopped and started again: the Ledger tab, the shipment state,
+verification and the acknowledged alert are all unchanged.
+
+## Failure tests (`wethaq-api/test/failures.test.ts`, local development ledger)
+
+* PostgreSQL unreachable → `/health/ready` 503, liveness 200, requests 503 with "The database is not reachable",
+  sign-in 503; the ledger received nothing (same number of blocks and submissions); ready again when it returns.
+* PostgreSQL lost right after the ledger committed → 202 pending; the ledger has the dispatch and PostgreSQL does not;
+  when PostgreSQL returns, the event consumer re-subscribes from its checkpoint and applies it **once** (one record,
+  one timeline entry, stock moved once). Without the re-subscription the test fails (checked by disabling it).
+* API restart mid-operation: the old process's event consumer is stopped and its request never answers; a new API
+  process on the same database applies the committed dispatch from the checkpoint; verify → verified.
+* Two simultaneous dispatches of one shipment → one 200 and one 409/422; one committed record; stock moved once.
+* Two simultaneous receipts → one committed, the other rejected; stock moved once.
+* The same Idempotency-Key sent twice at once → one shipment, one operation row.
+
+On the real network PostgreSQL was also stopped under a running API ([output](evidence/postgres-outage-fabric-2026-11-27.txt)):
+before the fix the API process exited on the pg pool's unhandled `error` event; after it, `/health/live` 200,
+`/health/ready` 503, a request 503, and after PostgreSQL started again a request committed in the next block (43).
+
+## Backup, restore and identity renewal on the real network
+
+See [evidence/backup-restore-renewal-2026-11-27.md](evidence/backup-restore-renewal-2026-11-27.md): both identities
+renewed (new serials and keys), a PostgreSQL dump restored into a new database, and a dispatch committed after the
+backup (block 44) applied to the restored copy when an API started on it.
+
+## Earlier runs (change set `a53f392`)
 
 An earlier NFR run in the same session reported 30 of 31: the sign-in rate limit (10 per minute) answered 429 to the
 SQL-injection probe because the Fabric integration tests had signed in four times in the same minute. Run again a
@@ -86,6 +134,8 @@ this container cannot download npm packages inside `docker build`):
 
 ## Not run here
 
+* Fabric ledger volume backup/restore and certificate revocation: documented in DEPLOYMENT.md, not executed.
+
 * `docker build -f wethaq-api/Dockerfile .`: Docker Hub answered **429 Too Many Requests** for `node:22-bookworm-slim`.
   The image's file layout was checked instead by copying exactly the files the Dockerfile copies into an empty folder
   and starting the API from there with `NODE_ENV=production` (migrations applied, `/api/health/ready` 200).
@@ -102,4 +152,7 @@ npm run dev                                      # terminal 1
 npm test                                         # terminal 2: API suite
 npm run test:fabric                              # Fabric integration (DEMO_PASSWORD from .env)
 sleep 60 && npm run nfr                          # NFR (wait a minute after the line above: sign-in rate limit)
+# stop the API in terminal 1 (Ctrl+C), then from the repository root:
+npx playwright install chromium                  # once
+npx playwright test -c playwright.fabric.config.ts   # 17-step browser test on Fabric (starts the API itself)
 ```
