@@ -19,7 +19,15 @@ if [ -n "$def" ] && [ "$(echo "$def" | jq -r '.approvals.Org1MSP and .approvals.
   ok "chaincode definition sequence $(echo "$def" | jq -r .sequence), version $(echo "$def" | jq -r .version), approved by Org1MSP and Org2MSP"
 else bad "chaincode definition is not committed with both approvals"; fi
 peer_env 1
-if timeout 30 peer chaincode query -C "$CHANNEL" -n "$CC_NAME" -c '{"function":"GetHistory","Args":["SHP-VERIFY-NETWORK"]}' >/dev/null 2>&1; then ok "chaincode answers queries"; else bad "chaincode does not answer queries"; fi
+# macOS has no "timeout" command, so the time limit is used only where it exists. The chaincode containers can
+# need a few seconds after a start before they answer, so the query is tried up to five times.
+limit() { if command -v timeout >/dev/null 2>&1; then timeout 30 "$@"; else "$@"; fi; }
+answered=no
+for attempt in 1 2 3 4 5; do
+  if limit peer chaincode query -C "$CHANNEL" -n "$CC_NAME" -c '{"function":"GetHistory","Args":["SHP-VERIFY-NETWORK"]}' >/dev/null 2>&1; then answered=yes; break; fi
+  sleep 3
+done
+if [ "$answered" = yes ]; then ok "chaincode answers queries"; else bad "chaincode does not answer queries"; fi
 for org in 1 2; do
   cert="$IDENTITIES/org$org/$APP_USER/msp/signcerts/cert.pem"
   if [ ! -f "$cert" ]; then bad "Org${org}MSP application identity missing (run ./fabric/enroll-identities.sh)"; continue; fi
