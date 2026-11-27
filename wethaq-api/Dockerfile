@@ -17,6 +17,8 @@ COPY src/data src/data
 COPY src/types.ts src/types.ts
 COPY src/utils src/utils
 COPY analysis/results analysis/results
+# The analysis scripts are copied only so the API can tell whether the results are older than the scripts (MANIFEST.json).
+COPY analysis/scripts analysis/scripts
 WORKDIR /app/wethaq-api
 USER node
 EXPOSE 4000
