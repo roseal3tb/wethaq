@@ -11,4 +11,5 @@ if ! docker start $CCAAS_CONTAINERS >/dev/null 2>&1; then
   # Recreate the chaincode containers for the committed definition.
   run_ccaas "$(installed_package_id "${CC_NAME}_$(committed_definition | jq -r .version)")"
 fi
+wait_for_orderer
 "$FABRIC_DIR/verify-network.sh"
