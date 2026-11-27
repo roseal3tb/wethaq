@@ -1,0 +1,305 @@
+{
+  "measuredAt": "2026-11-27T21:55:12.060Z",
+  "api": "http://127.0.0.1:4000/api",
+  "ledger": "fabric",
+  "runs": 10,
+  "concurrency": 20,
+  "targetMs": 2000,
+  "performance": [
+    {
+      "action": "Sign in",
+      "n": 4,
+      "avg": 96.77027125000004,
+      "min": 89.95685500000002,
+      "p50": 90.4763660000001,
+      "p95": 115.291605,
+      "max": 115.291605
+    },
+    {
+      "action": "Create request (Planner, ledger)",
+      "n": 10,
+      "avg": 536.1323459,
+      "min": 532.551942,
+      "p50": 534.412742999999,
+      "p95": 543.075431,
+      "max": 543.075431
+    },
+    {
+      "action": "Dispatch (Dispatcher, ledger)",
+      "n": 10,
+      "avg": 532.9185640999997,
+      "min": 528.7927339999987,
+      "p50": 532.3097070000003,
+      "p95": 538.2476790000001,
+      "max": 538.2476790000001
+    },
+    {
+      "action": "Mark in transit (Dispatcher, ledger)",
+      "n": 10,
+      "avg": 532.5950048999994,
+      "min": 528.4107639999966,
+      "p50": 531.8281630000001,
+      "p95": 536.3912409999994,
+      "max": 536.3912409999994
+    },
+    {
+      "action": "Confirm receipt (Receiver, ledger)",
+      "n": 10,
+      "avg": 535.4914385999998,
+      "min": 530.6639539999996,
+      "p50": 533.0991130000002,
+      "p95": 549.368262,
+      "max": 549.368262
+    },
+    {
+      "action": "Verify against ledger",
+      "n": 10,
+      "avg": 16.115254099999675,
+      "min": 13.733813999999256,
+      "p50": 14.879627000000255,
+      "p95": 20.59634399999959,
+      "max": 20.59634399999959
+    },
+    {
+      "action": "Load dashboard data (/state)",
+      "n": 10,
+      "avg": 13.09965699999998,
+      "min": 9.20347000000038,
+      "p50": 10.482841999999437,
+      "p95": 30.114544999999907,
+      "max": 30.114544999999907
+    },
+    {
+      "action": "Create request, 20 at once",
+      "n": 20,
+      "avg": 304.3868834500001,
+      "min": 249.34803399999873,
+      "p50": 284.69400600000154,
+      "p95": 346.90578299999834,
+      "max": 346.9956510000011
+    }
+  ],
+  "throughput": {
+    "committed": 20,
+    "seconds": 0.35104154199999904
+  },
+  "checks": [
+    {
+      "area": "Performance",
+      "test": "Average time of each ledger write (one at a time)",
+      "expected": "< 2000 ms",
+      "observed": "slowest average 536 ms",
+      "passed": true
+    },
+    {
+      "area": "Performance",
+      "test": "Reads and sign-in (95th percentile)",
+      "expected": "< 2000 ms",
+      "observed": "slowest 115 ms",
+      "passed": true
+    },
+    {
+      "area": "Performance",
+      "test": "20 concurrent shipment requests",
+      "expected": "all committed",
+      "observed": "20/20 committed in 0.35 s (57.0 tx/s)",
+      "passed": true
+    },
+    {
+      "area": "Reliability",
+      "test": "Workflow runs without errors (10 × request, dispatch, transit, receipt)",
+      "expected": "0 errors",
+      "observed": "0 errors, 10/10 completed",
+      "passed": true
+    },
+    {
+      "area": "Security",
+      "test": "Data without signing in",
+      "expected": "401",
+      "observed": "401",
+      "passed": true
+    },
+    {
+      "area": "Security",
+      "test": "Forged token",
+      "expected": "401",
+      "observed": "401",
+      "passed": true
+    },
+    {
+      "area": "Security",
+      "test": "Admin token signed with another key",
+      "expected": "401",
+      "observed": "401",
+      "passed": true
+    },
+    {
+      "area": "Security",
+      "test": "Expired token",
+      "expected": "401",
+      "observed": "401",
+      "passed": true
+    },
+    {
+      "area": "Security",
+      "test": "Wrong password and unknown email give the same answer",
+      "expected": "401, same message",
+      "observed": "401 / 401, same message",
+      "passed": true
+    },
+    {
+      "area": "Security",
+      "test": "SQL injection in the sign-in form",
+      "expected": "400 or 401",
+      "observed": "429",
+      "passed": false
+    },
+    {
+      "area": "Security",
+      "test": "Planner adds a user",
+      "expected": "403",
+      "observed": "403",
+      "passed": true
+    },
+    {
+      "area": "Security",
+      "test": "Dispatcher creates a shipment request",
+      "expected": "403",
+      "observed": "403",
+      "passed": true
+    },
+    {
+      "area": "Security",
+      "test": "Receiver resets a password",
+      "expected": "403",
+      "observed": "403",
+      "passed": true
+    },
+    {
+      "area": "Security",
+      "test": "Dispatcher changes a role",
+      "expected": "403",
+      "observed": "403",
+      "passed": true
+    },
+    {
+      "area": "Security",
+      "test": "Planner records a dispatch (refused before the ledger)",
+      "expected": "422, not submitted",
+      "observed": "422, application, not submitted",
+      "passed": true
+    },
+    {
+      "area": "Security",
+      "test": "Receiver records a dispatch (refused before the ledger)",
+      "expected": "422, not submitted",
+      "observed": "422, application, not submitted",
+      "passed": true
+    },
+    {
+      "area": "Security",
+      "test": "Dispatcher confirms a receipt (refused before the ledger)",
+      "expected": "422, not submitted",
+      "observed": "422, application, not submitted",
+      "passed": true
+    },
+    {
+      "area": "Security",
+      "test": "A non-admin sees only their own user record",
+      "expected": "1 user",
+      "observed": "1 user(s)",
+      "passed": true
+    },
+    {
+      "area": "Security",
+      "test": "Password hashes are never returned by the API",
+      "expected": "not present",
+      "observed": "not present",
+      "passed": true
+    },
+    {
+      "area": "Security",
+      "test": "Passwords stored as bcrypt hashes",
+      "expected": "all users",
+      "observed": "8/8",
+      "passed": true
+    },
+    {
+      "area": "Security",
+      "test": "Security headers (helmet)",
+      "expected": "4 headers",
+      "observed": "4: x-content-type-options, content-security-policy, strict-transport-security, x-frame-options",
+      "passed": true
+    },
+    {
+      "area": "Integrity",
+      "test": "Completed shipments match the ledger",
+      "expected": "10/10",
+      "observed": "10/10",
+      "passed": true
+    },
+    {
+      "area": "Integrity",
+      "test": "A change made directly in PostgreSQL is detected",
+      "expected": "mismatch reported",
+      "observed": "detected: Received quantity: database 4, ledger 5",
+      "passed": true
+    },
+    {
+      "area": "Integrity",
+      "test": "A second receipt is refused by the smart contract",
+      "expected": "noDuplicate",
+      "observed": "422, noDuplicate (chaincode, block 71)",
+      "passed": true
+    },
+    {
+      "area": "Integrity",
+      "test": "Earlier ledger records are unchanged; the attempt is appended",
+      "expected": "unchanged, +1 record",
+      "observed": "unchanged, +1 record",
+      "passed": true
+    },
+    {
+      "area": "Integrity",
+      "test": "The shipment state is unchanged after the rejected attempt",
+      "expected": "unchanged",
+      "observed": "unchanged",
+      "passed": true
+    },
+    {
+      "area": "Reliability",
+      "test": "Rule noDuplicate: Duplicate receipt",
+      "expected": "rejected by noDuplicate",
+      "observed": "rejected by noDuplicate (chaincode)",
+      "passed": true
+    },
+    {
+      "area": "Reliability",
+      "test": "Rule authorizedOrg: Unauthorized organization",
+      "expected": "rejected by authorizedOrg",
+      "observed": "rejected by authorizedOrg (chaincode)",
+      "passed": true
+    },
+    {
+      "area": "Reliability",
+      "test": "Rule validTransition: Invalid status transition",
+      "expected": "rejected by validTransition",
+      "observed": "rejected by validTransition (chaincode)",
+      "passed": true
+    },
+    {
+      "area": "Reliability",
+      "test": "Rule validQuantity: Quantity exceeds dispatched",
+      "expected": "rejected by validQuantity",
+      "observed": "rejected by validQuantity (chaincode)",
+      "passed": true
+    },
+    {
+      "area": "Reliability",
+      "test": "Rule validReference: Unknown shipment reference",
+      "expected": "rejected by validReference",
+      "observed": "rejected by validReference (chaincode)",
+      "passed": true
+    }
+  ]
+}
