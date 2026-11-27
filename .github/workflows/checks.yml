@@ -34,6 +34,8 @@ jobs:
         run: npm run test
       - name: Production build
         run: npm run build
+      - name: Caddy Content-Security-Policy allows the inline script in index.html
+        run: node deploy/check-csp-hash.mjs
 
   lint:
     name: ESLint (dashboard, API, chaincode, tests)
