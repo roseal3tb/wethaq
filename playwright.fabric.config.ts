@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test';
 
 // End-to-end browser test against the real Hyperledger Fabric test network (not part of the default checks).
 // Before running: ./fabric/up.sh, then in wethaq-api (LEDGER_MODE=fabric): npm run migrate && npm run seed -- --reset.
-// The test starts and restarts the API itself, so nothing may be listening on port 4000. See docs/gp482/TEST_EVIDENCE.md.
+// The test starts and restarts the API itself, so nothing may be listening on port 4000. See docs/gp482/FINAL_TEST_REPORT.md.
 export default defineConfig({
   testDir: './e2e-fabric',
   fullyParallel: false,

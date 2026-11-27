@@ -26,6 +26,30 @@ npm run check       # TypeScript type checking
 
 The repository contains complete application source files; **`node_modules` is intentionally excluded**. There are no runtime network requests for dashboard data. Browser font fallbacks are provided.
 
+## Live mode: API, PostgreSQL and Hyperledger Fabric (GP482)
+
+Demo mode above runs entirely in the browser and is what the Vercel site shows. Live mode connects the same
+dashboard to the Wethaq API (`wethaq-api/`: Express, PostgreSQL) and a Hyperledger Fabric 2.5 test network
+(`fabric/`, chaincode in `chaincode/shipment/`). It needs Docker.
+
+```bash
+./fabric/install.sh && ./fabric/up.sh              # once: Fabric test network with CAs, channel, chaincode, identities
+cd wethaq-api && npm install && cp .env.example .env # set LEDGER_MODE=fabric in .env
+npm run db:up && npm run migrate && npm run seed -- --reset && npm run dev
+cd .. && npm run dev:live                          # dashboard in live mode on http://localhost:5173
+```
+
+Documentation is in [`docs/gp482/`](docs/gp482/):
+* [final completion report](docs/gp482/FINAL_COMPLETION_REPORT.md) and [remaining blockers](docs/gp482/REMAINING_BLOCKERS.md);
+* [requirements traceability](docs/gp482/REQUIREMENTS_TRACEABILITY.md) and [test report](docs/gp482/FINAL_TEST_REPORT.md);
+* [architecture](docs/gp482/ARCHITECTURE.md), [deployment guide](docs/gp482/DEPLOYMENT_GUIDE.md),
+  [backup and recovery](docs/gp482/BACKUP_AND_RECOVERY.md) and [security review](docs/gp482/SECURITY_AUDIT.md);
+* [differences from the GP481 report](docs/gp482/REPORT_DISCREPANCIES.md).
+
+The API is described by `wethaq-api/openapi.json`, which it also serves at `/api/openapi.json`. Settings are
+documented in `.env.example`, `wethaq-api/.env.example` and `deploy/production.env.example`. Nothing has been
+deployed to a hosted server; `deploy/` holds a prepared single-server configuration.
+
 ## Demo sign-in
 
 The login page is a simulated credential experience. Select a demonstration role, use any nonempty email/username and any nonempty password except `wrong`, then sign in. Starter values: `planner@wethaq.demo` / `demo`.
@@ -89,16 +113,17 @@ tests/                        unit tests
 docs/                         demo walkthrough, acceptance matrix, design guidelines
 ```
 
-### Future integration map
+### Integration (GP482)
 
-| Current mock module | Potential real source (later project phase) |
+| Demo-mode module | Live mode |
 |---|---|
-| `mockAPI.parts`, `.inventory`, `.shipments`, `.alerts`, `.users` | Express REST API → PostgreSQL |
-| `mockAPI.forecast` | Python forecasting service via Express |
-| `mockAPI.ledger` | Fabric Gateway SDK and reporting API |
-| `validateOperation` + Store workflows | Server-authorized role checks and Fabric smart-contract validation |
+| `mockAPI.parts`, `.inventory`, `.shipments`, `.alerts`, `.users` | Express REST API → PostgreSQL (`wethaq-api`) |
+| `mockAPI.forecast` | the offline Python analysis's result files, served by the API with checksums (`/api/analytics`) |
+| `mockAPI.ledger` | Fabric Gateway SDK → Hyperledger Fabric (`chaincode/shipment`) |
+| `validateOperation` + Store workflows | server-side role checks in the API and the same rules in the chaincode |
 
-Never treat browser-side role restrictions as actual security; real access control requires server enforcement in a future implementation. Mock operations are labeled honestly. Changing the API layer would also require moving state mutations into proper service operations; the current Store is explicitly demonstration-only.
+In demo mode the browser-side role restrictions are a demonstration, not security. In live mode every request is
+authorized by the API, and every shipment operation is validated by the chaincode and endorsed by both organizations.
 
 ## Brand and UI
 
@@ -110,6 +135,6 @@ Never treat browser-side role restrictions as actual security; real access contr
 
 ## Important caveats
 
-This is an **academic prototype using synthetic data only**. No real, classified, or operational military data is present. Forecasts and inventory recommendations are decision-support material, not purchase commands. The mock ledger is a demonstration of transaction rules, **not a connected Hyperledger Fabric network**, and even a real committed ledger record would not independently prove physical delivery or cargo condition. Modeled stockout conditions and lead-time estimates are assumptions, not field observations. No fabricated operational savings or performance claims are made.
+This is an **academic prototype using synthetic data only**. No real, classified, or operational military data is present. Forecasts and inventory recommendations are decision-support material, not purchase commands. In demo mode the ledger is a demonstration of transaction rules, **not a connected Hyperledger Fabric network**; live mode uses a real Fabric test network on one machine. Even a committed ledger record does not independently prove physical delivery or cargo condition. Modeled stockout conditions and lead-time estimates are assumptions, not field observations. No fabricated operational savings or performance claims are made.
 
-**Build/testing note:** Source syntax, core TypeScript types, dataset sizes and rule-engine behavior were locally checked while preparing this repository. In the authoring environment, external npm registry access was unavailable, so a full dependency install, browser interaction suite, and Lighthouse assessment could not be completed there. Run `npm install`, `npm run build`, and `npm test` on a network-connected development machine before your committee demonstration.
+**Testing:** the results of the latest run of every suite (unit, API, chaincode, browser in demo and live mode, and on Fabric) are in [docs/gp482/FINAL_TEST_REPORT.md](docs/gp482/FINAL_TEST_REPORT.md). The GitHub Actions workflows have not run yet.

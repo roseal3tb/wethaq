@@ -9,7 +9,7 @@ export const LIVE = import.meta.env.VITE_WETHAQ_LIVE === 'true';
 /**
  * Where the Wethaq API is. Empty (the default): the same origin, through the Vite proxy in development or a
  * rewrite on the host. A full origin such as https://api.example.edu when the API is on another host; the API
- * must then allow the dashboard's origin (CORS_ORIGIN). See docs/gp482/DEPLOYMENT.md.
+ * must then allow the dashboard's origin (CORS_ORIGIN). See docs/gp482/DEPLOYMENT_GUIDE.md.
  */
 const API_BASE = String(import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
 

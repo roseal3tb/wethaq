@@ -1,7 +1,7 @@
 # Wethaq GP482 — Backend, blockchain and integration architecture
 
 This document describes the system as it is implemented in this repository. Every behaviour described
-here is in the code and covered by the tests listed in [TEST_EVIDENCE.md](TEST_EVIDENCE.md).
+here is in the code and covered by the tests listed in [FINAL_TEST_REPORT.md](FINAL_TEST_REPORT.md).
 The GP481 report is unchanged; differences from its design are listed at the end.
 
 ## 1. System context
@@ -212,27 +212,43 @@ In Fabric mode the comparison runs on the peer (`VerifyShipment`).
 
 ## 8. Security
 
-* JWT (HS256) sessions; bcrypt passwords; temporary passwords that expire; rate-limited sign-in; helmet headers.
+* JWT (HS256, algorithm pinned on verification) sessions; bcrypt passwords; temporary passwords that expire and must
+  be replaced at first sign-in; rate-limited sign-in and password change; helmet headers on the API.
+* Sessions end on the server: every token carries an id (`jti`) and the user's session version. `POST /api/auth/logout`
+  records the id in `revoked_tokens`; a password change or an administrator's reset increments `users.session_version`,
+  which ends every other session of that user (migration 005).
 * `NODE_ENV=production`: role switching and demo tools are forced off; `JWT_SECRET` must be ≥ 32 random characters;
-  `DEMO_PASSWORD` is refused; `CORS_ORIGIN` must be a single origin (`*` is refused).
-* Audit log (`audit_log`, `GET /api/admin/audit`): sign-ins (success and failure), password changes, user changes,
-  application-level refusals, ledger failures and unknown outcomes, manual reconciliation. No secrets are stored.
+  `DEMO_PASSWORD` is refused; `CORS_ORIGIN` must be a single origin (`*` is refused). A real installation starts from
+  `npm run bootstrap` (reference data and one administrator, no demonstration accounts).
+* Audit log (`audit_log`, `GET /api/admin/audit`, filtered and paged): sign-ins (success and failure), sign-out,
+  password changes, user changes, application-level refusals, ledger failures and unknown outcomes, reconciliation,
+  consistency checks, checkpoint resets and the bootstrap. A row trigger (`audit_log_no_update`, migration 004)
+  refuses every UPDATE and DELETE. The table owner can still drop the trigger or TRUNCATE the table (the demonstration
+  seed's `--reset` does), so this guards against application errors, not against a database administrator. No secrets
+  are stored.
 * Structured JSON logs with a request id (`X-Request-Id`) and redaction of password, token, secret, key and
   authorization fields.
 * Fabric: the API signs with a CA-enrolled **client** identity per organization (not an admin). Private keys stay in
-  `fabric/identities/` (git-ignored); the CI secret scan fails on tracked keys, `.env` files or identity folders.
+  `fabric/identities/` (git-ignored, mode 600); the CI secret scan fails on tracked keys, `.env` files or identity
+  folders. A client identity, or one superseded certificate, can be revoked with `fabric/revoke-identity.sh`, which
+  puts the CRL into the organization's MSP definition on the channel (run in a drill with a disposable identity).
+* The single-server configuration (`deploy/`) publishes only the web server; PostgreSQL and the API stay on internal
+  Docker networks, the API container mounts only the peers' TLS CA certificates and its own identities, and Caddy
+  adds HTTPS, HSTS and a Content-Security-Policy. The full review is in [SECURITY_AUDIT.md](SECURITY_AUDIT.md).
 
 ## 9. Limitations
 
 * One application identity per organization, not one Fabric identity per dashboard user. The ledger shows which
   organization submitted a transaction; the API's audit log shows which user asked for it.
 * The Fabric network is the single-host test network (one peer per organization, one Raft orderer). It is not a
-  production deployment, and nothing has been deployed outside the developer machine or CI runner.
+  production deployment, and nothing has been deployed outside the developer machine.
 * A transaction id that the ledger never received is marked failed after `PENDING_EXPIRY_MS`. The API never re-sends a
   signed envelope, so it cannot commit later through this API.
 * The local development ledger is for development and tests only and is not Hyperledger Fabric.
 * No IoT, GPS or sensor data; a committed transaction records a permitted workflow step, not physical delivery.
-* Identity renewal is scripted and was run; revocation (a CRL in the channel's MSP definition) is documented in
-  [DEPLOYMENT.md](DEPLOYMENT.md) but was not executed.
+* Cancellation and return workflows (GP481 §6.6, item 5) are not implemented. A receipt of fewer items than were
+  dispatched is accepted and raises a Discrepancy alert, but the rest cannot be received later (the no-duplicate rule
+  allows one receipt per shipment). See [REMAINING_BLOCKERS.md](REMAINING_BLOCKERS.md).
 * Diagrams for components, sign-in, data flow, Fabric topology and the shipment lifecycle are in [DIAGRAMS.md](DIAGRAMS.md);
-  deployment, backup, rollback and troubleshooting in [DEPLOYMENT.md](DEPLOYMENT.md).
+  deployment, rollback and troubleshooting in [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md); backup, restore, revocation
+  and recovery in [BACKUP_AND_RECOVERY.md](BACKUP_AND_RECOVERY.md).

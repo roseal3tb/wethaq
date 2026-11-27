@@ -1,7 +1,7 @@
 # Wethaq GP482 — diagrams
 
 All diagrams are Mermaid (they render on GitHub) and describe the code in this repository. Four are in
-[ARCHITECTURE.md](ARCHITECTURE.md) next to the text they illustrate, one is in [DEPLOYMENT.md](DEPLOYMENT.md), and
+[ARCHITECTURE.md](ARCHITECTURE.md) next to the text they illustrate, one is in [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md), and
 the other five are below.
 
 | # | Diagram | Where |
@@ -10,7 +10,7 @@ the other five are below.
 | 2 | Ledger transaction sequence (request → endorsement → commit → PostgreSQL) | [ARCHITECTURE.md §4](ARCHITECTURE.md#4-transaction-outcomes) |
 | 3 | Ledger operation states (Case A/B/C, reconciliation) | [ARCHITECTURE.md §4](ARCHITECTURE.md#4-transaction-outcomes) |
 | 4 | PostgreSQL data model | [ARCHITECTURE.md §5](ARCHITECTURE.md#5-synchronization-between-fabric-and-postgresql) |
-| 5 | Deployment | [DEPLOYMENT.md §1](DEPLOYMENT.md#1-deployment-architecture) |
+| 5 | Deployment | [DEPLOYMENT_GUIDE.md §1](DEPLOYMENT_GUIDE.md#1-deployment-architecture) |
 | 6 | Backend components | [below](#6-backend-components) |
 | 7 | Sign-in and authorization | [below](#7-sign-in-and-authorization) |
 | 8 | Forecasting and inventory data flow | [below](#8-forecasting-and-inventory-data-flow) |
