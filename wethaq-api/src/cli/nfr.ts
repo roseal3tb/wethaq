@@ -169,9 +169,11 @@ async function main() {
   check('Integrity', 'Completed shipments match the ledger', `${completed.length}/${completed.length}`, `${matching}/${completed.length}`, completed.length > 0 && matching === completed.length);
   if (target) {
     const before = await call('GET', `/shipments/${target}/verify`, token.dispatcher);
-    await db.query('UPDATE shipments SET received_qty = received_qty + 5 WHERE shipment_id = $1', [target]);
+    // Lower the received quantity by one: since migration 004 the database itself refuses a received quantity
+    // above the dispatched one, so the simulated tampering stays within the table's constraints.
+    await db.query('UPDATE shipments SET received_qty = received_qty - 1 WHERE shipment_id = $1', [target]);
     const tampered = await call('GET', `/shipments/${target}/verify`, token.dispatcher);
-    await db.query('UPDATE shipments SET received_qty = received_qty - 5 WHERE shipment_id = $1', [target]);
+    await db.query('UPDATE shipments SET received_qty = received_qty + 1 WHERE shipment_id = $1', [target]);
     const restored = await call('GET', `/shipments/${target}/verify`, token.dispatcher);
     check('Integrity', 'A change made directly in PostgreSQL is detected', 'mismatch reported', tampered.body.match ? 'not detected' : `detected: ${tampered.body.differences?.join('; ')}`, before.body.match && !tampered.body.match && restored.body.match);
 

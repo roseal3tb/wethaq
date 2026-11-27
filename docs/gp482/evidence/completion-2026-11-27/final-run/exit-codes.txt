@@ -1,0 +1,17 @@
+root-check exit=0 start=20:42:37 end=20:42:42
+root-unit exit=0 start=20:42:42 end=20:42:43
+root-build exit=0 start=20:42:43 end=20:42:52
+lint exit=0 start=20:42:52 end=20:42:57
+chaincode-test exit=0 start=20:42:57 end=20:43:00
+api-check exit=0 start=20:43:00 end=20:43:03
+api-test exit=0 start=20:43:03 end=20:43:19
+analysis-manifest exit=0 start=20:43:20 end=20:43:20
+openapi-current exit=0 start=20:43:29 end=20:43:29
+e2e-demo exit=0 start=20:43:33 end=20:46:11
+e2e-live exit=0 start=20:46:11 end=20:46:52
+fabric-verify-network exit=0 start=20:47:06 end=20:47:07
+fabric-integration-attempt1 exit=1 start=20:47:07 end=20:47:08 (the API was not running yet: ECONNREFUSED 127.0.0.1:4000; run again below with the API started)
+e2e-fabric exit=0 start=20:47:08 end=20:47:38
+fabric-integration exit=0 start=20:47:50 end=20:47:54
+nfr-attempt1 exit=1 start=20:48:01 end=20:48:25 (stopped by the new CHECK constraint shipments_received_le_dispatched on the simulated tampering received_qty + 5; the sign-in rate limit also answered 429 because it ran right after the integration tests; see FINAL_TEST_REPORT.md)
+nfr exit=0 start=20:50:06 end=20:50:33
