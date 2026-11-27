@@ -1,6 +1,6 @@
 # Wethaq · Logistics Intelligence
 
-![Wethaq](public/brand/wathaq-olive-lockup-dark.svg)
+![Wethaq](public/brand/wethaq-logo-dark.png)
 
 **A React + TypeScript academic demonstration of military logistics planning, inventory recommendations, simulated supply movements, and permissioned-ledger-style transaction validation.**
 

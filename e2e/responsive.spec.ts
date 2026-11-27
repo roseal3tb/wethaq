@@ -99,7 +99,7 @@ for (const theme of ['Dark', 'Light'] as const) {
     await page.getByRole('button', { name: /About this prototype/i }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     const src = await page.locator('.about-logo-surface img').getAttribute('src');
-    expect(src).toContain(theme === 'Dark' ? '-light.svg' : '-dark.svg');
+    expect(src).toContain(theme === 'Dark' ? '-light.png' : '-dark.png');
     await page.screenshot({ path: info.outputPath(`${theme.toLowerCase()}-about.png`), fullPage: false });
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toBeHidden();

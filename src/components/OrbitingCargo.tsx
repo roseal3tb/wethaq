@@ -36,7 +36,7 @@ export function OrbitingCargo({ location = 'overview' }: { location?: 'overview'
 
       <div className="w-orbit-center-float">
         <div className="w-orbit-center-box">
-          <img src="/brand/wathaq-olive-icon-light.svg" alt="" draggable={false} />
+          <img src="/brand/wethaq-icon-light.png" alt="" draggable={false} />
         </div>
       </div>
     </div>
