@@ -6,10 +6,10 @@ on:
 permissions:
   contents: read
 env:
-  # Official Docker images from the Amazon ECR Public mirror of Docker Hub's library (the same images), so the
-  # checks do not depend on Docker Hub's anonymous pull limit. Set the repository variables to use another registry.
-  NODE_IMAGE: ${{ vars.WETHAQ_NODE_IMAGE || 'public.ecr.aws/docker/library/node:22-bookworm-slim' }}
-  CHAINCODE_NODE_IMAGE: ${{ vars.WETHAQ_CHAINCODE_NODE_IMAGE || 'public.ecr.aws/docker/library/node:20-bookworm-slim' }}
+  # Optional repository variables to use another registry for the base images first. Otherwise the docker job pulls
+  # the official images from Docker Hub, then from the Amazon ECR Public mirror of the same library images.
+  NODE_IMAGE: ${{ vars.WETHAQ_NODE_IMAGE }}
+  CHAINCODE_NODE_IMAGE: ${{ vars.WETHAQ_CHAINCODE_NODE_IMAGE }}
 jobs:
   validate:
     name: TypeScript, unit tests and production build
@@ -212,27 +212,24 @@ jobs:
           if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ]; then
             echo "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
           else
-            echo "No Docker Hub credentials configured: using $NODE_IMAGE"
+            echo "No Docker Hub credentials configured: anonymous pulls"
           fi
-      - name: Build the API image (up to 3 attempts, 30 s and 60 s apart, for registry errors)
+      - name: Pull the base images (official copies on Docker Hub, then the public.ecr.aws mirror; bounded attempts)
         run: |
-          for attempt in 1 2 3; do
-            docker build -f wethaq-api/Dockerfile --build-arg NODE_IMAGE="$NODE_IMAGE" -t wethaq-api:ci . && exit 0
-            [ "$attempt" -lt 3 ] && { echo "Build failed (attempt $attempt); retrying in $((attempt * 30)) s"; sleep $((attempt * 30)); }
-          done
-          exit 1
-      - name: Build the chaincode image (up to 3 attempts)
-        run: |
-          for attempt in 1 2 3; do
-            docker build --build-arg NODE_IMAGE="$CHAINCODE_NODE_IMAGE" -t wethaq_ccaas_image:ci chaincode/shipment && exit 0
-            [ "$attempt" -lt 3 ] && { echo "Build failed (attempt $attempt); retrying in $((attempt * 30)) s"; sleep $((attempt * 30)); }
-          done
-          exit 1
+          set -e
+          pick() { .github/scripts/pull-image.sh "$@"; }
+          echo "API_BASE=$(pick "$NODE_IMAGE" node:22-bookworm-slim public.ecr.aws/docker/library/node:22-bookworm-slim)" >> "$GITHUB_ENV"
+          echo "CC_BASE=$(pick "$CHAINCODE_NODE_IMAGE" node:20-bookworm-slim public.ecr.aws/docker/library/node:20-bookworm-slim)" >> "$GITHUB_ENV"
+          echo "PG_IMAGE=$(pick postgres:16-alpine public.ecr.aws/docker/library/postgres:16-alpine)" >> "$GITHUB_ENV"
+      - name: Build the API image from the pulled base image
+        run: docker build -f wethaq-api/Dockerfile --build-arg NODE_IMAGE="$API_BASE" -t wethaq-api:ci .
+      - name: Build the chaincode image from the pulled base image
+        run: docker build --build-arg NODE_IMAGE="$CC_BASE" -t wethaq_ccaas_image:ci chaincode/shipment
       - name: Start PostgreSQL and the API container, and check that it is ready
         run: |
           set -e
           docker network create wethaq-ci
-          docker run -d --name db --network wethaq-ci -e POSTGRES_USER=wethaq -e POSTGRES_PASSWORD=wethaq -e POSTGRES_DB=wethaq public.ecr.aws/docker/library/postgres:16-alpine
+          docker run -d --name db --network wethaq-ci -e POSTGRES_USER=wethaq -e POSTGRES_PASSWORD=wethaq -e POSTGRES_DB=wethaq "$PG_IMAGE"
           for i in $(seq 1 30); do docker exec db pg_isready -U wethaq && break; sleep 2; done
           docker run -d --name api --network wethaq-ci -p 127.0.0.1:4000:4000 \
             -e DATABASE_URL=postgres://wethaq:wethaq@db:5432/wethaq -e JWT_SECRET="$(openssl rand -hex 32)" -e NODE_ENV=production wethaq-api:ci

@@ -15,6 +15,10 @@ run the Fabric network was recreated (`./fabric/reset.sh --yes`, `./fabric/up.sh
   refused `SET transaction_timeout`.
 * The fix runs `pg_dump` and `pg_restore` inside the PostgreSQL 16 container. It was checked locally with the same
   container image. It has not yet run on GitHub.
+* Second run (pull request #14): the database job passed. The *Docker* job failed because public.ecr.aws answered
+  **429 Too Many Requests** to anonymous pulls of the Node.js base image.
+* The fix pulls each base image from Docker Hub first, then from the mirror, with bounded attempts. Not yet run on
+  GitHub.
 * The manual *Fabric integration* workflow has not been run.
 
 Everything else on this page ran locally.

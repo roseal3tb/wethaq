@@ -22,8 +22,6 @@ jobs:
       DATABASE_URL: postgres://wethaq:wethaq@127.0.0.1:5432/wethaq
       LEDGER_MODE: fabric
       DEMO_PASSWORD: ci-demo-password-1
-      # The chaincode image's Node.js base image comes from the ECR Public mirror of Docker Hub's library.
-      WETHAQ_NODE_IMAGE: public.ecr.aws/docker/library/node:20-bookworm-slim
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -51,6 +49,8 @@ jobs:
         run: |
           npm install --no-audit --no-fund
           (cd wethaq-api && npm ci --no-audit --no-fund)
+      - name: Pull the chaincode's base image (Docker Hub, then the public.ecr.aws mirror; bounded attempts)
+        run: echo "WETHAQ_NODE_IMAGE=$(.github/scripts/pull-image.sh node:20-bookworm-slim public.ecr.aws/docker/library/node:20-bookworm-slim)" >> "$GITHUB_ENV"
       - name: Install Fabric
         run: ./fabric/install.sh
       - name: Start the network (CA, channel, chaincode, identities) and verify it

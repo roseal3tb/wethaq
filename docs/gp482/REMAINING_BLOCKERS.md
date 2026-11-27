@@ -35,7 +35,7 @@ Because of the items below, the project is **not** 100% complete.
 | --- | --- | --- | --- |
 | B11 | Building the chaincode image on this machine | BLOCKED here | npm inside Docker builds cannot reach the registry in this sandbox. The image from earlier was used, and the chaincode source is unchanged since b92b950. It built on the owner's Mac before. CI builds it in the *docker* job |
 | B12 | This branch on macOS and WSL2 | IMPLEMENTED BUT NOT VERIFIED | every suite ran on Linux. The previous change set ran on the owner's Mac. WSL2 was never tested |
-| B13 | Docker Hub anonymous pull limits | handled | CI and `deploy/` can use the `public.ecr.aws/docker/library` mirror, and log in only when the repository has `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets. No retry loop tries to get around the limits |
+| B13 | Registry pull limits (Docker Hub and public.ecr.aws) | handled | the second GitHub run failed when public.ecr.aws answered 429 to anonymous pulls. CI now pulls each base image with `.github/scripts/pull-image.sh`: the official image on Docker Hub, then the same image on the public.ecr.aws mirror, at most two attempts each, and no further attempts at a registry that answered 429. It logs in to Docker Hub when the repository has `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets. Nothing tries to get around a limit |
 
 ## Accepted limitations (not planned for GP482)
 
