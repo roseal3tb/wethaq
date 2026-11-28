@@ -15,6 +15,10 @@
 ## CI
 * `actions/checkout` v7.0.1, `actions/setup-node` v7.1.0, `actions/upload-artifact` v7.0.2 (Node 24), pinned by
   commit SHA in every workflow.
+* PostgreSQL in the *migrations* job and in `fabric.yml` is no longer a service container fixed to
+  public.ecr.aws (the first run of this branch failed there with "Data limit exceeded"). A step starts it with
+  `pull-image.sh`: Docker Hub, then public.ecr.aws, then mirror.gcr.io. Every base-image pull also falls back to
+  mirror.gcr.io, and "Data limit exceeded" counts as a rate limit.
 * New manual workflow `oracle-arm64-readiness.yml` (*Oracle Cloud ARM64 Readiness*, `ubuntu-24.04-arm`) and
   `.github/scripts/timed.sh`.
 

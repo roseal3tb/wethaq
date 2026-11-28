@@ -94,15 +94,6 @@ jobs:
   migrations:
     name: Database · migrations on PostgreSQL 16, seed, dump and restore
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: public.ecr.aws/docker/library/postgres:16-alpine
-        env:
-          POSTGRES_USER: wethaq
-          POSTGRES_PASSWORD: wethaq
-          POSTGRES_DB: wethaq
-        ports: ["5432:5432"]
-        options: --health-cmd "pg_isready -U wethaq" --health-interval 2s --health-retries 30
     env:
       DATABASE_URL: postgres://wethaq:wethaq@127.0.0.1:5432/wethaq
       PGPASSWORD: wethaq
@@ -113,6 +104,14 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Start PostgreSQL 16 (Docker Hub, then the public.ecr.aws and mirror.gcr.io copies; bounded attempts)
+        run: |
+          set -e
+          PG_IMAGE=$(.github/scripts/pull-image.sh postgres:16-alpine public.ecr.aws/docker/library/postgres:16-alpine mirror.gcr.io/library/postgres:16-alpine)
+          docker run -d --name wethaq-pg -p 127.0.0.1:5432:5432 \
+            -e POSTGRES_USER=wethaq -e POSTGRES_PASSWORD=wethaq -e POSTGRES_DB=wethaq "$PG_IMAGE"
+          for i in $(seq 1 60); do docker exec wethaq-pg pg_isready -U wethaq -q && break; sleep 1; done
+          docker exec wethaq-pg pg_isready -U wethaq
       - name: Set up Node.js with the npm cache
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -149,7 +148,7 @@ jobs:
         # pg_dump and pg_restore run inside the PostgreSQL 16 container, so their version matches the server's
         # (the runner's own client is newer and writes settings, such as transaction_timeout, that 16 refuses).
         env:
-          PG_CONTAINER: ${{ job.services.postgres.id }}
+          PG_CONTAINER: wethaq-pg
         run: |
           set -e
           docker exec "$PG_CONTAINER" pg_dump -U wethaq --format=custom --no-owner wethaq > wethaq.dump
@@ -214,13 +213,13 @@ jobs:
           else
             echo "No Docker Hub credentials configured: anonymous pulls"
           fi
-      - name: Pull the base images (official copies on Docker Hub, then the public.ecr.aws mirror; bounded attempts)
+      - name: Pull the base images (official copies on Docker Hub, then the public.ecr.aws and mirror.gcr.io copies; bounded attempts)
         run: |
           set -e
           pick() { .github/scripts/pull-image.sh "$@"; }
-          echo "API_BASE=$(pick "$NODE_IMAGE" node:22-bookworm-slim public.ecr.aws/docker/library/node:22-bookworm-slim)" >> "$GITHUB_ENV"
-          echo "CC_BASE=$(pick "$CHAINCODE_NODE_IMAGE" node:20-bookworm-slim public.ecr.aws/docker/library/node:20-bookworm-slim)" >> "$GITHUB_ENV"
-          echo "PG_IMAGE=$(pick postgres:16-alpine public.ecr.aws/docker/library/postgres:16-alpine)" >> "$GITHUB_ENV"
+          echo "API_BASE=$(pick "$NODE_IMAGE" node:22-bookworm-slim public.ecr.aws/docker/library/node:22-bookworm-slim mirror.gcr.io/library/node:22-bookworm-slim)" >> "$GITHUB_ENV"
+          echo "CC_BASE=$(pick "$CHAINCODE_NODE_IMAGE" node:20-bookworm-slim public.ecr.aws/docker/library/node:20-bookworm-slim mirror.gcr.io/library/node:20-bookworm-slim)" >> "$GITHUB_ENV"
+          echo "PG_IMAGE=$(pick postgres:16-alpine public.ecr.aws/docker/library/postgres:16-alpine mirror.gcr.io/library/postgres:16-alpine)" >> "$GITHUB_ENV"
       - name: Build the API image from the pulled base image
         run: docker build -f wethaq-api/Dockerfile --build-arg NODE_IMAGE="$API_BASE" -t wethaq-api:ci .
       - name: Build the chaincode image from the pulled base image

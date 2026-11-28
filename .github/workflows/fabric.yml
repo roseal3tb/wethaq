@@ -9,15 +9,6 @@ jobs:
   fabric:
     runs-on: ubuntu-latest
     timeout-minutes: 40
-    services:
-      postgres:
-        image: public.ecr.aws/docker/library/postgres:16-alpine
-        env:
-          POSTGRES_USER: wethaq
-          POSTGRES_PASSWORD: wethaq
-          POSTGRES_DB: wethaq
-        ports: ["5432:5432"]
-        options: --health-cmd "pg_isready -U wethaq" --health-interval 2s --health-retries 30
     env:
       DATABASE_URL: postgres://wethaq:wethaq@127.0.0.1:5432/wethaq
       LEDGER_MODE: fabric
@@ -27,6 +18,14 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Start PostgreSQL 16 (Docker Hub, then the public.ecr.aws and mirror.gcr.io copies; bounded attempts)
+        run: |
+          set -e
+          PG_IMAGE=$(.github/scripts/pull-image.sh postgres:16-alpine public.ecr.aws/docker/library/postgres:16-alpine mirror.gcr.io/library/postgres:16-alpine)
+          docker run -d --name wethaq-pg -p 127.0.0.1:5432:5432 \
+            -e POSTGRES_USER=wethaq -e POSTGRES_PASSWORD=wethaq -e POSTGRES_DB=wethaq "$PG_IMAGE"
+          for i in $(seq 1 60); do docker exec wethaq-pg pg_isready -U wethaq -q && break; sleep 1; done
+          docker exec wethaq-pg pg_isready -U wethaq
       - name: Sign in to Docker Hub when credentials are configured (the Fabric images come from Docker Hub)
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -49,8 +48,8 @@ jobs:
         run: |
           npm install --no-audit --no-fund
           (cd wethaq-api && npm ci --no-audit --no-fund)
-      - name: Pull the chaincode's base image (Docker Hub, then the public.ecr.aws mirror; bounded attempts)
-        run: echo "WETHAQ_NODE_IMAGE=$(.github/scripts/pull-image.sh node:20-bookworm-slim public.ecr.aws/docker/library/node:20-bookworm-slim)" >> "$GITHUB_ENV"
+      - name: Pull the chaincode's base image (Docker Hub, then the public.ecr.aws and mirror.gcr.io copies; bounded attempts)
+        run: echo "WETHAQ_NODE_IMAGE=$(.github/scripts/pull-image.sh node:20-bookworm-slim public.ecr.aws/docker/library/node:20-bookworm-slim mirror.gcr.io/library/node:20-bookworm-slim)" >> "$GITHUB_ENV"
       - name: Install Fabric
         run: ./fabric/install.sh
       - name: Start the network (CA, channel, chaincode, identities) and verify it
@@ -83,6 +82,8 @@ jobs:
             wethaq-api/api.log
             wethaq-api/nfr-results/
           retention-days: 7
-      - name: Stop the network
+      - name: Stop the network and PostgreSQL
         if: always()
-        run: ./fabric/reset.sh --yes
+        run: |
+          ./fabric/reset.sh --yes
+          docker rm -f wethaq-pg >/dev/null 2>&1 || true
