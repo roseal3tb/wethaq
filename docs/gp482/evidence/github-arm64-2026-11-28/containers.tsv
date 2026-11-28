@@ -1,0 +1,9 @@
+peer0org2_wethaq_ccaas	wethaq_ccaas_image:latest	linux/arm64
+peer0org1_wethaq_ccaas	wethaq_ccaas_image:latest	linux/arm64
+peer0.org2.example.com	hyperledger/fabric-peer:latest	linux/arm64
+orderer.example.com	hyperledger/fabric-orderer:latest	linux/arm64
+peer0.org1.example.com	hyperledger/fabric-peer:latest	linux/arm64
+ca_orderer	hyperledger/fabric-ca:latest	linux/arm64
+ca_org2	hyperledger/fabric-ca:latest	linux/arm64
+ca_org1	hyperledger/fabric-ca:latest	linux/arm64
+wethaq-pg	postgres:16-alpine	linux/arm64

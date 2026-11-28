@@ -1,0 +1,72 @@
+## Containers (docker stats, one sample)
+NAME                     CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O
+peer0org2_wethaq_ccaas   0.00%     29.14MiB / 15.57GiB   0.18%     510kB / 518kB     0B / 0B
+peer0org1_wethaq_ccaas   0.00%     30.01MiB / 15.57GiB   0.19%     707kB / 605kB     0B / 0B
+peer0.org2.example.com   0.63%     72.29MiB / 15.57GiB   0.45%     2.93MB / 1.91MB   0B / 3.56MB
+orderer.example.com      0.02%     30MiB / 15.57GiB      0.19%     1.48MB / 3.06MB   0B / 3.75MB
+peer0.org1.example.com   0.61%     82.3MiB / 15.57GiB    0.52%     4.78MB / 3.8MB    0B / 3.56MB
+ca_orderer               0.00%     10.08MiB / 15.57GiB   0.06%     52.3kB / 84.6kB   0B / 1.05MB
+ca_org2                  0.00%     10.03MiB / 15.57GiB   0.06%     36.1kB / 54.3kB   0B / 819kB
+ca_org1                  0.00%     9.902MiB / 15.57GiB   0.06%     38.6kB / 60.1kB   0B / 819kB
+wethaq-pg                0.01%     56.12MiB / 15.57GiB   0.35%     1.17MB / 2.1MB    65.5kB / 63.7MB
+
+## API process (Node.js, Fabric mode)
+    PID   RSS    VSZ %CPU     ELAPSED COMMAND
+   7663 48976 822628  0.0       01:39 node /home/runner/work/wethaq/wethaq/wethaq-api/node_modules/.bin/tsx src/server.ts
+   7674 135740 22457144 3.3     01:39 /opt/hostedtoolcache/node/22.23.5/arm64/bin/node --require /home/runner/work/wethaq/wethaq/wethaq-api/node_modules/tsx/dist/preflight.cjs --import file:///home/runner/work/wethaq/wethaq/wethaq-api/node_modules/tsx/dist/loader.mjs src/server.ts
+
+## Memory (MB)
+               total        used        free      shared  buff/cache   available
+Mem:           15941        1662       10005          71        4600       14278
+Swap:           3071           0        3071
+
+## Disk
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/root       145G   42G  103G  29% /
+
+## Docker disk use
+TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+Images          17        5         4.37GB    3.808GB (87%)
+Containers      9         9         59B       0B (0%)
+Local Volumes   8         8         183.5MB   0B (0%)
+Build Cache     37        0         107.4MB   107.4MB
+
+## Images (size)
+REPOSITORY:TAG                                      SIZE
+busybox:latest                                      4.17MB
+ghcr.io/dependabot/dependabot-updater-core:latest   846MB
+ghcr.io/github/gh-aw-firewall/agent:latest          1.07GB
+ghcr.io/github/gh-aw-firewall/api-proxy:latest      379MB
+ghcr.io/github/gh-aw-firewall/squid:latest          67.8MB
+ghcr.io/github/gh-aw-mcpg:latest                    186MB
+ghcr.io/github/github-mcp-server:latest             59.4MB
+ghcr.io/hyperledger/fabric-baseos:2.5.12            129MB
+ghcr.io/hyperledger/fabric-ca:1.5.15                208MB
+ghcr.io/hyperledger/fabric-ccenv:2.5.12             644MB
+ghcr.io/hyperledger/fabric-orderer:2.5.12           107MB
+ghcr.io/hyperledger/fabric-peer:2.5.12              144MB
+hyperledger/fabric-baseos:2.5                       129MB
+hyperledger/fabric-baseos:2.5.12                    129MB
+hyperledger/fabric-baseos:latest                    129MB
+hyperledger/fabric-ca:1.5                           208MB
+hyperledger/fabric-ca:1.5.15                        208MB
+hyperledger/fabric-ca:latest                        208MB
+hyperledger/fabric-ccenv:2.5                        644MB
+hyperledger/fabric-ccenv:2.5.12                     644MB
+hyperledger/fabric-ccenv:latest                     644MB
+hyperledger/fabric-orderer:2.5                      107MB
+hyperledger/fabric-orderer:2.5.12                   107MB
+hyperledger/fabric-orderer:latest                   107MB
+hyperledger/fabric-peer:2.5                         144MB
+hyperledger/fabric-peer:2.5.12                      144MB
+hyperledger/fabric-peer:latest                      144MB
+node:20-bookworm-slim                               222MB
+node:22-bookworm-slim                               247MB
+postgres:16-alpine                                  288MB
+wethaq-api:arm64                                    287MB
+wethaq_ccaas_image:latest                           244MB
+
+## Load average
+0.84 0.61 0.30 4/731 7879
+NAME               CPU %     MEM USAGE / LIMIT
+wethaq-api-image   0.07%     105.2MiB / 15.57GiB

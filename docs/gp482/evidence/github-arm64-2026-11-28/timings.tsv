@@ -1,0 +1,12 @@
+npm install (dashboard)	4.8	0
+npm ci (API)	10.5	0
+PostgreSQL ready	2.1	0
+build API image (linux/arm64)	3.8	0
+install Fabric 2.5.12 / CA 1.5.15	27.2	0
+start Fabric network (fabric/up.sh, includes chaincode image build and verify-network)	48.2	0
+migrate and seed through the ledger	7.6	0
+API ready (Fabric mode)	1.0	0
+Fabric integration tests	3.5	0
+non-functional checks	27.0	0
+Fabric browser test (Playwright, Chromium arm64)	31.0	0
+API image ready (migrations included)	2.0	0

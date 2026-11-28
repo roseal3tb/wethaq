@@ -19,7 +19,7 @@ PARTIALLY COMPLETE, BLOCKED, DEFERRED TO GP2, NOT APPLICABLE.
 | Fabric 2.5.12 and Fabric CA 1.5.15 publish `linux-arm64` binaries, and the installer selects them on `aarch64` | COMPLETE AND VERIFIED | §4.2 |
 | No hard-coded `amd64`/`x86_64` in the project's scripts, Dockerfiles or compose files | COMPLETE AND VERIFIED | §4.3: search of `fabric/*.sh`, `deploy/`, both Dockerfiles, `.github/` |
 | npm dependencies need no native build on arm64 | COMPLETE AND VERIFIED | §4.4: lockfile audit |
-| Native arm64 run: build images, start Fabric, PostgreSQL and the API, integration and NFR checks, resource figures | IMPLEMENTED BUT NOT VERIFIED | `.github/workflows/oracle-arm64-readiness.yml` exists; it has not run yet. Results go in `docs/gp482/evidence/arm64-readiness-<date>/` once it has |
+| Native arm64 run: build images, start Fabric, PostgreSQL and the API, integration and NFR checks, resource figures | COMPLETE AND VERIFIED on a GitHub-hosted arm64 runner (2026-11-28) | [evidence/github-arm64-2026-11-28/](evidence/github-arm64-2026-11-28/README.md): every step passed, NFR 31 of 31, all containers `linux/arm64`, no emulation |
 | Proposed server size (VM.Standard.A1.Flex, 2 OCPU, 12 GB, Ubuntu 24.04 aarch64) fits Always Free | COMPLETE AND VERIFIED against the official documentation | §3 |
 | Oracle account, instance, network, DNS, TLS certificate, backups on OCI | DEFERRED TO GP2 | §7, §8 |
 
@@ -155,6 +155,9 @@ The arm64 figures will come from the workflow.
 | API (tsx and Node, Fabric mode) | about 130 MB resident |
 | API production image (local ledger, after migrations) | about 139 MB |
 
+On the **native arm64 runner** (2026-11-28, one sample after the tests): peers 72 and 82 MiB, orderer 30 MiB,
+CAs about 10 MiB each, chaincode containers about 30 MiB each, PostgreSQL 56 MiB, API about 136 MB resident.
+
 That is well under 1 GB of the 12 GB planned, so memory is not the constraint. Disk is the larger item: the
 Fabric images alone take several GB (`fabric-ccenv` about 1 GB, `fabric-tools` about 0.9 GB, chaincode image
 about 0.7 GB in this environment), which is why §3 plans a 50 to 100 GB boot volume.
@@ -174,7 +177,11 @@ binds every port to `127.0.0.1`.
 
 To run it: GitHub → Actions → "Oracle Cloud ARM64 Readiness" → Run workflow (on the branch that contains it).
 Then download the artifact and add it under `docs/gp482/evidence/arm64-readiness-<date>/` with the run URL.
-Until then the native arm64 run stays IMPLEMENTED BUT NOT VERIFIED.
+**First run, 2026-11-28:** <https://github.com/roseal3tb/wethaq/actions/runs/46166121729> on `main` (`c9c445b`),
+Arm Neoverse-N2, 4 vCPU, 16 GB. Every step passed: native image builds, Fabric network with both peers and the
+chaincode on arm64, Fabric integration tests, NFR 31 of 31, the Fabric browser test, and the production API image.
+The whole stack used well under 1 GB of memory. Evidence:
+[evidence/github-arm64-2026-11-28/](evidence/github-arm64-2026-11-28/README.md).
 
 The runner is 4 vCPU and 16 GB; the planned server is 2 OCPU and 12 GB (an OCPU on Ampere A1 is one core). The
 run shows that WETHAQ works on arm64 and how much memory it uses. It does not prove the timings of the smaller

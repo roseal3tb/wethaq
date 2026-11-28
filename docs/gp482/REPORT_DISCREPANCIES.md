@@ -86,8 +86,8 @@ These statements would be wrong, given the evidence above:
   demonstration without a backend (Demo Mode, not connected to any blockchain network). The single-server
   configuration was only checked locally. Actual cloud deployment is intentionally deferred until GP2; WETHAQ has
   not been deployed to Oracle Cloud during GP1.
-* "Runs on Oracle Cloud" or "verified on ARM64". Only a static arm64 audit was done; the native arm64 workflow has
-  not run yet. A GitHub-hosted test run is a test, not a deployment.
+* "Runs on Oracle Cloud" or "deployed on ARM64". WETHAQ passed its tests natively on a GitHub-hosted arm64 runner
+  (2026-11-28); that is a test, not a deployment, and nothing ran on an Oracle server.
 * Any user acceptance testing or expert evaluation results. None were collected in GP1.
 * "Real-time forecasting". The forecasts are precomputed results of the offline analysis.
 * "All CI passes" without qualification. The pull-request checks pass on GitHub. The manual Fabric workflow ran

@@ -1,3 +1,9 @@
+# Change log — first native arm64 run (branch `gp1-arm64-evidence`)
+
+* `evidence/github-arm64-2026-11-28/`: the artifact of the first *Oracle Cloud ARM64 Readiness* run (every step
+  passed, NFR 31 of 31). Native arm64, B14 and the NFR fix (B1, F15) are now COMPLETE AND VERIFIED; status updated in
+  the completion and test reports, blockers, traceability, readiness, deployment guide and discrepancies.
+
 # Change log — GP1 submission readiness (branch `gp1-final-readiness`, from `main` at `17e9113`)
 
 ## Evidence

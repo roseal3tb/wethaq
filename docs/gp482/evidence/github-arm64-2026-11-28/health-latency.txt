@@ -1,0 +1,2 @@
+/api/health/live: n=20 mean=0.0008 p50=0.0008 p95=0.0010 max=0.0013 s
+/api/health/ready: n=20 mean=0.0079 p50=0.0079 p95=0.0082 max=0.0085 s

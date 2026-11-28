@@ -1,0 +1,39 @@
+date (UTC): 2026-11-28T16:37:17Z
+workflow run: https://github.com/roseal3tb/wethaq/actions/runs/46166121729 (attempt 1)
+commit: c9c445b5474d8da00f5ac75e8d3d0e81b1cc840c  ref: main
+runner: GitHub Actions 1000000354  os: Linux  arch: ARM64  image: ubuntu24-arm64 20261122.193.1
+uname -m: aarch64
+uname -a: Linux runnervmu7lcj 7.0.0-1020-azure #21~24.04.2-Ubuntu SMP PREEMPT Tue Nov 10 01:19:17 UTC 2026 aarch64 aarch64 aarch64 GNU/Linux
+
+PRETTY_NAME="Ubuntu 24.04.5 LTS"
+VERSION_ID="24.04"
+
+Architecture:                            aarch64
+CPU(s):                                  4
+Vendor ID:                               ARM
+Model name:                              Neoverse-N2
+Thread(s) per core:                      1
+Core(s) per socket:                      4
+Socket(s):                               1
+nproc: 4
+
+               total        used        free      shared  buff/cache   available
+Mem:           15941        1128       13815          42        1270       14812
+Swap:           3071           0        3071
+
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/root       145G   39G  106G  27% /
+/dev/root       145G   39G  106G  27% /
+
+docker client 28.0.4 (arm64), server 28.0.4 (arm64)
+docker info: aarch64 linux Ubuntu 24.04.5 LTS
+docker compose: 2.38.2
+
+binfmt_misc handlers registered:
+llvm-16-runtime.binfmt
+llvm-17-runtime.binfmt
+llvm-18-runtime.binfmt
+python3.12
+register
+status
+node v22.23.5 arm64, npm 10.9.9

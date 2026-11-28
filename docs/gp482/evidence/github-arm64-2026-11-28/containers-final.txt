@@ -1,0 +1,11 @@
+NAMES                    IMAGE                               STATUS
+wethaq-api-image         wethaq-api:arm64                    Up 3 seconds (health: starting)
+peer0org2_wethaq_ccaas   wethaq_ccaas_image:latest           Up 2 minutes
+peer0org1_wethaq_ccaas   wethaq_ccaas_image:latest           Up 2 minutes
+peer0.org2.example.com   hyperledger/fabric-peer:latest      Up 3 minutes
+orderer.example.com      hyperledger/fabric-orderer:latest   Up 3 minutes
+peer0.org1.example.com   hyperledger/fabric-peer:latest      Up 3 minutes
+ca_orderer               hyperledger/fabric-ca:latest        Up 3 minutes
+ca_org2                  hyperledger/fabric-ca:latest        Up 3 minutes
+ca_org1                  hyperledger/fabric-ca:latest        Up 3 minutes
+wethaq-pg                postgres:16-alpine                  Up 4 minutes

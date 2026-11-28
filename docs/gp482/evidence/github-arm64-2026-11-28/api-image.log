@@ -1,0 +1,5 @@
+Applied: 001_init.sql, 002_password_policy.sql, 003_ledger_sync.sql, 004_integrity.sql, 005_sessions.sql
+Wethaq API listening on http://127.0.0.1:4000/api (ledger: local)
+Note: the local development ledger is in use; records are not written to Hyperledger Fabric.
+{"time":"2026-11-28T16:42:16.410Z","level":"info","event":"http","requestId":"b98ca09b-3056-4f86-a806-6bb78bbddc33","method":"GET","path":"/health/ready","status":200,"ms":5}
+{"time":"2026-11-28T16:42:16.421Z","level":"info","event":"http","requestId":"5a52a221-1227-4fa9-b8e9-7d070d9be577","method":"GET","path":"/state","status":401,"ms":1}
