@@ -99,21 +99,19 @@ These statements would be wrong, given the evidence above:
 * "Security-certified", "penetration-tested" or "WCAG-compliant".
 * "Per-user blockchain signatures". The ledger is signed per organization.
 
-## 7. Phase names (to confirm with the supervisor)
+## 7. Phase names (confirmed: GP1 and GP2)
 
 The GP481 report calls the phases **GP481** (Release 1, Semester 1) and **GP482** (Release 2, Semester 2), and lists
 the backend, the Fabric network, cancellation and returns, and user evaluation as GP482 work (§6.6). This
 repository and the closure brief call the current submission **"GP1"** and defer items to **"GP2"**, while the
-documents sit in `docs/gp482/`. No university requirements document was provided to settle it.
+documents sit in `docs/gp482/`.
 
-* **Reading A.** "GP1" is a milestone inside GP482 (or the course is organized differently from the report), and
-  "GP2" is still to come. The deferrals in REMAINING_BLOCKERS.md stand, with the supervisor's agreement.
-* **Reading B.** "GP1" is the final GP482 submission. Then §6.6 items 5 (cancellation, return, partial receipt)
-  and 7 (evaluation with users) are planned items that were not done. The report should say so plainly and give the
-  reason, rather than call them deferred.
+On 28 November 2026 the project owner confirmed that the phases are named **GP1** (this submission) and **GP2**
+(the next phase), and that no other names are needed. The deferrals in REMAINING_BLOCKERS.md are therefore GP2 work.
+The report file name and the `docs/gp482/` folder keep their existing names.
 
-Suggested wording for either reading: "The GP481 report planned cancellation, return and partial-receipt workflows
-and an evaluation with representative users for GP482. They were not carried out in this phase. A short receipt is
+Suggested wording: "The GP481 report planned cancellation, return and partial-receipt workflows
+and an evaluation with representative users for GP482. They were not carried out in GP1 and are planned for GP2. A short receipt is
 recorded and raises a discrepancy alert, and the evaluation materials are prepared but have not been used."
 
 ## 8. Updates from the GP1 closure (2026-11-28)

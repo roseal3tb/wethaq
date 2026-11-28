@@ -1,5 +1,10 @@
 # Change log — GP1 closure (branch `gp1-closure`, from `main` at `3347560`)
 
+## Phase names
+* The project owner confirmed that the phases are named GP1 (this submission) and GP2 (the next phase). The sign-off,
+  remaining blockers, report discrepancies and academic-requirements check no longer make the conclusion conditional
+  on that question; the "reading B" notes on B5 and B9 were removed. File and folder names are unchanged.
+
 ## Fixes
 * `fabric/install.sh`: no longer downloads and runs `install-fabric.sh` from the `main` branch of hyperledger/fabric.
   fabric-samples is checked out at a fixed commit, each release archive must match a recorded SHA-256 before it is
