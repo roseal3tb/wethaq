@@ -8,11 +8,8 @@ project is **not** complete in every respect, and no completion percentage is gi
 Status labels: COMPLETE AND VERIFIED, IMPLEMENTED BUT NOT VERIFIED, PARTIALLY COMPLETE, BLOCKED, DEFERRED TO GP2,
 NOT APPLICABLE.
 
-**Phase names.** "GP1" and "GP2" are the names used by the closure brief. The GP481 report calls the phases GP481
-(Release 1, Semester 1) and GP482 (Release 2, Semester 2), and lists some of the items below as GP482 work. Every
-"DEFERRED TO GP2" below assumes that GP2 is still to come, and says what changes if this submission is the final
-GP482 one. See [evidence/gp1-closure-2026-11-28/academic-requirements-verification.md](evidence/gp1-closure-2026-11-28/academic-requirements-verification.md) §1.
-The project owner must confirm this with the supervisor.
+**Phase names (confirmed).** On 28 November 2026 the project owner confirmed that the phases are named **GP1** (this submission) and **GP2** (the next phase), and that no other names are needed. Every "DEFERRED TO GP2" below is work for
+the next phase. See [evidence/gp1-closure-2026-11-28/academic-requirements-verification.md](evidence/gp1-closure-2026-11-28/academic-requirements-verification.md) §1.
 
 ## 1. Summary
 
@@ -22,7 +19,7 @@ The project owner must confirm this with the supervisor.
 | B2 | Hosted deployment on Oracle Cloud | DEFERRED TO GP2 |
 | B3 | Revoking the superseded live `wethaq-app` certificate | IMPLEMENTED BUT NOT VERIFIED on a live identity |
 | B4 | Merge of `gp1-final-readiness` | COMPLETE AND VERIFIED |
-| B5 | Cancellation, return and multi-step partial receipt | DEFERRED TO GP2 (see the note for reading B) |
+| B5 | Cancellation, return and multi-step partial receipt | DEFERRED TO GP2 |
 | B6 | Importing a real parts catalogue and inventory | NOT APPLICABLE in GP1 |
 | B7 | Splitting the 951 KB dashboard bundle | DEFERRED TO GP2 |
 | B8 | Accessibility (NFR2) | NFR2 criteria COMPLETE AND VERIFIED; colour contrast PARTIALLY COMPLETE (documented risk) |
@@ -71,8 +68,7 @@ The project owner must confirm this with the supervisor.
 
 * **Reason.** It needs new chaincode functions and rules, a chaincode upgrade endorsed by both organizations, and new
   dashboard actions. That is a high-risk change to the agreed lifecycle right before submission.
-* **Academic justification.** GP481 §6.6 lists it as future work (item 5). **Under reading B** (this is the final
-  GP482 submission), it is a planned item that was not done and must be reported as such, not as deferred.
+* **Academic justification.** GP481 §6.6 lists it as future work (item 5).
 * **Current status.** PARTIALLY COMPLETE in behaviour: a short receipt is accepted, recorded on the ledger and raises
   a Discrepancy alert. No cancellation, no return, no second receipt for the rest.
 * **Required work.** States `Cancelled` and `Returned`; transitions and rules (who may cancel, up to which state;
@@ -98,8 +94,7 @@ The project owner must confirm this with the supervisor.
 * **Reason.** It needs participants, their consent, and a plan agreed with the supervisor. No results may be
   invented.
 * **Academic justification.** GP481 §5.8: the plan "will be agreed with the supervisor before it is run, and its
-  results will be reported in the next release". **Under reading B**, §6.6 item 7 is a planned item that was not
-  done and must be reported as such.
+  results will be reported in the next release".
 * **Current status.** Materials prepared, not executed:
   [UAT_AND_EXPERT_EVALUATION_KIT.md](UAT_AND_EXPERT_EVALUATION_KIT.md) (tasks T1 to T10, SUS questionnaire, expert
   checklist, blank result sheets).

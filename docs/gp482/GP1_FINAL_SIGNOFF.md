@@ -3,10 +3,9 @@
 Date: 28 November 2026. Branch `gp1-closure`, from `main` at `3347560`. Prepared for the project owner. This is a
 technical sign-off by the development work, not a university approval.
 
-**Conclusion: READY WITH DOCUMENTED LIMITATIONS**, on one condition: the supervisor confirms the phase names (§3).
-The GitHub workflows have run on this branch and passed (§5, §8). If the supervisor says this is the
-final GP482 submission, the conclusion still holds, but cancellation and returns (B5) and the user evaluation (B9)
-must be reported as planned items that were not done, not as deferred ones.
+**Conclusion: READY WITH DOCUMENTED LIMITATIONS.** The GitHub workflows have run on this branch and passed (§5, §8).
+The phases are GP1 (this submission) and GP2 (the next phase), as confirmed by the project owner (§3), so the items
+marked DEFERRED TO GP2 are work for the next phase.
 
 Actual cloud deployment is intentionally deferred until GP2. WETHAQ has not been deployed to Oracle Cloud during GP1.
 
@@ -31,11 +30,12 @@ changed. Nothing was deployed, bought or activated.
 
 No university requirements document, rubric or course specification was provided. The only reference used is the
 GP481 report. It calls the phases GP481 (Release 1, Semester 1) and GP482 (Release 2, Semester 2), and lists the
-backend, Fabric, cancellation and returns, and user evaluation as GP482 work. This repository calls the current
-submission "GP1" and defers items to "GP2". The two readings and their consequences are set out in
+backend, Fabric, cancellation and returns, and user evaluation as GP482 work. On 28 November 2026 the project
+owner confirmed that the phases are named **GP1** (this submission) and **GP2** (the next phase), and that no other
+names are needed. Items deferred in [REMAINING_BLOCKERS.md](REMAINING_BLOCKERS.md) are therefore GP2 work. See
 [evidence/gp1-closure-2026-11-28/academic-requirements-verification.md](evidence/gp1-closure-2026-11-28/academic-requirements-verification.md) §1
-and [REPORT_DISCREPANCIES.md](REPORT_DISCREPANCIES.md) §7. **The project owner must confirm which reading
-applies.**
+and [REPORT_DISCREPANCIES.md](REPORT_DISCREPANCIES.md) §7. The report file name and the `docs/gp482/` folder
+keep their existing names.
 
 ## 4. What this closure did
 
@@ -182,8 +182,7 @@ unit tests, `npm ci` and tests in `wethaq-api`, and chaincode tests. The results
 
 ## 18. What the project owner must do
 
-1. Done: `gp1-closure` pushed, pull request #19 opened, and the three manual runs passed on it.
-2. Push the last documentation commit (it records those runs), check that the pull-request checks pass again, then
-   merge pull request #19.
-3. Ask the supervisor which reading of the phase names applies (§3), and whether the UAT kit can be used.
+1. Done: `gp1-closure` pushed, the three manual runs passed on it, and pull requests #19 and #20 merged into `main`.
+2. Done: phase names confirmed as GP1 and GP2 (§3).
+3. Ask the supervisor whether the UAT kit can be used in GP2.
 4. Optional, with explicit approval only: revoke the superseded live `wethaq-app` certificate (B3).

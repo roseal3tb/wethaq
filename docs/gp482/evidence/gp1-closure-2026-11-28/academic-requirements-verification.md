@@ -2,7 +2,7 @@
 
 Checked on 28 November 2026 against `Wethaq GP481 Report v2.docx`, which was read and not changed. **No university requirements document, marking rubric or course specification for GP481, GP482, "GP1" or "GP2" was provided.** This check therefore uses only the project's own report. It does not say what the university requires.
 
-## 1. Phase names: a question the project owner must answer
+## 1. Phase names
 
 The GP481 report uses these names:
 
@@ -11,14 +11,14 @@ The GP481 report uses these names:
 
 The repository uses other names. The closure brief and the repository documents call this submission **"GP1"** and defer items to **"GP2"**. However, the documents sit in `docs/gp482/`, and they implement §6.6 items 1 to 4 and 6, which the report places in GP482.
 
-There are two readings, and they lead to different conclusions:
+**Confirmed on 28 November 2026:** the project owner confirmed that the phases are named **GP1** (this submission) and **GP2** (the next phase), and that no other names are needed. Reading A below applies, so the items labelled "DEFERRED TO GP2" in `REMAINING_BLOCKERS.md` are GP2 work. The table is kept as a record of the question that was asked.
 
 | If… | Then the deferred items… |
 |---|---|
 | **A.** "GP1" is a milestone inside GP482, or the course was split differently from the report, and "GP2" comes later | can be deferred as this document does, provided the supervisor agrees |
 | **B.** "GP1" means the final GP482 submission | B5 (cancellation, returns, partial receipt: §6.6 item 5) and B9 (evaluation with users: §6.6 item 7, §5.8) are **commitments the GP481 report made for GP482 that are not done**. They cannot just be relabelled "deferred". They must be reported as not done, with the reason |
 
-This document does not pick one. **The project owner should confirm with the supervisor which reading applies.** The labels "DEFERRED TO GP2" in `REMAINING_BLOCKERS.md` assume reading A, and each one says what changes under reading B.
+Reading A was confirmed (see above).
 
 ## 2. Functional requirements (Table 4.4)
 
