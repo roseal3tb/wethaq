@@ -27,14 +27,27 @@ cd "$NET"
 # early when 10 transactions are waiting). This changes only the local test network's channel configuration.
 sed -i.bak 's/^\( *BatchTimeout:\).*/\1 500ms/' configtx/configtx.yaml && rm -f configtx/configtx.yaml.bak
 # The chaincode containers are started outside docker compose, so network.sh down does not always remove them.
+# Optional: WETHAQ_PHASE_TIMINGS=<file> appends "up.sh: <phase><TAB><seconds><TAB>0" per phase (the arm64 workflow uses it).
+phase_start=$(date +%s)
+phase_done() {
+  [ -n "${WETHAQ_PHASE_TIMINGS:-}" ] || return 0
+  local now; now=$(date +%s)
+  printf 'up.sh: %s\t%s\t0\n' "$1" "$((now - phase_start))" >> "$WETHAQ_PHASE_TIMINGS"
+  phase_start=$now
+}
 docker rm -f $CCAAS_CONTAINERS >/dev/null 2>&1 || true
 ./network.sh down
 rm -rf "$IDENTITIES"
+phase_done "remove any previous network"
 # -ca: the organizations' identities are issued by Fabric CA servers (not cryptogen).
 ./network.sh up createChannel -ca -c "$CHANNEL"
+phase_done "CAs, orderer, peers and channel"
 "$FABRIC_DIR/deploy-chaincode.sh"
+phase_done "chaincode build, install, approve, commit"
 "$FABRIC_DIR/enroll-identities.sh"
+phase_done "application identities"
 "$FABRIC_DIR/verify-network.sh"
+phase_done "verify-network"
 echo
 echo "Fabric network is running with the $CC_NAME chaincode."
 echo "Next, in wethaq-api (LEDGER_MODE=fabric in .env): npm run seed -- --reset && npm run dev"
