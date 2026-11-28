@@ -40,8 +40,16 @@ workflow runs again on GitHub, the NFR result on GitHub stays 30 of 31.
 [evidence/gp1-final-2026-11-27/accessibility/](evidence/gp1-final-2026-11-27/accessibility/README.md). This does not
 establish WCAG conformance.
 
-**Not run in GP1:** the native arm64 workflow (`oracle-arm64-readiness.yml`, needs GitHub's Arm runner), any cloud
-deployment (deferred to GP2), user acceptance testing and expert evaluation (no results exist).
+**Native arm64 on GitHub (2026-11-28).** *Oracle Cloud ARM64 Readiness*, run
+<https://github.com/roseal3tb/wethaq/actions/runs/46166121729> on `main` (`c9c445b`), Arm Neoverse-N2, 4 vCPU,
+16 GB, no emulation. Every step passed: native image builds, Fabric network (every container `linux/arm64`),
+Fabric integration tests, **NFR 31 of 31** (the first GitHub NFR run after the fix), the Fabric browser test in
+Chromium arm64, and the production API image. Evidence:
+[evidence/github-arm64-2026-11-28/](evidence/github-arm64-2026-11-28/README.md). This is a test on a GitHub-hosted
+runner, not a deployment.
+
+**Not run in GP1:** any cloud deployment (deferred to GP2), user acceptance testing and expert evaluation (no
+results exist). A second x64 run of `fabric.yml` after the fix was not supplied.
 
 ## Earlier GP482 run
 

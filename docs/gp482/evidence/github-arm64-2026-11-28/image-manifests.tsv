@@ -1,0 +1,10 @@
+fabric-peer 2.5.12	hyperledger/fabric-peer:2.5.12	sha256:18f7503cfc82f062708f93199d372e3f63b6a1b8ce168f20f387d2ce87aaf2eb	yes	linux/amd64 linux/arm64 
+fabric-orderer 2.5.12	hyperledger/fabric-orderer:2.5.12	sha256:d33a2714b6628d38a46b2e054d558e002cf2ee991828189741b3417c54e1ac0c	yes	linux/amd64 linux/arm64 
+fabric-ccenv 2.5.12	hyperledger/fabric-ccenv:2.5.12	sha256:14c6cca8d85535d4eb08de66be025d20e953e7deff34e1c90c3e4f4cae7d497f	yes	linux/amd64 linux/arm64 
+fabric-baseos 2.5.12	hyperledger/fabric-baseos:2.5.12	sha256:9133efd86ef1ad7e7f7f8e9795d0e23287aab4caf6b1d7500cccfde9870940fd	yes	linux/amd64 linux/arm64 
+fabric-tools 2.5.12	hyperledger/fabric-tools:2.5.12	sha256:c802f0bae7998bfac4371c02b1cb794216b746931f127ba6dfe3d336ba5e0238	yes	linux/amd64 linux/arm64 
+fabric-ca 1.5.15	hyperledger/fabric-ca:1.5.15	sha256:1b64dc702bd400e14c8f452dedc0359b7dc06679b751b08937eb2bf2865fed40	yes	linux/amd64 linux/arm64 
+node 22 (API)	node:22-bookworm-slim	sha256:be979e5523c76fa4d5ca4ebd3099078f220aa47ec39c48ad5b5df9314debd6eb	yes	linux/amd64 linux/arm/v7 linux/arm64/v8 linux/ppc64le 
+node 20 (chaincode)	node:20-bookworm-slim	sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0	yes	linux/amd64 linux/arm/v7 linux/arm64/v8 linux/ppc64le linux/s390x 
+postgres 16	postgres:16-alpine	sha256:f2f98726820d0342055351c6e9d36e705f5bfffb3dd53ff556325114b08afb6d	yes	linux/386 linux/amd64 linux/arm/v6 linux/arm/v7 linux/arm64/v8 linux/ppc64le linux/riscv64 linux/s390x 
+caddy 2 (web server)	caddy:2	sha256:4851e54a46b206517c574821bb5cc67f170d2156041e9fbc4c9193b45e84a75b	yes	linux/amd64 linux/arm/v6 linux/arm/v7 linux/arm64/v8 linux/ppc64le linux/riscv64 linux/s390x windows/amd64 

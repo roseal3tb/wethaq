@@ -1,0 +1,2 @@
+fabric/fabric-samples/bin/peer:             ELF 64-bit LSB executable, ARM aarch64, version 1 (SYSV), statically linked, Go BuildID=zK38tM6CZnmTnJf7zIfK/Big9_omFNQwrcu77NFNS/WC1AUKKmYCoHFXGSK6uu/X-n3yN8mmOHrLtUy__Ra, with debug_info, not stripped
+fabric/fabric-samples/bin/fabric-ca-client: ELF 64-bit LSB executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, Go BuildID=uNEuUrx8i7lj2bnKTj8-/hSxdIC3zMCqXkEo4lYll/ujfVm7ioBZB1Je2mxy7b/TWDO-N3f-Ap-uv1Y3Q7W, with debug_info, not stripped

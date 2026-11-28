@@ -231,7 +231,7 @@ Base images can be pulled from a mirror when Docker Hub limits anonymous pulls: 
 | --- | --- |
 | Linux x64 (Ubuntu 24.04 container, Docker 29.9, Node 22.23) | every suite in [FINAL_TEST_REPORT.md](FINAL_TEST_REPORT.md) was run here |
 | Linux x64, GitHub-hosted runner (`ubuntu-latest`) | the manual Fabric workflow ran on 2026-11-27: 7 of 7 integration tests (FINAL_TEST_REPORT.md) |
-| Linux arm64 (Ampere A1, GitHub `ubuntu-24.04-arm`) | static audit done; the native workflow `oracle-arm64-readiness.yml` exists but has not run yet (ORACLE_CLOUD_READINESS.md §6) |
+| Linux arm64 (GitHub `ubuntu-24.04-arm`, Arm Neoverse-N2) | the native workflow `oracle-arm64-readiness.yml` passed on 2026-11-28: Fabric, PostgreSQL, API, integration, NFR 31 of 31, browser test (ORACLE_CLOUD_READINESS.md §6). Not yet run on an Oracle Ampere A1 server (GP2) |
 | macOS (Docker Desktop) | the first change set (`a53f392`) was run on the project owner's Mac: API tests, Fabric integration, NFR and `verify-network.sh`. The later changes have not been run on macOS |
 | Windows with WSL2 | not tested. The scripts are bash and expect a Linux file system: clone the repository inside the WSL2 distribution (not under `/mnt/c`), and use Docker Desktop's WSL2 integration |
 
