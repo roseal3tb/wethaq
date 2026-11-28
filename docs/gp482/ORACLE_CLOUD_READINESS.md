@@ -17,12 +17,12 @@ PARTIALLY COMPLETE, BLOCKED, DEFERRED TO GP2, NOT APPLICABLE.
 | --- | --- | --- |
 | Every container image used publishes `linux/arm64` (Fabric 2.5.12, Fabric CA 1.5.15, Node 22 and 20, PostgreSQL 16, Caddy 2) | COMPLETE AND VERIFIED | §4.1: manifest lists read from the registries on 2026-11-27 |
 | Fabric 2.5.12 and Fabric CA 1.5.15 publish `linux-arm64` binaries, and the installer selects them on `aarch64` | COMPLETE AND VERIFIED | §4.2 |
-| Installer pinned: fabric-samples commit, SHA-256 of every release archive, image digests | COMPLETE AND VERIFIED on x86_64 (2026-11-28); on GitHub arm64 IMPLEMENTED BUT NOT VERIFIED | §4.2; [fabric-install/](evidence/gp1-closure-2026-11-28/fabric-install/README.md) |
+| Installer pinned: fabric-samples commit, SHA-256 of every release archive, image digests | COMPLETE AND VERIFIED locally and on GitHub x64 and arm64 (2026-11-28) | §4.2; [fabric-install/](evidence/gp1-closure-2026-11-28/fabric-install/README.md) |
 | No hard-coded `amd64`/`x86_64` in the project's scripts, Dockerfiles or compose files | COMPLETE AND VERIFIED | §4.3: search of `fabric/*.sh`, `deploy/`, both Dockerfiles, `.github/` |
 | npm dependencies need no native build on arm64 | COMPLETE AND VERIFIED | §4.4: lockfile audit |
 | Native arm64 run: build images, start Fabric, PostgreSQL and the API, integration and NFR checks, resource figures | COMPLETE AND VERIFIED on a GitHub-hosted arm64 runner (2026-11-28) | [evidence/github-arm64-2026-11-28/](evidence/github-arm64-2026-11-28/README.md): every step passed, NFR 31 of 31, all containers `linux/arm64`, no emulation |
 | Proposed server size (VM.Standard.A1.Flex, 2 OCPU, 12 GB, Ubuntu 24.04 aarch64) fits Always Free | COMPLETE AND VERIFIED against the official documentation (re-read 2026-11-28) | §3 |
-| Peak memory and CPU by phase, storage growth, and a run limited to 2 CPU / 12 GB | IMPLEMENTED BUT NOT VERIFIED: the workflow can measure them, but has not run yet | §5, §6 |
+| Peak memory and CPU by phase, storage growth, and a run limited to 2 CPU / 12 GB | COMPLETE AND VERIFIED on a GitHub arm64 runner, not on Oracle hardware (runs 46174686728 and 46174759675) | §5, §6 |
 | Oracle account, instance, network, DNS, TLS certificate, backups on OCI | DEFERRED TO GP2 | §7, §8 |
 
 Compatibility of single dependencies is not taken as proof that WETHAQ runs on arm64: upstream Fabric states
@@ -180,7 +180,8 @@ sequential workflow runs, and the 68.7 tx/s figure is a burst of 20 concurrent c
 sustained rate. Most of the 0.5 s per write is the orderer's 500 ms `BatchTimeout`. The full explanation is in
 [arm64-measurement-context.md](evidence/gp1-closure-2026-11-28/arm64-measurement-context.md).
 
-At rest, that is well under 1 GB of the 12 GB planned. Peak use under load has not been measured yet (§6). Disk is the larger item: the
+At rest, that is well under 1 GB of the 12 GB planned. Peaks under load, with and without a 2 CPU / 12 GB limit,
+are in §6. Disk is the larger item: the
 Fabric images alone take several GB (`fabric-ccenv` about 1 GB, `fabric-tools` about 0.9 GB, chaincode image
 about 0.7 GB in this environment), which is why §3 plans a 50 to 100 GB boot volume.
 
@@ -209,7 +210,7 @@ The runner is 4 vCPU and 16 GB; the planned server is 2 OCPU and 12 GB (an OCPU 
 run shows that WETHAQ works on arm64 and how much memory it uses at rest. It does not prove the timings of the
 smaller server.
 
-**Peak and limited runs (added in the GP1 closure, not run yet).** The workflow now samples every container, the
+**Peak and limited runs (added in the GP1 closure).** The workflow now samples every container, the
 API, the host and (when limited) the cgroup every 2 seconds, marks the phases (startup, 30 s idle, NFR checks, an
 extra load step of 30 workflow runs and 50 concurrent requests), and writes `resources-summary.md` (median and peak
 per phase), `storage.txt` (PostgreSQL and ledger sizes) and `timings.tsv` (network start phases). Its
@@ -218,6 +219,14 @@ swap, and checks that the limit is in place before it starts. To run it: Actions
 → Run workflow → branch `gp1-closure` → once with `a1_limits` unticked, once ticked. This is still a GitHub
 runner (Neoverse-N2), not an Oracle A1 instance (Ampere Altra): it shows whether WETHAQ fits in 2 CPUs and 12 GB,
 not the exact timings on Oracle.
+
+**Results, 28 November 2026** ([github-runs.md](evidence/gp1-closure-2026-11-28/github-runs.md)). Run 46174686728
+(no limit) and run 46174759675 (2 CPUs, 12 GB, no swap) both passed every check, including the extra load step.
+Under the limit, Docker and the API together peaked at about 531 MiB (file cache included) and 58 % of one core;
+containers peaked at about 327 MiB in total and the API at about 201 MiB. Single writes stayed at about 0.53 s;
+the 50-request burst took 0.69 s (72.8 tx/s) against 0.54 s (93.2 tx/s) without the limit. After the runs, the
+orderer ledger was 125 MiB, each peer ledger 4 MiB and PostgreSQL 49 to 65 MiB. So 12 GB leaves a wide margin for
+memory; CPU is the resource the limit affects. Oracle timings still need a measurement on the instance in GP2.
 
 ## 7. Future GP2 deployment guide (not performed)
 
@@ -276,8 +285,8 @@ Placeholders: `<HOME_REGION>`, `<COMPARTMENT>`, `<VCN_NAME>`, `<SERVER_PUBLIC_IP
 | Off-instance backups to Object Storage and a restore drill on the server | DEFERRED TO GP2 |
 | Monitoring and alerting on the server | DEFERRED TO GP2 |
 | Chaincode runtime from Node.js 20 (EOL) to Node.js 22 | DEFERRED TO GP2 |
-| Pinning the Fabric installer and the image digests | COMPLETE AND VERIFIED on x86_64 in the GP1 closure (§4.2); confirm on GitHub arm64 |
-| Peak and 2 CPU / 12 GB measurements on the arm64 runner | IMPLEMENTED BUT NOT VERIFIED (§6) |
+| Pinning the Fabric installer and the image digests | COMPLETE AND VERIFIED in the GP1 closure, locally and on GitHub x64 and arm64 (§4.2) |
+| Peak and 2 CPU / 12 GB measurements on the arm64 runner | COMPLETE AND VERIFIED on GitHub (§6); measure again on the Oracle instance in GP2 |
 | Production identity management (CA administrator credentials off the server, revocation procedures on real identities) | DEFERRED TO GP2 |
 
 ## Sources (read 2026-11-27; the Oracle pages and nodejs.org re-read 2026-11-28)

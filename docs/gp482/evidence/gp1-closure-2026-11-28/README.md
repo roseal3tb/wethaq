@@ -17,5 +17,6 @@ Security findings changed in this closure (F13 verified, F15 verified on x64, F1
 [../../SECURITY_AUDIT.md](../../SECURITY_AUDIT.md). The overall sign-off is
 [../../GP1_FINAL_SIGNOFF.md](../../GP1_FINAL_SIGNOFF.md).
 
-**Still to be run by the project owner** (needs the branch on GitHub): `fabric.yml` and
-`oracle-arm64-readiness.yml` on `gp1-closure`, the second one twice (with and without `a1_limits`).
+**Runs on the branch itself** (28 November 2026, commit 03666f0): `fabric.yml` run 46174623807 and
+`oracle-arm64-readiness.yml` runs 46174686728 (no limit) and 46174759675 (2 CPU / 12 GB) all passed; see
+[github-runs.md](github-runs.md).

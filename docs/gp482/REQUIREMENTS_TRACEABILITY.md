@@ -45,7 +45,7 @@ integration (7 passed); *NFR* = 31 of 31 on Fabric (locally and on GitHub x64 an
 | NFR4 CSV without formulas | `src/utils` export | COMPLETE AND VERIFIED | dashboard unit tests; demo e2e | passed | — |
 | NFR5 passwords and tokens protected, server authorization | `auth.ts`, `config.ts`, `app.ts`, migration 005 | COMPLETE AND VERIFIED | NFR (17 security checks); sessions tests; SECURITY_AUDIT.md | passed | open findings F5 to F13 |
 | NFR6 accepted record cannot be changed | Fabric ledger; chaincode `noDuplicate`; verification | COMPLETE AND VERIFIED | NFR integrity checks (5) | passed | — |
-| NFR7 performance | measured by `wethaq-api/src/cli/nfr.ts` (target 2,000 ms set by the script; the report gives no number) | COMPLETE AND VERIFIED on the test machines | NFR performance checks | closure regression: 540 ms slowest average write, 84 ms p95 reads, 20/20 in 0.21 s; GitHub x64: 536 ms, 127 ms, 0.31 s | not a capacity test; peaks under a 2 CPU / 12 GB limit not yet run (B18) |
+| NFR7 performance | measured by `wethaq-api/src/cli/nfr.ts` (target 2,000 ms set by the script; the report gives no number) | COMPLETE AND VERIFIED on the test machines | NFR performance checks | closure regression: 540 ms slowest average write, 84 ms p95 reads, 20/20 in 0.21 s; GitHub x64: 536 ms, 127 ms, 0.31 s | not a capacity test. Also passed on GitHub arm64 limited to 2 CPUs and 12 GB, with 50 concurrent requests (B18) |
 
 ## 3. GP482 completion areas
 

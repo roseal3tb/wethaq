@@ -30,8 +30,10 @@ PostgreSQL 16), 17:42 to 17:53 UTC. Every output is in
 
 **On GitHub.** `fabric.yml` run 46169704428 on `main` (3347560), 28 Nov 2026, x64: 7 of 7, NFR 31 of 31, Fabric
 browser test passed, 4 m 42 s. The pull-request checks of #17 and #18 were read on GitHub and passed
-([github-runs.md](evidence/gp1-closure-2026-11-28/github-runs.md)). `fabric.yml` and the arm64 workflow have
-**not yet run on `gp1-closure`**.
+([github-runs.md](evidence/gp1-closure-2026-11-28/github-runs.md)). On `gp1-closure` itself (commit 03666f0):
+`fabric.yml` run 46174623807 passed (7 of 7, NFR 31 of 31, images from ghcr.io by digest), and the arm64 workflow
+passed twice, once limited to 2 CPUs and 12 GB (runs 46174686728 and 46174759675; NFR 31 of 31 and the extra load
+step 31 of 31 in both).
 
 **Also checked:** a clean install with the pinned installer and a wrong-hash test
 ([fabric-install/](evidence/gp1-closure-2026-11-28/fabric-install/README.md)); `up.sh` refusing to replace an

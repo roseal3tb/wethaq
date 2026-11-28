@@ -34,8 +34,8 @@ The project owner must confirm this with the supervisor.
 | B14 | Native arm64 run | COMPLETE AND VERIFIED (GitHub-hosted runner) |
 | B15 | GitHub Actions on the Node 24 runtime, PR checks | COMPLETE AND VERIFIED |
 | B16 | Chaincode runtime on Node.js 20 (end of life) | DEFERRED TO GP2 |
-| B17 | Fabric installer pinned and checksum-verified | COMPLETE AND VERIFIED on x86_64; GitHub runs on this branch IMPLEMENTED BUT NOT VERIFIED |
-| B18 | Peak memory and CPU under a 2 CPU / 12 GB limit | IMPLEMENTED BUT NOT VERIFIED |
+| B17 | Fabric installer pinned and checksum-verified | COMPLETE AND VERIFIED (local x86_64, GitHub x64 and arm64) |
+| B18 | Peak memory and CPU under a 2 CPU / 12 GB limit | COMPLETE AND VERIFIED on a GitHub arm64 runner (not Oracle hardware) |
 | B19 | Accidental replacement of an existing network | COMPLETE AND VERIFIED |
 
 ## 2. Closed or verified in this closure
@@ -48,6 +48,8 @@ The project owner must confirm this with the supervisor.
 | B14 | run 46166121729: every step passed, NFR 31 of 31, every container `linux/arm64`, no emulation | [evidence/github-arm64-2026-11-28/](evidence/github-arm64-2026-11-28/README.md) |
 | B15 | quality checks #30 and #31 and browser QA #26 and #27 read on GitHub: all passed, no Node 20 deprecation annotation. This concerns the actions' runtime only, not the API (Node 22) or the chaincode (Node 20) | [github-runs.md](evidence/gp1-closure-2026-11-28/github-runs.md) |
 | B17 | `fabric/install.sh` no longer runs the unpinned upstream helper. fabric-samples is pinned to a commit, the 8 release archives to SHA-256s, the 6 images to digests. A clean install, a second run and a wrong-hash test were run | [fabric-install/](evidence/gp1-closure-2026-11-28/fabric-install/README.md) |
+| B17 | `fabric.yml` run 46174623807 on `gp1-closure`: pinned samples, both archives verified, images from ghcr.io by digest, 7 of 7, NFR 31 of 31. arm64 runs 46174686728 and 46174759675: installer and every check passed | [github-runs.md](evidence/gp1-closure-2026-11-28/github-runs.md) |
+| B18 | arm64 run 46174759675 with Docker and the API limited to 2 CPUs and 12 GB (no swap): every check passed, including 30 workflow runs and 50 concurrent requests; WETHAQ peaked at about 531 MiB and 58 % of one core. A GitHub runner, not Oracle hardware | [github-runs.md](evidence/gp1-closure-2026-11-28/github-runs.md) |
 | B19 | `fabric/up.sh` refuses to replace an existing network unless the user types `recreate` or passes `--recreate`. `fabric/down.sh` now asks first (it calls `reset.sh`). Routine restarts use `start.sh` and `stop.sh`, which keep the ledger | regression `persistence.txt`; DEPLOYMENT_GUIDE.md §4 |
 
 ## 3. Deferred items, with what GP2 must do
@@ -61,7 +63,7 @@ The project owner must confirm this with the supervisor.
 * **Current status.** Target checked against Oracle's documentation on 28 Nov 2026 (VM.Standard.A1.Flex, 2 OCPU,
   12 GB, Always Free). Native arm64 run passed. Single-server configuration checked locally.
 * **Required work.** ORACLE_CLOUD_READINESS.md §7, steps 1 to 25.
-* **Dependencies.** Supervisor approval; an Oracle account in the right home region; a domain; B18 (resource run).
+* **Dependencies.** Supervisor approval; an Oracle account in the right home region; a domain. (The resource run, B18, is done.)
 * **Acceptance criteria.** Smoke checks pass over HTTPS on the server; `fabric.yml`-equivalent checks pass there;
   only ports 22 (admin range), 80 and 443 open; off-instance backup and one restore drill done; evidence recorded.
 
@@ -132,8 +134,6 @@ The project owner must confirm this with the supervisor.
 | B10 | Independent security review or penetration test | BLOCKED | needs a reviewer outside the team. The team's own review is in SECURITY_AUDIT.md |
 | B11 | Building the chaincode image in this sandbox | BLOCKED here only | npm inside Docker builds cannot reach the registry here. CI and the arm64 workflow build it |
 | B12 | This branch on macOS and WSL 2 | IMPLEMENTED BUT NOT VERIFIED | everything ran on Linux. `install.sh` handles darwin-amd64 and darwin-arm64 with their own hashes, but was not run on a Mac in this closure |
-| B17 | The new installer on GitHub (x64 and arm64) | IMPLEMENTED BUT NOT VERIFIED | the owner runs `fabric.yml` and `oracle-arm64-readiness.yml` on `gp1-closure` after pushing it |
-| B18 | Peak memory and CPU, and a run limited to 2 CPU / 12 GB | IMPLEMENTED BUT NOT VERIFIED | the owner runs `oracle-arm64-readiness.yml` twice on `gp1-closure`, once with `a1_limits` ticked ([arm64-measurement-context.md](evidence/gp1-closure-2026-11-28/arm64-measurement-context.md)). Still a GitHub runner, not Oracle hardware |
 
 ## 5. Accepted limitations (not planned)
 

@@ -24,8 +24,8 @@ jobs:
           PG_IMAGE=$(.github/scripts/pull-image.sh postgres:16-alpine public.ecr.aws/docker/library/postgres:16-alpine mirror.gcr.io/library/postgres:16-alpine)
           docker run -d --name wethaq-pg -p 127.0.0.1:5432:5432 \
             -e POSTGRES_USER=wethaq -e POSTGRES_PASSWORD=wethaq -e POSTGRES_DB=wethaq "$PG_IMAGE"
-          for i in $(seq 1 60); do docker exec wethaq-pg pg_isready -U wethaq -q && break; sleep 1; done
-          docker exec wethaq-pg pg_isready -U wethaq
+          for i in $(seq 1 60); do docker exec wethaq-pg pg_isready -h 127.0.0.1 -U wethaq -q && break; sleep 1; done
+          docker exec wethaq-pg pg_isready -h 127.0.0.1 -U wethaq
       - name: Sign in to Docker Hub when credentials are configured (base images; Fabric images come from ghcr.io first, Docker Hub second)
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}

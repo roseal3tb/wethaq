@@ -42,4 +42,43 @@ NFR figures from the step log:
 
 The earlier run, Fabric integration #1 (run 46073086507, 3 m 53 s), passed 7/7 and 30 of 31 NFR checks. The one failure was fixed before PR #17. Run #2 is the first run on `main` with all 31 checks passing.
 
-**Not yet run:** this workflow has not run on the `gp1-closure` branch. The installer change in that branch (5439dc4) was tested locally on x86_64 (see `fabric-install/`). The project owner needs to run `fabric.yml` and `oracle-arm64-readiness.yml` on the branch after pushing it.
+## Runs on branch `gp1-closure` (commit 03666f0), 28 November 2026
+
+The project owner pushed the branch and opened pull request #19. At her request, Claude started the three manual runs from her signed-in browser at about 18:13 UTC, and read the results from the run pages at about 18:30 UTC.
+
+| Workflow | Run # | Run ID | Result | Duration | What the page shows |
+|---|---|---|---|---|---|
+| Wethaq quality checks | 32 | (PR #19) | success | 48 s | pull-request checks |
+| Responsive browser QA | 28 | (PR #19) | success | 2 m 50 s | pull-request checks |
+| Fabric integration (manual), x64 | 3 | 46174623807 (job 141070429255) | success | 4 m 52 s | see below |
+| Oracle Cloud ARM64 Readiness, no limit | 2 | 46174686728 | success | 8 m 3 s (job 7 m 58 s) | see below |
+| Oracle Cloud ARM64 Readiness, `a1_limits` ticked | 3 | 46174759675 | success | 15 m 2 s including the wait for #2 (job 7 m 45 s) | see below |
+
+**Fabric #3 (x64).** The pinned installer's step log shows fabric-samples cloned at `5789681b4f4d`, both linux-amd64 archives "SHA-256 verified" with the pinned hashes, and all six images pulled from `ghcr.io/hyperledger` by digest. That tests the ghcr.io path, which was blocked on the local test machine. Fabric integration tests 7 of 7. NFR "31 of 31 checks passed" (slowest average write 541 ms, slowest p95 read 120 ms, 20 of 20 concurrent requests in 0.32 s, 10 of 10 workflows, second receipt refused at block 71). The Fabric browser test step passed. Artifact `wethaq-fabric-run`, 8.41 KB, sha256:21dcaa804b177bcec79e5fb1212e9ae5b4c39475b13edbb99f2303c713b885a4.
+
+**arm64 #2 and #3.** Both ran on `ubuntu24-arm64` (Neoverse-N2, 4 vCPU, 15,941 MiB). In both, the installer step and the network start passed, all running containers were `linux/arm64`, Fabric integration was 7 of 7, NFR was 31 of 31, the extra load step (30 runs, 50 concurrent) was also 31 of 31, and the Fabric browser test and the production API image passed. In #3, the job summary confirms the limit was in place before anything started: `CPUQuotaPerSecUSec=2s`, `MemoryMax=12884901888`, `MemorySwapMax=0`, `cpu.max` "200000 100000", and the Docker containers and the API inside `wethaq.slice`.
+
+Resource figures (from each run's `resources-summary.md`, sampled every 2 s; MiB unless marked):
+
+| Figure | #2, no limit | #3, 2 CPU / 12 GB |
+|---|---|---|
+| Containers' memory, sum: median / peak over the run | 287.1 / 337.6 | 281.1 / 326.5 |
+| API resident memory: median / peak | 184.3 / 203.9 | 182.4 / 201.1 |
+| Containers' CPU, sum: peak (100 % = one core) | 177.3 % (startup) | 61.0 % (startup) |
+| Limited group (Docker + API): memory peak | — | 530.7 (includes the kernel's file cache for the group) |
+| Limited group: CPU median / peak (200 % = the limit) | — | 1.4 % / 58.2 % |
+| Host memory used, peak (whole runner, includes GitHub's own services) | 1,852 | 1,805 |
+| Peak per container | peers 77.9 and 70.8, PostgreSQL 59.4, chaincode 45.8 and 45.5, orderer 29.0, CAs about 10 | peers 72.3 and 68.9, PostgreSQL 60.5, chaincode 45.8 and 45.3, orderer 29.9, CAs about 10 |
+
+| Timings and throughput | #2, no limit | #3, 2 CPU / 12 GB |
+|---|---|---|
+| Install Fabric / start network | 33.0 s / 48.1 s | 30.9 s / 47.3 s |
+| NFR: slowest average write, slowest p95 read | 537 ms, 88 ms | 538 ms, 86 ms |
+| 20 concurrent requests | 20/20 in 0.29 s (68.8 tx/s) | 20/20 in 0.36 s (55.3 tx/s) |
+| Extra load: 30 runs, slowest average write | 534 ms | 533 ms |
+| Extra load: 50 concurrent requests | 50/50 in 0.54 s (93.2 tx/s) | 50/50 in 0.69 s (72.8 tx/s) |
+| Storage after the runs: PostgreSQL data / orderer ledger / each peer ledger | 49 / 125 / 4 | 65 / 125 / 4 |
+
+Artifacts: #2 `wethaq-arm64-readiness`, 38.4 KB, sha256:99a00c5eaf8063a9029f6869763ca28b26d39111bc6eefc96c2ce99d9226b36b. #3 `wethaq-arm64-readiness`, 39.4 KB, sha256:5bb2d9388f904cdca777ab6217ca8c2fe8d2cec1241314ea7a8ec7b511021a06. The artifacts themselves were not downloaded into this repository; the figures above are copied from the run summaries.
+
+**What this shows.** Under a hard limit of 2 CPUs and 12 GB with no swap, every check passed, the whole of WETHAQ (Fabric, chaincode, PostgreSQL and the API) peaked at about 531 MiB of memory and about 58 % of one core, and the burst figures were lower than without the limit (55 to 73 tx/s instead of 69 to 93), with single writes unchanged at about 0.53 s because they wait for the orderer's 500 ms batch timeout. **What it does not show:** this is still a GitHub runner (Neoverse-N2), not an Oracle Ampere A1 instance (Neoverse-N1), with different disks and network. The load was at most 50 concurrent requests. It does not predict Oracle timings or capacity for real use.
