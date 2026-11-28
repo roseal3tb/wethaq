@@ -172,6 +172,10 @@ they are re-created (with new keys) when the network is reset. They are not comm
 
 ## 9. One server (prepared configuration, not deployed)
 
+Actual cloud deployment is intentionally deferred until GP2. WETHAQ has not been deployed to Oracle Cloud during
+GP1. The planned server (Oracle Cloud Always Free, Ampere A1 `VM.Standard.A1.Flex`, 2 OCPU, 12 GB, Ubuntu 24.04
+aarch64), the arm64 audit and a step-by-step GP2 guide are in [ORACLE_CLOUD_READINESS.md](ORACLE_CLOUD_READINESS.md).
+
 `deploy/compose.yml` runs PostgreSQL, the API in Fabric mode and a Caddy web server on one Linux machine, next to
 the Fabric test network started by `./fabric/up.sh` on the same machine. Caddy serves the live-mode dashboard,
 forwards `/api` to the API (server-sent events pass through unbuffered), obtains a certificate automatically for a
@@ -226,6 +230,8 @@ Base images can be pulled from a mirror when Docker Hub limits anonymous pulls: 
 | Environment | Status |
 | --- | --- |
 | Linux x64 (Ubuntu 24.04 container, Docker 29.9, Node 22.23) | every suite in [FINAL_TEST_REPORT.md](FINAL_TEST_REPORT.md) was run here |
+| Linux x64, GitHub-hosted runner (`ubuntu-latest`) | the manual Fabric workflow ran on 2026-11-27: 7 of 7 integration tests (FINAL_TEST_REPORT.md) |
+| Linux arm64 (Ampere A1, GitHub `ubuntu-24.04-arm`) | static audit done; the native workflow `oracle-arm64-readiness.yml` exists but has not run yet (ORACLE_CLOUD_READINESS.md §6) |
 | macOS (Docker Desktop) | the first change set (`a53f392`) was run on the project owner's Mac: API tests, Fabric integration, NFR and `verify-network.sh`. The later changes have not been run on macOS |
 | Windows with WSL2 | not tested. The scripts are bash and expect a Linux file system: clone the repository inside the WSL2 distribution (not under `/mnt/c`), and use Docker Desktop's WSL2 integration |
 

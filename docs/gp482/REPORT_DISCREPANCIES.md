@@ -83,8 +83,15 @@ the wording. Statuses use the labels of [REQUIREMENTS_TRACEABILITY.md](REQUIREME
 These statements would be wrong, given the evidence above:
 
 * "Deployed", "in production" or "production-ready". Nothing was deployed to a server. The Vercel site is the
-  demonstration without a backend. The single-server configuration was only checked locally.
+  demonstration without a backend (Demo Mode, not connected to any blockchain network). The single-server
+  configuration was only checked locally. Actual cloud deployment is intentionally deferred until GP2; WETHAQ has
+  not been deployed to Oracle Cloud during GP1.
+* "Runs on Oracle Cloud" or "verified on ARM64". Only a static arm64 audit was done; the native arm64 workflow has
+  not run yet. A GitHub-hosted test run is a test, not a deployment.
+* Any user acceptance testing or expert evaluation results. None were collected in GP1.
 * "Real-time forecasting". The forecasts are precomputed results of the offline analysis.
-* "All CI passes" without qualification. The pull-request checks pass on GitHub, but the manual Fabric workflow has not run there.
+* "All CI passes" without qualification. The pull-request checks pass on GitHub. The manual Fabric workflow ran
+  on GitHub on 2026-11-27 with 7 of 7 integration tests passing, but its NFR report was 30 of 31 (a rate-limit
+  collision that the script did not report as a failure); the fix needs one more GitHub run.
 * "Security-certified", "penetration-tested" or "WCAG-compliant".
 * "Per-user blockchain signatures". The ledger is signed per organization.

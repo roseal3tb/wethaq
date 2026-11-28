@@ -2,7 +2,9 @@
 
 This page covers what to back up, how to restore it, how to revoke a Fabric identity, and what to do after each kind
 of failure. Each procedure is marked **executed** (with its evidence file) or **documented only**. Everything was
-executed on the single-machine Fabric test network used for development. Nothing here was run on a hosted server.
+executed on the single-machine Fabric test network used for development. Nothing here was run on a hosted server. Cloud deployment is deferred to GP2; on the planned Oracle Cloud Always
+Free server, backups must be copied off the instance (Always Free instances can be reclaimed when idle; see
+[ORACLE_CLOUD_READINESS.md](ORACLE_CLOUD_READINESS.md) §3 and §7, step 21).
 
 ## 1. What holds what
 

@@ -1,13 +1,14 @@
 # Wethaq: requirements traceability
 
-Status as of 2026-11-27, branch `gp482-final`. The test results are those of the final run in
-[FINAL_TEST_REPORT.md](FINAL_TEST_REPORT.md). The final report is [FINAL_COMPLETION_REPORT.md](FINAL_COMPLETION_REPORT.md).
+Status as of 2026-11-27 (GP1 submission), branch `gp1-final-readiness`. The test results are those of the final run
+in [FINAL_TEST_REPORT.md](FINAL_TEST_REPORT.md) (GP1 update). The final report is [FINAL_COMPLETION_REPORT.md](FINAL_COMPLETION_REPORT.md).
 
 Status labels:
 * **COMPLETE AND VERIFIED**: implemented, and the verification named in the row was run and passed.
 * **IMPLEMENTED BUT NOT VERIFIED**: the code exists, but the verification could not be run here.
 * **PARTIALLY COMPLETE**: part of the requirement is done; the rest is named under *Remaining work*.
 * **BLOCKED**: needs something outside the code; see [REMAINING_BLOCKERS.md](REMAINING_BLOCKERS.md).
+* **DEFERRED TO GP2**: deliberately left for the second project phase, with the reason recorded.
 * **NOT APPLICABLE**: does not apply to this system.
 
 Abbreviations: *API tests* = `wethaq-api` vitest (109 passed); *chaincode tests* = 24 passed; *demo e2e* = 54
@@ -36,7 +37,7 @@ integration (7 passed); *NFR* = 31 of 31 on Fabric.
 | Requirement | Implementation location | Current status | Verification method | Test result | Remaining work |
 | --- | --- | --- | --- | --- | --- |
 | NFR1 usability at four screen sizes | dashboard CSS (unchanged) | COMPLETE AND VERIFIED | demo e2e at 390, 430, 768, 1440 px | 54 passed | — |
-| NFR2 accessibility | dashboard (unchanged) | PARTIALLY COMPLETE | keyboard and focus tests in demo e2e | passed | full audit (B8) |
+| NFR2 accessibility | dashboard | PARTIALLY COMPLETE | keyboard and focus tests in demo e2e; automated axe check on 7 pages, both colour schemes | passed; 4 kinds of axe finding fixed without visual change | colour contrast, heading order, manual screen-reader test (B8) |
 | NFR3 transparency | live ledger wording; analytics provenance and `check` | COMPLETE AND VERIFIED | live e2e; analytics-files tests | passed | — |
 | NFR4 CSV without formulas | `src/utils` export | COMPLETE AND VERIFIED | dashboard unit tests; demo e2e | passed | — |
 | NFR5 passwords and tokens protected, server authorization | `auth.ts`, `config.ts`, `app.ts`, migration 005 | COMPLETE AND VERIFIED | NFR (17 security checks); sessions tests; SECURITY_AUDIT.md | passed | open findings F5 to F13 |
@@ -56,7 +57,7 @@ integration (7 passed); *NFR* = 31 of 31 on Fabric.
 | PostgreSQL ↔ ledger consistency check | `services/consistency.ts`, `GET /api/admin/consistency` | COMPLETE AND VERIFIED | integrity tests; drill; local server check | passed | — |
 | Chaincode queries (record by tx id, paged queries, verify) | `contract.ts` | COMPLETE AND VERIFIED | chaincode tests; Fabric IT | passed | — |
 | Case A/B/C handling, operation log, event consumer, reconciler, idempotency | `services/operations.ts`, `sync` | COMPLETE AND VERIFIED | sync and failure tests; real outages (earlier evidence) | passed | — |
-| Database constraints, indexes, append-only audit log | migration `004_integrity.sql` | COMPLETE AND VERIFIED | integrity tests; CI migrations job simulated locally | passed | CI on GitHub (B1) |
+| Database constraints, indexes, append-only audit log | migration `004_integrity.sql` | COMPLETE AND VERIFIED | integrity tests; CI migrations job on GitHub (quality checks #27) | passed | — |
 | Clean initialization, migrations twice, dump and restore | `src/cli/migrate.ts`, `db.ts` | COMPLETE AND VERIFIED | clean-init evidence | identical tables | — |
 | Paged and filtered lists; shipment trace; audit paging | `services/lists.ts`; `/shipments`, `/ledger/records`, `/alerts`, `/admin/audit` | COMPLETE AND VERIFIED | integrity tests; OpenAPI route coverage | passed | — |
 | Server-side sessions (sign-out, password change and reset end sessions) | `auth.ts`, migration 005, `/auth/logout`; `Store.tsx` | COMPLETE AND VERIFIED | sessions tests (8); live e2e (3 new) | passed | — |
@@ -65,10 +66,12 @@ integration (7 passed); *NFR* = 31 of 31 on Fabric.
 | Python analysis reproducible | `analysis/run_all.sh`, `compare_results.py` | COMPLETE AND VERIFIED | fresh environment; inputs match the dataset manifest | all outputs identical | — |
 | OpenAPI document | `scripts/openapi.py` → `openapi.json` (0.4.0) | COMPLETE AND VERIFIED | route coverage test; regenerated with no diff | passed | — |
 | API container | `wethaq-api/Dockerfile`, `docker-compose.yml` | COMPLETE AND VERIFIED | build (sandbox npm step), compose run, non-root | passed | — |
-| Chaincode container | `chaincode/shipment/Dockerfile` | IMPLEMENTED BUT NOT VERIFIED on this branch | build blocked here (B11); the earlier image runs on the network | — | CI *docker* job (B1) |
+| Chaincode container | `chaincode/shipment/Dockerfile` | COMPLETE AND VERIFIED on GitHub (x64) | CI *docker* job (quality checks #27); built and run by `fabric/up.sh` in the manual Fabric workflow (2026-11-27). Not buildable in this sandbox (B11) | passed | arm64 build (B14) |
 | Single-server deployment configuration | `deploy/compose.yml`, `Caddyfile`, `production.env.example` | COMPLETE AND VERIFIED locally | full workflow through Caddy on Fabric; CSP browser check | passed | hosted deployment (B2) |
-| Hosted deployment | — | BLOCKED | — | — | B2 |
-| CI: validate, lint, API, migrations, chaincode, analysis, Docker, secrets, audit, browser, Fabric | `.github/workflows/*.yml`, `.github/scripts/pull-image.sh` | COMPLETE AND VERIFIED except `fabric.yml` | GitHub Actions on pull requests #13 to #15 | quality checks #27 and browser QA #23 passed (after two fixes); `fabric.yml` not run on GitHub | B1 |
+| Hosted deployment | — | DEFERRED TO GP2 | — | — | B2; [ORACLE_CLOUD_READINESS.md](ORACLE_CLOUD_READINESS.md). WETHAQ has not been deployed to Oracle Cloud during GP1 |
+| arm64 (Ampere A1) readiness | `oracle-arm64-readiness.yml`; ORACLE_CLOUD_READINESS.md §4 | static audit COMPLETE AND VERIFIED; native run IMPLEMENTED BUT NOT VERIFIED | image manifests, release assets, lockfiles; workflow dry-run of its scripts on x64 | every image publishes linux/arm64 | run the workflow on GitHub (B14) |
+| Chaincode runtime off Node.js 20 (end-of-life) | `chaincode/shipment/Dockerfile` | DEFERRED TO GP2 | — | — | B16 |
+| CI: validate, lint, API, migrations, chaincode, analysis, Docker, secrets, audit, browser, Fabric | `.github/workflows/*.yml`, `.github/scripts/pull-image.sh` | COMPLETE AND VERIFIED on GitHub before this branch; this branch's workflow changes IMPLEMENTED BUT NOT VERIFIED | GitHub Actions on pull requests #13 to #15; manual `fabric.yml` run on 2026-11-27 | quality checks #27 and browser QA #23 passed (after two fixes); `fabric.yml`: 7 of 7 integration tests, NFR 30 of 31 (masked) | NFR re-run (B1); Node 24 actions (B15) |
 | Lint | `eslint.config.js` | COMPLETE AND VERIFIED | `npx eslint .` | 0 errors, 106 warnings | warnings in existing code |
 | Dependencies | three `package-lock.json` | COMPLETE AND VERIFIED | `npm audit` | 0 vulnerabilities | — |
 | No secrets in the repository | `.gitignore`; CI *secrets* job | COMPLETE AND VERIFIED | the job's patterns on the tree and history | 0 findings | — |
@@ -76,6 +79,6 @@ integration (7 passed); *NFR* = 31 of 31 on Fabric.
 | Demo mode and visual design unchanged | dashboard | COMPLETE AND VERIFIED | demo e2e | 54 passed | — |
 | Cancellation, returns, multi-step partial receipts | — | PARTIALLY COMPLETE | short receipt test (chaincode, API) | passed | B5 |
 | Per-user Fabric identities | — | NOT APPLICABLE to this design (one identity per organization; F9) | — | — | — |
-| User acceptance testing | — | BLOCKED | — | — | B9 |
+| User acceptance testing and expert evaluation | — | BLOCKED (no results exist; none are reported) | — | — | B9 |
 | macOS and WSL2 | scripts and docs | IMPLEMENTED BUT NOT VERIFIED | Linux only on this branch | — | B12 |
 | Documentation (completion, traceability, tests, security, deployment, backup, discrepancies, change log, blockers) | `docs/gp482/` | COMPLETE AND VERIFIED | written from the evidence files; links checked | — | — |

@@ -44,11 +44,14 @@ Documentation is in [`docs/gp482/`](docs/gp482/):
 * [requirements traceability](docs/gp482/REQUIREMENTS_TRACEABILITY.md) and [test report](docs/gp482/FINAL_TEST_REPORT.md);
 * [architecture](docs/gp482/ARCHITECTURE.md), [deployment guide](docs/gp482/DEPLOYMENT_GUIDE.md),
   [backup and recovery](docs/gp482/BACKUP_AND_RECOVERY.md) and [security review](docs/gp482/SECURITY_AUDIT.md);
-* [differences from the GP481 report](docs/gp482/REPORT_DISCREPANCIES.md).
+* [differences from the GP481 report](docs/gp482/REPORT_DISCREPANCIES.md);
+* [Oracle Cloud ARM64 readiness](docs/gp482/ORACLE_CLOUD_READINESS.md) (planning for GP2; nothing deployed).
 
 The API is described by `wethaq-api/openapi.json`, which it also serves at `/api/openapi.json`. Settings are
 documented in `.env.example`, `wethaq-api/.env.example` and `deploy/production.env.example`. Nothing has been
-deployed to a hosted server; `deploy/` holds a prepared single-server configuration.
+deployed to a hosted server; `deploy/` holds a prepared single-server configuration. Actual cloud deployment is
+intentionally deferred until GP2. WETHAQ has not been deployed to Oracle Cloud during GP1. The Vercel site runs Demo
+Mode and is not connected to a blockchain network.
 
 ## Demo sign-in
 
@@ -137,4 +140,4 @@ authorized by the API, and every shipment operation is validated by the chaincod
 
 This is an **academic prototype using synthetic data only**. No real, classified, or operational military data is present. Forecasts and inventory recommendations are decision-support material, not purchase commands. In demo mode the ledger is a demonstration of transaction rules, **not a connected Hyperledger Fabric network**; live mode uses a real Fabric test network on one machine. Even a committed ledger record does not independently prove physical delivery or cargo condition. Modeled stockout conditions and lead-time estimates are assumptions, not field observations. No fabricated operational savings or performance claims are made.
 
-**Testing:** the results of the latest run of every suite (unit, API, chaincode, browser in demo and live mode, and on Fabric) are in [docs/gp482/FINAL_TEST_REPORT.md](docs/gp482/FINAL_TEST_REPORT.md). The GitHub Actions checks pass on pull requests (since pull request #15); the manual Fabric workflow has not been run on GitHub.
+**Testing:** the results of the latest run of every suite (unit, API, chaincode, browser in demo and live mode, and on Fabric) are in [docs/gp482/FINAL_TEST_REPORT.md](docs/gp482/FINAL_TEST_REPORT.md). The GitHub Actions checks pass on pull requests (since pull request #15). The manual Fabric workflow ran on GitHub on 2026-11-27 with 7 of 7 integration tests passing; its NFR step needs one more run after a fix (see the test report). The manual *Oracle Cloud ARM64 Readiness* workflow has not run yet.

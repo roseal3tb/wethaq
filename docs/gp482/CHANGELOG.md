@@ -1,3 +1,34 @@
+# Change log — GP1 submission readiness (branch `gp1-final-readiness`, from `main` at `17e9113`)
+
+## Evidence
+* `evidence/github-fabric-2026-11-27/`: the artifact of the manual Fabric workflow run on GitHub (unchanged), with
+  its checksum and what it shows (7 of 7 integration tests; NFR 30 of 31).
+* `evidence/gp1-final-2026-11-27/`: final regression on the last code commit, NFR report, network check, and the
+  automated accessibility check.
+
+## Fixes
+* `wethaq-api/src/cli/nfr.ts`: exits 1 when any check fails (it exited 0, which hid a failure on GitHub).
+* `.github/workflows/fabric.yml`: waits 65 s for the sign-in rate-limit window before the NFR step.
+* Accessibility, no visual change: main landmark on the sign-in and 404 pages; level-one heading on the
+  *Access restricted* and *Page not found* states; labelled donut-chart sectors; *Guided demo* button name.
+
+## CI
+* `actions/checkout` v7.0.1, `actions/setup-node` v7.1.0, `actions/upload-artifact` v7.0.2 (Node 24), pinned by
+  commit SHA in every workflow.
+* PostgreSQL in the *migrations* job and in `fabric.yml` is no longer a service container fixed to
+  public.ecr.aws (the first run of this branch failed there with "Data limit exceeded"). A step starts it with
+  `pull-image.sh`: Docker Hub, then public.ecr.aws, then mirror.gcr.io. Every base-image pull also falls back to
+  mirror.gcr.io, and "Data limit exceeded" counts as a rate limit.
+* New manual workflow `oracle-arm64-readiness.yml` (*Oracle Cloud ARM64 Readiness*, `ubuntu-24.04-arm`) and
+  `.github/scripts/timed.sh`.
+
+## Documentation
+* New `ORACLE_CLOUD_READINESS.md`: arm64 audit, Oracle Always Free checks, GP2 deployment guide. No deployment.
+* Updated: README, FINAL_COMPLETION_REPORT, FINAL_TEST_REPORT (formerly `TEST_EVIDENCE.md`), REMAINING_BLOCKERS
+  (B1, B2, B4, B8; new B14 to B16), REQUIREMENTS_TRACEABILITY (new label DEFERRED TO GP2), SECURITY_AUDIT (F13
+  fixed; F15 to F17), DEPLOYMENT_GUIDE, REPORT_DISCREPANCIES, ARCHITECTURE.
+* OpenAPI: unchanged (no API route changed).
+
 # Change log — final completion (branch `gp482-final`, from `b92b950`)
 
 ## Fabric

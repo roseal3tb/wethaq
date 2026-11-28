@@ -1,13 +1,40 @@
 # Wethaq GP482: final completion report
 
-Date: 2026-11-27. Branch `gp482-final`, from `b92b950` (the end of branch `gp482-gaps`). Nothing on this branch has
-been pushed, merged or deployed. The GP481 report and the research results in `analysis/results/` were not changed.
+Date: 2026-11-27, updated for the GP1 submission on branch `gp1-final-readiness` (from `main` at `17e9113`).
+Sections 1 to 6 describe the GP482 work merged through pull requests #13 to #16; §0 describes the final readiness
+branch. The GP481 report and the research results in `analysis/results/` were not changed.
 
 **Status.** The backend, the Hyperledger Fabric integration and the operations work are complete for a
 single-machine academic prototype. Every suite was run on a freshly created Fabric 2.5.12 network and passed. The
 system is **not 100% complete**, and it is not production-ready or deployed. The GitHub Actions checks pass on
-pull requests, but the manual Fabric workflow has not been run on GitHub. Nothing has been hosted. User testing was deferred. Cancellation and return workflows do not exist. The
-open items are listed in [REMAINING_BLOCKERS.md](REMAINING_BLOCKERS.md).
+pull requests, and the manual Fabric workflow ran on GitHub on 2026-11-27 (7 of 7 integration tests; its NFR report
+showed 30 of 31, see §0). Nothing has been hosted: **actual cloud deployment is intentionally deferred until GP2.
+WETHAQ has not been deployed to Oracle Cloud during GP1.** The Vercel site runs Demo Mode and is not connected to
+any blockchain network. User testing was deferred. Cancellation and return workflows do not exist. The open items
+are listed in [REMAINING_BLOCKERS.md](REMAINING_BLOCKERS.md).
+
+## 0. GP1 submission readiness (branch `gp1-final-readiness`)
+
+| Item | Change | Status | Evidence |
+| --- | --- | --- | --- |
+| Manual Fabric workflow on GitHub | the artifact `wethaq-fabric-run.zip` was checked (checksum, contents, secret scan) and kept unchanged | Integration: COMPLETE AND VERIFIED (7 of 7) | [evidence/github-fabric-2026-11-27/](evidence/github-fabric-2026-11-27/README.md) |
+| NFR failure hidden on GitHub | the GitHub NFR run was 30 of 31 (429 from the sign-in rate limit) but the step passed. `nfr.ts` now exits 1 when a check fails; `fabric.yml` waits 65 s before the NFR step | fix COMPLETE AND VERIFIED locally (31 of 31, and exit 1 seen on a failing run). On GitHub: IMPLEMENTED BUT NOT VERIFIED until the workflow is run again | [evidence/gp1-final-2026-11-27/](evidence/gp1-final-2026-11-27/README.md) |
+| GitHub Actions Node 20 deprecation | `actions/checkout` v4.2.2 → v7.0.1, `actions/setup-node` v4 → v7.1.0, `actions/upload-artifact` v4.6.2 → v7.0.2, all pinned by full commit SHA and declaring `node24`. The application stays on Node 22 and the chaincode job on Node 20 | IMPLEMENTED BUT NOT VERIFIED (actionlint passes; the warning can only be checked on GitHub) | commit message lists the SHAs |
+| Native arm64 readiness | new manual workflow *Oracle Cloud ARM64 Readiness* (`ubuntu-24.04-arm`): arch checks, image manifests, native builds, Fabric, PostgreSQL, API, integration, NFR, browser test, resources, sanitized artifact | IMPLEMENTED BUT NOT VERIFIED (not run yet) | `.github/workflows/oracle-arm64-readiness.yml` |
+| arm64 static audit | every image publishes `linux/arm64`; Fabric arm64 binaries exist; no hard-coded amd64; no native npm builds | COMPLETE AND VERIFIED | [ORACLE_CLOUD_READINESS.md](ORACLE_CLOUD_READINESS.md) §4 |
+| Oracle Cloud readiness | proposed Ampere A1 configuration checked against Oracle's Always Free documentation; GP2 deployment guide (25 steps, placeholders) | DEFERRED TO GP2 (deployment); documentation COMPLETE | [ORACLE_CLOUD_READINESS.md](ORACLE_CLOUD_READINESS.md) |
+| Accessibility | automated axe check on 7 pages, both colour schemes; 4 kinds of finding fixed with pixel-identical screenshots; contrast and heading order documented | PARTIALLY COMPLETE (B8) | [evidence/gp1-final-2026-11-27/accessibility/](evidence/gp1-final-2026-11-27/accessibility/README.md) |
+| Chaincode on Node 20 (end-of-life) | documented, not migrated | DEFERRED TO GP2 (B16) | ORACLE_CLOUD_READINESS.md §4.5 |
+| Regression on the final code | every suite below, at commit `4e134e7` | COMPLETE AND VERIFIED | [evidence/gp1-final-2026-11-27/](evidence/gp1-final-2026-11-27/README.md) |
+
+Final regression (2026-11-27, Linux x86-64): dashboard unit 20; chaincode 24; API 109 passed, 7 skipped;
+Demo Mode browser 54 passed, 2 skipped; live-mode browser 9; Fabric network checks 14 of 14; Fabric integration 7;
+Fabric browser 1; NFR 31 of 31; lint 0 errors (106 warnings); both builds and the CSP hash check pass. The first
+Fabric attempt in that session failed because the ledger had already been seeded; after a fresh network everything
+passed (details in the evidence README).
+
+User acceptance testing and expert evaluation were not carried out; no participant feedback or evaluation
+results exist, and none are reported.
 
 ## 1. What this branch added
 
@@ -47,8 +74,8 @@ note 4).
 | API container image | COMPLETE AND VERIFIED (built with a sandbox-only npm proxy step) |
 | Chaincode container image on this branch | IMPLEMENTED BUT NOT VERIFIED (B11) |
 | Single-server configuration | COMPLETE AND VERIFIED locally; not deployed |
-| CI workflows | COMPLETE AND VERIFIED for `checks.yml` and `browser-qa.yml` on GitHub (pull request #15); `fabric.yml` (manual) IMPLEMENTED BUT NOT VERIFIED on GitHub (B1) |
-| Hosted deployment | BLOCKED (B2) |
+| CI workflows | COMPLETE AND VERIFIED for `checks.yml` and `browser-qa.yml` on GitHub (pull request #15) and for the integration tests of `fabric.yml` on GitHub (2026-11-27). The NFR fix and the Node 24 actions need a GitHub run (B1, B15). `oracle-arm64-readiness.yml` IMPLEMENTED BUT NOT VERIFIED (B14) |
+| Hosted deployment | DEFERRED TO GP2 (B2) |
 | Cancellation, returns, multi-step partial receipts | PARTIALLY COMPLETE (B5) |
 | User acceptance testing | BLOCKED (B9) |
 | Per-user Fabric identities | NOT APPLICABLE to this design |
@@ -98,6 +125,7 @@ Details, skips and blocked items: [FINAL_TEST_REPORT.md](FINAL_TEST_REPORT.md).
 | [BACKUP_AND_RECOVERY.md](BACKUP_AND_RECOVERY.md) | backups, restores, revocation, failure handling |
 | [REPORT_DISCREPANCIES.md](REPORT_DISCREPANCIES.md) | GP481 report compared with the implementation |
 | [REMAINING_BLOCKERS.md](REMAINING_BLOCKERS.md) | what is not done and what unblocks it |
+| [ORACLE_CLOUD_READINESS.md](ORACLE_CLOUD_READINESS.md) | arm64 audit, Oracle Always Free checks, GP2 deployment guide (no deployment in GP1) |
 | [CHANGELOG.md](CHANGELOG.md) | changes by branch |
 | [ARCHITECTURE.md](ARCHITECTURE.md), [DIAGRAMS.md](DIAGRAMS.md) | design and diagrams |
 | `wethaq-api/openapi.json` | the API (OpenAPI 3.0, version 0.4.0, served at `/api/openapi.json`) |
