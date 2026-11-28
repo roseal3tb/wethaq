@@ -1,0 +1,248 @@
+
+> wethaq-logistics-dashboard@1.0.0 test:live
+> playwright test -c playwright.live.config.ts
+
+
+Running 9 tests using 1 worker
+
+  ✓  1 e2e-live/live.spec.ts:16:1 › A wrong password is refused by the API (1.5s)
+  ✘  2 e2e-live/live.spec.ts:22:1 › A request goes through dispatch, transit and receipt on the ledger and verifies (5.9s)
+  ✘  3 e2e-live/live.spec.ts:61:1 › A rejection demonstration is rejected by the smart-contract rules (6.0s)
+  ✘  4 e2e-live/live.spec.ts:72:1 › A new user gets a temporary password and must change it at first sign-in (6.0s)
+  ✘  5 e2e-live/live.spec.ts:104:1 › A change made by another user appears without reloading the page (6.0s)
+  ✘  6 e2e-live/live.spec.ts:118:1 › The forecasting page reads the analysis results from the API, with their checksum (6.1s)
+  ✘  7 e2e-live/live.spec.ts:129:1 › Signing out ends the session on the server, not only in the browser (6.1s)
+  ✓  8 e2e-live/live.spec.ts:141:1 › An expired or ended session returns to the sign-in page and shows no data (1.3s)
+  ✓  9 e2e-live/live.spec.ts:150:1 › When the API cannot be reached, the dashboard says so and shows no demonstration data (862ms)
+
+
+  1) e2e-live/live.spec.ts:22:1 › A request goes through dispatch, transit and receipt on the ledger and verifies 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected pattern: /\/overview/
+    Received string:  "http://127.0.0.1:4174/login"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toHaveURL" with timeout 5000ms
+        14 × locator resolved to <html lang="en" data-theme="light">…</html>
+           - unexpected value "http://127.0.0.1:4174/login"
+
+
+      22 | test('A request goes through dispatch, transit and receipt on the ledger and verifies', async ({ page }) => {
+      23 |   await signIn(page, 'planner');
+    > 24 |   await expect(page).toHaveURL(/\/overview/);
+         |                      ^
+      25 |   await page.goto('/inventory?search=SP-001&location=Distribution+Center');
+      26 |   await page.locator('tbody tr').first().press('Enter');
+      27 |   await page.getByRole('button', { name: 'Create shipment request' }).click();
+        at /home/user/roseal3tb/wethaq/e2e-live/live.spec.ts:24:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/live-A-request-goes-throug-0be6f--on-the-ledger-and-verifies/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/live-A-request-goes-throug-0be6f--on-the-ledger-and-verifies/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/live-A-request-goes-throug-0be6f--on-the-ledger-and-verifies/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/live-A-request-goes-throug-0be6f--on-the-ledger-and-verifies/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) e2e-live/live.spec.ts:61:1 › A rejection demonstration is rejected by the smart-contract rules 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected pattern: /\/overview/
+    Received string:  "http://127.0.0.1:4174/login"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toHaveURL" with timeout 5000ms
+        14 × locator resolved to <html lang="en" data-theme="light">…</html>
+           - unexpected value "http://127.0.0.1:4174/login"
+
+
+      61 | test('A rejection demonstration is rejected by the smart-contract rules', async ({ page }) => {
+      62 |   await signIn(page, 'admin');
+    > 63 |   await expect(page).toHaveURL(/\/overview/);
+         |                      ^
+      64 |   await page.goto('/shipments');
+      65 |   await expect(page.getByText('Local development ledger · not Fabric')).toBeVisible();
+      66 |   await page.getByRole('button', { name: /Demonstration tools/ }).click();
+        at /home/user/roseal3tb/wethaq/e2e-live/live.spec.ts:63:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/live-A-rejection-demonstra-ad847-by-the-smart-contract-rules/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/live-A-rejection-demonstra-ad847-by-the-smart-contract-rules/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/live-A-rejection-demonstra-ad847-by-the-smart-contract-rules/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/live-A-rejection-demonstra-ad847-by-the-smart-contract-rules/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) e2e-live/live.spec.ts:72:1 › A new user gets a temporary password and must change it at first sign-in 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected pattern: /\/overview/
+    Received string:  "http://127.0.0.1:4174/login"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toHaveURL" with timeout 5000ms
+        14 × locator resolved to <html lang="en" data-theme="light">…</html>
+           - unexpected value "http://127.0.0.1:4174/login"
+
+
+      72 | test('A new user gets a temporary password and must change it at first sign-in', async ({ page, browser }) => {
+      73 |   await signIn(page, 'admin');
+    > 74 |   await expect(page).toHaveURL(/\/overview/);
+         |                      ^
+      75 |   await page.goto('/users');
+      76 |   await page.getByRole('button', { name: 'Add user' }).click();
+      77 |   await page.getByPlaceholder('Demo User A. Example').fill('Live Test User');
+        at /home/user/roseal3tb/wethaq/e2e-live/live.spec.ts:74:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/live-A-new-user-gets-a-tem-62069--change-it-at-first-sign-in/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/live-A-new-user-gets-a-tem-62069--change-it-at-first-sign-in/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/live-A-new-user-gets-a-tem-62069--change-it-at-first-sign-in/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/live-A-new-user-gets-a-tem-62069--change-it-at-first-sign-in/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) e2e-live/live.spec.ts:104:1 › A change made by another user appears without reloading the page 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected pattern: /\/overview/
+    Received string:  "http://127.0.0.1:4174/login"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toHaveURL" with timeout 5000ms
+        14 × locator resolved to <html lang="en" data-theme="light">…</html>
+           - unexpected value "http://127.0.0.1:4174/login"
+
+
+      104 | test('A change made by another user appears without reloading the page', async ({ page, request }) => {
+      105 |   await signIn(page, 'dispatcher');
+    > 106 |   await expect(page).toHaveURL(/\/overview/);
+          |                      ^
+      107 |   await page.goto('/shipments');
+      108 |   await expect(page.getByText('Live updates on')).toBeVisible();
+      109 |   const token = (await (await request.post('http://127.0.0.1:4000/api/auth/login', { data: { email: 'planner@wethaq.demo', password: 'demo' } })).json()).token;
+        at /home/user/roseal3tb/wethaq/e2e-live/live.spec.ts:106:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/live-A-change-made-by-anot-5264a--without-reloading-the-page/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/live-A-change-made-by-anot-5264a--without-reloading-the-page/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/live-A-change-made-by-anot-5264a--without-reloading-the-page/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/live-A-change-made-by-anot-5264a--without-reloading-the-page/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) e2e-live/live.spec.ts:118:1 › The forecasting page reads the analysis results from the API, with their checksum 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected pattern: /\/overview/
+    Received string:  "http://127.0.0.1:4174/login"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toHaveURL" with timeout 5000ms
+        14 × locator resolved to <html lang="en" data-theme="light">…</html>
+           - unexpected value "http://127.0.0.1:4174/login"
+
+
+      121 |   const sha = createHash('sha256').update(readFileSync('analysis/results/raf-forecasts.json')).digest('hex');
+      122 |   await signIn(page, 'planner');
+    > 123 |   await expect(page).toHaveURL(/\/overview/);
+          |                      ^
+      124 |   await page.goto('/forecasts');
+      125 |   await expect(page.getByText(`From the API · analysis/results/raf-forecasts.json · ${sha.slice(0, 8)}`)).toBeVisible();
+      126 |   await expect(page.getByText('could not be loaded from the Wethaq API')).toHaveCount(0);
+        at /home/user/roseal3tb/wethaq/e2e-live/live.spec.ts:123:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/live-The-forecasting-page--15ef9-the-API-with-their-checksum/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/live-The-forecasting-page--15ef9-the-API-with-their-checksum/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/live-The-forecasting-page--15ef9-the-API-with-their-checksum/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/live-The-forecasting-page--15ef9-the-API-with-their-checksum/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6) e2e-live/live.spec.ts:129:1 › Signing out ends the session on the server, not only in the browser 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected pattern: /\/overview/
+    Received string:  "http://127.0.0.1:4174/login"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toHaveURL" with timeout 5000ms
+        14 × locator resolved to <html lang="en" data-theme="light">…</html>
+           - unexpected value "http://127.0.0.1:4174/login"
+
+
+      129 | test('Signing out ends the session on the server, not only in the browser', async ({ page, request }) => {
+      130 |   await signIn(page, 'receiver');
+    > 131 |   await expect(page).toHaveURL(/\/overview/);
+          |                      ^
+      132 |   const token = await page.evaluate(() => sessionStorage.getItem('wethaq.token'));
+      133 |   expect(token).toBeTruthy();
+      134 |   expect((await request.get('http://127.0.0.1:4000/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })).status()).toBe(200);
+        at /home/user/roseal3tb/wethaq/e2e-live/live.spec.ts:131:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/live-Signing-out-ends-the--3f055-ver-not-only-in-the-browser/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/live-Signing-out-ends-the--3f055-ver-not-only-in-the-browser/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/live-Signing-out-ends-the--3f055-ver-not-only-in-the-browser/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/live-Signing-out-ends-the--3f055-ver-not-only-in-the-browser/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6 failed
+    e2e-live/live.spec.ts:22:1 › A request goes through dispatch, transit and receipt on the ledger and verifies 
+    e2e-live/live.spec.ts:61:1 › A rejection demonstration is rejected by the smart-contract rules ─
+    e2e-live/live.spec.ts:72:1 › A new user gets a temporary password and must change it at first sign-in 
+    e2e-live/live.spec.ts:104:1 › A change made by another user appears without reloading the page ─
+    e2e-live/live.spec.ts:118:1 › The forecasting page reads the analysis results from the API, with their checksum 
+    e2e-live/live.spec.ts:129:1 › Signing out ends the session on the server, not only in the browser 
+  3 passed (47.7s)

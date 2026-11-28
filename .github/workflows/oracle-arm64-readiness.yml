@@ -5,8 +5,16 @@ name: Oracle Cloud ARM64 Readiness
 # non-functional checks, measures resource use, then removes everything.
 # Nothing is deployed: no cloud account, credential or paid resource is used, and no emulation (QEMU) is involved.
 # Manual only. See docs/gp482/ORACLE_CLOUD_READINESS.md.
+# With "a1_limits", Docker (Fabric, chaincode, PostgreSQL) and the API run inside one cgroup limited to 2 CPUs and
+# 12 GB of memory, the size of the planned 2 OCPU / 12 GB VM.Standard.A1.Flex. That is a resource cap on a GitHub
+# Neoverse-N2 runner, not an Ampere Altra: it does not reproduce Oracle's CPU speed, memory bandwidth or disks.
 on:
   workflow_dispatch:
+    inputs:
+      a1_limits:
+        description: "Limit Docker and the API together to 2 CPUs and 12 GB (like a 2 OCPU / 12 GB A1 VM)"
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -22,6 +30,8 @@ jobs:
       LEDGER_MODE: fabric
       DEMO_PASSWORD: ci-demo-password-1
       EVIDENCE: ${{ github.workspace }}/arm64-evidence
+      SAMPLES: ${{ github.workspace }}/arm64-evidence/samples
+      A1_LIMITS: ${{ inputs.a1_limits && 'yes' || 'no' }}
       NODE_IMAGE: ${{ vars.NODE_IMAGE }}
       CHAINCODE_NODE_IMAGE: ${{ vars.CHAINCODE_NODE_IMAGE }}
     steps:
@@ -53,6 +63,33 @@ jobs:
           } | tee "$EVIDENCE/runner.txt"
           test "$(uname -m)" = aarch64
           test "$(docker info --format '{{.Architecture}}')" = aarch64
+
+      - name: "Optional: put Docker and the API in one cgroup limited to 2 CPUs and 12 GB"
+        if: ${{ inputs.a1_limits }}
+        run: |
+          set -e
+          printf '[Unit]\nDescription=WETHAQ server processes, limited like a 2 OCPU / 12 GB VM\n[Slice]\nCPUQuota=200%%\nMemoryMax=12G\nMemorySwapMax=0\n' \
+            | sudo tee /etc/systemd/system/wethaq.slice >/dev/null
+          sudo systemctl daemon-reload
+          sudo systemctl start wethaq.slice
+          cfg=/etc/docker/daemon.json
+          [ -s "$cfg" ] || echo '{}' | sudo tee "$cfg" >/dev/null
+          sudo jq '. + {"cgroup-parent": "wethaq.slice"}' "$cfg" | sudo tee "$cfg.new" >/dev/null && sudo mv "$cfg.new" "$cfg"
+          sudo systemctl restart docker
+          for i in $(seq 1 30); do docker info >/dev/null 2>&1 && break; sleep 1; done
+          {
+            echo "mode: aggregate limit for Docker and the API (cgroup wethaq.slice)"
+            systemctl show wethaq.slice -p CPUQuotaPerSecUSec -p MemoryMax -p MemorySwapMax
+            echo "cgroup: $(cat /sys/fs/cgroup/wethaq.slice/cpu.max) cpu.max, $(cat /sys/fs/cgroup/wethaq.slice/memory.max) memory.max"
+            echo "docker cgroup driver: $(docker info --format '{{.CgroupDriver}} v{{.CgroupVersion}}')"
+          } | tee "$EVIDENCE/limits.txt"
+          test "$(cat /sys/fs/cgroup/wethaq.slice/cpu.max)" = "200000 100000"
+          echo "WETHAQ_SLICE=wethaq.slice" >> "$GITHUB_ENV"
+
+      - name: Record that no aggregate limit is applied
+        if: ${{ !inputs.a1_limits }}
+        run: |
+          echo "mode: no aggregate limit (the whole runner, $(nproc) vCPU and $(free -m | awk '/^Mem:/ {print $2}') MiB, is available)" | tee "$EVIDENCE/limits.txt"
 
       - name: Sign in to Docker Hub when credentials are configured (optional; raises the pull limit)
         env:
@@ -119,12 +156,22 @@ jobs:
           echo "WETHAQ_NODE_IMAGE=$(pick "$CHAINCODE_NODE_IMAGE" node:20-bookworm-slim public.ecr.aws/docker/library/node:20-bookworm-slim mirror.gcr.io/library/node:20-bookworm-slim)" >> "$GITHUB_ENV"
           echo "PG_IMAGE=$(pick postgres:16-alpine public.ecr.aws/docker/library/postgres:16-alpine mirror.gcr.io/library/postgres:16-alpine)" >> "$GITHUB_ENV"
 
+      - name: Start the resource sampler (about every 2 s, until the measurement step)
+        run: |
+          mkdir -p "$SAMPLES"
+          setsid nohup .github/scripts/sample-resources.sh "$SAMPLES" > "$SAMPLES/sampler.log" 2>&1 &
+          echo $! > "$SAMPLES/sampler.pid"
+          echo "$(date +%s)	startup start" >> "$SAMPLES/phases.tsv"
+
       - name: Start PostgreSQL 16 (bound to 127.0.0.1 only)
         run: |
           set -e
           docker run -d --name wethaq-pg -p 127.0.0.1:5432:5432 \
             -e POSTGRES_USER=wethaq -e POSTGRES_PASSWORD=wethaq -e POSTGRES_DB=wethaq "$PG_IMAGE"
           .github/scripts/timed.sh "PostgreSQL ready" sh -c 'for i in $(seq 1 60); do docker exec wethaq-pg pg_isready -U wethaq -q && exit 0; sleep 1; done; exit 1'
+          if [ -n "${WETHAQ_SLICE:-}" ]; then
+            grep "$WETHAQ_SLICE" "/proc/$(docker inspect --format '{{.State.Pid}}' wethaq-pg)/cgroup" | tee -a "$EVIDENCE/limits.txt"
+          fi
 
       - name: Build the API image natively
         run: .github/scripts/timed.sh "build API image (linux/arm64)" docker build -f wethaq-api/Dockerfile --build-arg NODE_IMAGE="$API_BASE" -t wethaq-api:arm64 .
@@ -137,6 +184,8 @@ jobs:
           file fabric/fabric-samples/bin/peer | grep -q 'ARM aarch64'
 
       - name: Start the network (CA, channel, chaincode built natively, identities) and verify it
+        env:
+          WETHAQ_PHASE_TIMINGS: ${{ github.workspace }}/arm64-evidence/timings.tsv
         run: .github/scripts/timed.sh "start Fabric network (fabric/up.sh, includes chaincode image build and verify-network)" ./fabric/up.sh
 
       - name: Check that every running container is arm64
@@ -161,8 +210,18 @@ jobs:
       - name: Start the API (Fabric mode)
         working-directory: wethaq-api
         run: |
-          JWT_SECRET=$(openssl rand -hex 32) nohup npm start > api.log 2>&1 &
+          set -e
+          # With the limit, the API runs in a scope inside the same cgroup as Docker (same user and environment).
+          in_slice=""
+          [ -z "${WETHAQ_SLICE:-}" ] || in_slice="sudo -E systemd-run --quiet --scope --slice=$WETHAQ_SLICE -- sudo -E -u $(id -un) env PATH=$PATH"
+          JWT_SECRET=$(openssl rand -hex 32) nohup $in_slice npm start > api.log 2>&1 &
           ../.github/scripts/timed.sh "API ready (Fabric mode)" sh -c 'for i in $(seq 1 120); do curl -fs -o /dev/null http://127.0.0.1:4000/api/health/ready && exit 0; sleep 1; done; exit 1'
+          if [ -n "${WETHAQ_SLICE:-}" ]; then
+            grep "$WETHAQ_SLICE" "/proc/$(pgrep -f src/server.ts | tail -1)/cgroup" | tee -a "$EVIDENCE/limits.txt"
+          fi
+          echo "$(date +%s)	startup end" >> "$SAMPLES/phases.tsv"
+          # Idle: network, PostgreSQL and API running, no requests, for 30 s.
+          echo "$(date +%s)	idle start" >> "$SAMPLES/phases.tsv"; sleep 30; echo "$(date +%s)	idle end" >> "$SAMPLES/phases.tsv"
 
       - name: Fabric integration tests
         working-directory: wethaq-api
@@ -170,11 +229,39 @@ jobs:
 
       - name: Non-functional checks (after the one-minute sign-in rate-limit window used by the tests above)
         working-directory: wethaq-api
-        run: sleep 65 && ../.github/scripts/timed.sh "non-functional checks" npm run nfr
+        run: |
+          sleep 65
+          echo "$(date +%s)	NFR (10 runs, 20 concurrent) start" >> "$SAMPLES/phases.tsv"
+          ../.github/scripts/timed.sh "non-functional checks" npm run nfr
+          echo "$(date +%s)	NFR (10 runs, 20 concurrent) end" >> "$SAMPLES/phases.tsv"
+
+      - name: "Extra load measurement: 30 workflow runs and 50 concurrent requests (recorded; does not gate the run)"
+        working-directory: wethaq-api
+        continue-on-error: true
+        run: |
+          sleep 65
+          echo "$(date +%s)	load (30 runs, 50 concurrent) start" >> "$SAMPLES/phases.tsv"
+          ../.github/scripts/timed.sh "extra load: nfr --runs 30 --concurrency 50" npm run nfr -- --runs 30 --concurrency 50
+          rc=$?
+          echo "$(date +%s)	load (30 runs, 50 concurrent) end" >> "$SAMPLES/phases.tsv"
+          exit $rc
 
       - name: Measure resources with the network, PostgreSQL and the API running
         run: |
           set -u
+          kill "$(cat "$SAMPLES/sampler.pid")" 2>/dev/null || true
+          {
+            cat "$EVIDENCE/limits.txt"; echo
+            python3 .github/scripts/summarize-resources.py "$SAMPLES"
+          } | tee "$EVIDENCE/resources-summary.md"
+          {
+            echo "## Persistent data (MiB)"
+            echo "PostgreSQL data directory: $(docker exec wethaq-pg du -sm /var/lib/postgresql/data | cut -f1)"
+            for c in peer0.org1.example.com peer0.org2.example.com orderer.example.com; do
+              echo "$c ledger (/var/hyperledger/production): $(docker exec "$c" du -sm /var/hyperledger/production 2>/dev/null | cut -f1)"
+            done
+            echo; docker system df -v --format '{{range .Volumes}}{{.Name}}	{{.Size}}{{"\n"}}{{end}}' 2>/dev/null || docker system df -v | sed -n '/VOLUME NAME/,/^$/p'
+          } | tee "$EVIDENCE/storage.txt"
           {
             echo "## Containers (docker stats, one sample)"; docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}'
             echo; echo "## API process (Node.js, Fabric mode)"; ps -o pid,rss,vsz,pcpu,etime,args -C node | grep -E 'PID|server.ts' || true
@@ -225,6 +312,8 @@ jobs:
           {
             echo "# WETHAQ native arm64 readiness run"
             echo; echo '```'; cat "$EVIDENCE/runner.txt"; echo '```'
+            echo; echo "## Resource samples"; echo; cat "$EVIDENCE/resources-summary.md" 2>/dev/null
+            echo; echo '```'; cat "$EVIDENCE/storage.txt" 2>/dev/null; echo '```'
             echo; echo "## Timings (seconds, exit code)"; echo; echo '| Step | Seconds | Exit |'; echo '|---|---|---|'
             awk -F '\t' '{printf "| %s | %s | %s |\n", $1, $2, $3}' "$EVIDENCE/timings.tsv" 2>/dev/null
             echo; echo "## Image manifests"; echo; echo '| Image | Reference | Digest | linux/arm64 | Platforms |'; echo '|---|---|---|---|---|'
@@ -247,6 +336,7 @@ jobs:
         if: always()
         run: |
           pkill -f "src/server.ts" || true
+          kill "$(cat "$SAMPLES/sampler.pid" 2>/dev/null)" 2>/dev/null || true
           docker rm -f wethaq-api-image wethaq-pg >/dev/null 2>&1 || true
           docker network rm wethaq-arm64 >/dev/null 2>&1 || true
           ./fabric/reset.sh --yes || true

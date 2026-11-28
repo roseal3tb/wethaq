@@ -1,18 +1,33 @@
 # Wethaq GP482: final completion report
 
 Date: 2026-11-27, updated for the GP1 submission (branch `gp1-final-readiness`, merged as pull request #17 on
-2026-11-28) and with the first native arm64 run on 2026-11-28.
-Sections 1 to 6 describe the GP482 work merged through pull requests #13 to #16; §0 describes the final readiness
-branch. The GP481 report and the research results in `analysis/results/` were not changed.
+2026-11-28), with the first native arm64 run on 2026-11-28, and for the GP1 closure (branch `gp1-closure`,
+2026-11-28). Sections 1 to 6 describe the GP482 work merged through pull requests #13 to #16; §0 describes the
+readiness branch and §0a the closure. The GP481 report and the research results in `analysis/results/` were not
+changed. The sign-off is in [GP1_FINAL_SIGNOFF.md](GP1_FINAL_SIGNOFF.md).
 
 **Status.** The backend, the Hyperledger Fabric integration and the operations work are complete for a
 single-machine academic prototype. Every suite was run on a freshly created Fabric 2.5.12 network and passed. The
-system is **not 100% complete**, and it is not production-ready or deployed. The GitHub Actions checks pass on
-pull requests, and the manual Fabric workflow ran on GitHub on 2026-11-27 (7 of 7 integration tests; its NFR report
-showed 30 of 31, see §0). Nothing has been hosted: **actual cloud deployment is intentionally deferred until GP2.
-WETHAQ has not been deployed to Oracle Cloud during GP1.** The Vercel site runs Demo Mode and is not connected to
-any blockchain network. User testing was deferred. Cancellation and return workflows do not exist. The open items
-are listed in [REMAINING_BLOCKERS.md](REMAINING_BLOCKERS.md).
+system is **not complete in every respect**, and it is not production-ready or deployed. The GitHub Actions checks
+pass on pull requests, and the manual Fabric workflow passed on GitHub on `main` on 2026-11-28 (7 of 7, NFR 31 of
+31). Nothing has been hosted: **actual cloud deployment is intentionally deferred until GP2. WETHAQ has not been
+deployed to Oracle Cloud during GP1.** The Vercel site runs Demo Mode and is not connected to any blockchain
+network. User testing was not carried out (materials are prepared). Cancellation and return workflows do not exist.
+The open items are listed in [REMAINING_BLOCKERS.md](REMAINING_BLOCKERS.md).
+
+## 0a. GP1 closure (branch `gp1-closure`)
+
+| Item | Change | Status | Evidence |
+| --- | --- | --- | --- |
+| Fresh `fabric.yml` run on GitHub (x64) | run 46169704428 on `main` | COMPLETE AND VERIFIED: 7 of 7, NFR 31 of 31 | [github-runs.md](evidence/gp1-closure-2026-11-28/github-runs.md) |
+| Pull-request checks and Node 20 warnings | read on GitHub, not taken from a report | COMPLETE AND VERIFIED: all passed, no Node 20 deprecation annotation | same |
+| Fabric installer | pinned commit, SHA-256 per archive, image digests; upstream helper no longer run | COMPLETE AND VERIFIED on x86_64; on GitHub not yet run | [fabric-install/](evidence/gp1-closure-2026-11-28/fabric-install/README.md) |
+| Accidental network replacement | `up.sh` asks or needs `--recreate`; `down.sh` asks | COMPLETE AND VERIFIED | regression `persistence.txt`; DEPLOYMENT_GUIDE.md §4 |
+| Accessibility | heading order fixed with no visual change; NFR2 table-alternative test | NFR2 criteria COMPLETE AND VERIFIED; contrast documented (B8) | [accessibility/](evidence/gp1-closure-2026-11-28/accessibility/README.md) |
+| arm64 measurements | peaks by phase, storage, network start phases, optional 2 CPU / 12 GB limit | IMPLEMENTED BUT NOT VERIFIED (needs a run) | [arm64-measurement-context.md](evidence/gp1-closure-2026-11-28/arm64-measurement-context.md) |
+| Academic requirements | FR1–FR12 and NFR1–NFR7 compared with the GP481 report; phase names questioned | COMPLETE (no university requirements document was available) | [academic-requirements-verification.md](evidence/gp1-closure-2026-11-28/academic-requirements-verification.md) |
+| User and expert evaluation | kit prepared | prepared, **not executed** | [UAT_AND_EXPERT_EVALUATION_KIT.md](UAT_AND_EXPERT_EVALUATION_KIT.md) |
+| Final regression | every suite, at `d0835da` | COMPLETE AND VERIFIED (API image build blocked in this sandbox only) | [regression/](evidence/gp1-closure-2026-11-28/regression/README.md) |
 
 ## 0. GP1 submission readiness (branch `gp1-final-readiness`)
 

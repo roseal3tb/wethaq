@@ -1,0 +1,13 @@
+
+> wethaq-shipment-chaincode@1.0.0 test
+> tsc && vitest run
+
+
+ RUN  v4.1.12 /home/user/roseal3tb/wethaq/chaincode/shipment
+
+
+ Test Files  1 passed (1)
+      Tests  24 passed (24)
+   Start at  17:43:18
+   Duration  249ms (transform 56ms, setup 0ms, import 122ms, tests 22ms, environment 0ms)
+

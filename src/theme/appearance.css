@@ -91,7 +91,7 @@ html[data-theme="dark"] .theme-moon { opacity: 1; transform: rotate(0) scale(1);
   .login-brand-footer, .login-brand-footer svg, .olive-eyebrow, .brand-version, .mini-mark,
   .login-topline, .login-foot, .field > span, .input-icon > svg,
   .app-shell, .topbar, .header-page, .breadcrumbs, .footer-title strong, .footer-title small,
-  .kpi-label, .kpi-value, .kpi-note, .panel-heading h3, .panel-heading p, .info-banner) {
+  .kpi-label, .kpi-value, .kpi-note, .panel-heading h3, .panel-heading h2, .panel-heading p, .info-banner) {
   transition: background-color var(--theme-duration) var(--theme-ease),
     color var(--theme-duration) var(--theme-ease), border-color var(--theme-duration) var(--theme-ease);
 }

@@ -1,0 +1,9 @@
+
+ RUN  v4.1.12 <repo>/wethaq-api
+
+
+ Test Files  10 passed | 1 skipped (11)
+      Tests  109 passed | 7 skipped (116)
+   Start at  20:43:03
+   Duration  15.89s (transform 810ms, setup 0ms, import 3.20s, tests 37.65s, environment 1ms)
+

@@ -1,0 +1,18 @@
+
+> wethaq-logistics-dashboard@1.0.0 build
+> tsc -b && vite build
+
+vite v6.4.6 building for production...
+transforming...
+✓ 2112 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   1.09 kB │ gzip:   0.61 kB
+dist/assets/index-DNcEsz2D.css  130.78 kB │ gzip:  28.07 kB
+dist/assets/index-Cne6At9Y.js   951.20 kB │ gzip: 273.63 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 4.12s

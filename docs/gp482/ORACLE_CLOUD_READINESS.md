@@ -17,10 +17,12 @@ PARTIALLY COMPLETE, BLOCKED, DEFERRED TO GP2, NOT APPLICABLE.
 | --- | --- | --- |
 | Every container image used publishes `linux/arm64` (Fabric 2.5.12, Fabric CA 1.5.15, Node 22 and 20, PostgreSQL 16, Caddy 2) | COMPLETE AND VERIFIED | §4.1: manifest lists read from the registries on 2026-11-27 |
 | Fabric 2.5.12 and Fabric CA 1.5.15 publish `linux-arm64` binaries, and the installer selects them on `aarch64` | COMPLETE AND VERIFIED | §4.2 |
+| Installer pinned: fabric-samples commit, SHA-256 of every release archive, image digests | COMPLETE AND VERIFIED on x86_64 (2026-11-28); on GitHub arm64 IMPLEMENTED BUT NOT VERIFIED | §4.2; [fabric-install/](evidence/gp1-closure-2026-11-28/fabric-install/README.md) |
 | No hard-coded `amd64`/`x86_64` in the project's scripts, Dockerfiles or compose files | COMPLETE AND VERIFIED | §4.3: search of `fabric/*.sh`, `deploy/`, both Dockerfiles, `.github/` |
 | npm dependencies need no native build on arm64 | COMPLETE AND VERIFIED | §4.4: lockfile audit |
 | Native arm64 run: build images, start Fabric, PostgreSQL and the API, integration and NFR checks, resource figures | COMPLETE AND VERIFIED on a GitHub-hosted arm64 runner (2026-11-28) | [evidence/github-arm64-2026-11-28/](evidence/github-arm64-2026-11-28/README.md): every step passed, NFR 31 of 31, all containers `linux/arm64`, no emulation |
-| Proposed server size (VM.Standard.A1.Flex, 2 OCPU, 12 GB, Ubuntu 24.04 aarch64) fits Always Free | COMPLETE AND VERIFIED against the official documentation | §3 |
+| Proposed server size (VM.Standard.A1.Flex, 2 OCPU, 12 GB, Ubuntu 24.04 aarch64) fits Always Free | COMPLETE AND VERIFIED against the official documentation (re-read 2026-11-28) | §3 |
+| Peak memory and CPU by phase, storage growth, and a run limited to 2 CPU / 12 GB | IMPLEMENTED BUT NOT VERIFIED: the workflow can measure them, but has not run yet | §5, §6 |
 | Oracle account, instance, network, DNS, TLS certificate, backups on OCI | DEFERRED TO GP2 | §7, §8 |
 
 Compatibility of single dependencies is not taken as proof that WETHAQ runs on arm64: upstream Fabric states
@@ -44,7 +46,7 @@ orderer and CAs, the API's port 4000 and the Docker socket stay on internal Dock
 
 ## 3. Proposed configuration, checked against the official Oracle documentation
 
-| Item | Proposed for GP2 | What the official documentation says (read 2026-11-27) | Check |
+| Item | Proposed for GP2 | What the official documentation says (read 2026-11-27, re-read 2026-11-28) | Check |
 | --- | --- | --- | --- |
 | Shape | `VM.Standard.A1.Flex` (Ampere A1, Arm) | Always Free includes Arm instances on the `VM.Standard.A1.Flex` shape | Fits |
 | CPU | 2 OCPU | Always Free Ampere A1: "2 OCPUs and 12 GB of memory" (1,500 OCPU hours and 9,000 GB hours per month), allocated flexibly to one or two instances | Fits, uses the whole A1 allowance in one instance |
@@ -57,7 +59,7 @@ orderer and CAs, the API's port 4000 and the Docker socket stay on internal Dock
 **Two official pages disagree on the A1 allowance.** The Always Free Resources page gives 2 OCPUs and 12 GB
 (1,500 OCPU hours, 9,000 GB hours per month). The Arm-Based Compute page still gives 3,000 OCPU hours and
 18,000 GB hours per month (4 OCPUs and 24 GB). The plan uses the smaller figure, so it fits either way. Check the
-page again before provisioning in GP2.
+page again before provisioning in GP2. Both pages were re-read on 2026-11-28 and still disagree in the same way.
 
 ### Always Free conditions that affect WETHAQ
 
@@ -101,15 +103,21 @@ digests at that time; tags can move, so GP2 should pin these digests (or newer o
 The library images were read through Google's Docker Hub mirror (`mirror.gcr.io`) because Docker Hub and
 public.ecr.aws were rate-limiting this environment. The digests match Docker Hub's where both answered.
 
-### 4.2 Fabric binaries
+### 4.2 Fabric binaries and images
 
-`fabric/install.sh` runs Hyperledger's `install-fabric.sh`, which maps `uname -m` `aarch64` to `arm64` and
-downloads `hyperledger-fabric-linux-arm64-2.5.12.tar.gz` and `hyperledger-fabric-ca-linux-arm64-1.5.15.tar.gz`.
-Both release assets exist (HTTP 206 on a ranged request, 2026-11-27). The workflow checks that the installed
-`peer` is an `ARM aarch64` executable.
+`fabric/install.sh` maps `uname -m` `aarch64` to `arm64` and downloads
+`hyperledger-fabric-linux-arm64-2.5.12.tar.gz` and `hyperledger-fabric-ca-linux-arm64-1.5.15.tar.gz` from the
+official GitHub releases. The workflow checks that the installed `peer` is an `ARM aarch64` executable.
 
-Finding for GP2 (not changed in GP1): `install.sh` downloads `install-fabric.sh` from the `main` branch of
-hyperledger/fabric, which is not pinned. Pin it to a tag or commit before using it on a server.
+**Pinned since commit 5439dc4 (GP1 closure).** Until then, `install.sh` downloaded Hyperledger's
+`install-fabric.sh` from the `main` branch and ran it, so what it installed could change with no change in this
+repository (on 2026-11-28 that script already defaulted to Fabric 2.5.16). Now the upstream helper is not run.
+fabric-samples is checked out at commit `5789681b…`, each release archive (linux and darwin, amd64 and arm64) must
+match a SHA-256 written in the script before it is unpacked, and the six images are pulled by their
+multi-architecture index digests (ghcr.io first, Docker Hub second). Hyperledger publishes no checksum files for
+these archives, so the hashes are trust on first use: they were taken on 2026-11-28 and the extracted binaries
+match the ones tested since September. Details and the tamper test:
+[evidence/gp1-closure-2026-11-28/fabric-install/](evidence/gp1-closure-2026-11-28/fabric-install/README.md).
 
 ### 4.3 Architecture assumptions in the project
 
@@ -134,11 +142,19 @@ The chaincode image uses `node:20-bookworm-slim`. Node.js 20 is end-of-life (nod
 22 and 24 are LTS). The chaincode uses `fabric-shim` and `fabric-contract-api` 2.5.8, which per
 fabric-chaincode-node's compatibility table needs Node 18 or later and ships with a Node 22 runtime.
 
+Node.js release status re-checked on nodejs.org on 2026-11-28: 20 is end of life, 22 and 24 are LTS.
+
 **Decision:** not migrated in GP1. Changing the runtime right before submission without a verified run is
 exactly what the brief forbids. **DEFERRED TO GP2:** move the chaincode image to Node 22, then run the chaincode
 unit tests, `fabric.yml` and the arm64 workflow before accepting it. The API already runs on Node 22.
 The GitHub Actions themselves now run on Node 24 (`actions/checkout` v7.0.1, `actions/setup-node` v7.1.0,
 `actions/upload-artifact` v7.0.2); that is the runtime of the actions, not of WETHAQ.
+
+**Migration plan for GP2.** (1) Set the repository variable `CHAINCODE_NODE_IMAGE` to `node:22-bookworm-slim` and
+run the arm64 workflow, and `WETHAQ_CHAINCODE_NODE_IMAGE` for the quality checks; no code change is needed for this
+trial. (2) If they pass, change the default `ARG NODE_IMAGE` in `chaincode/shipment/Dockerfile` and the fallbacks in
+the workflows. (3) Upgrade the chaincode on both organizations with `fabric/upgrade-chaincode.sh` and check that the
+earlier ledger history still verifies. The acceptance criteria are in REMAINING_BLOCKERS.md (B16).
 
 ## 5. Resource expectations
 
@@ -158,7 +174,13 @@ The arm64 figures will come from the workflow.
 On the **native arm64 runner** (2026-11-28, one sample after the tests): peers 72 and 82 MiB, orderer 30 MiB,
 CAs about 10 MiB each, chaincode containers about 30 MiB each, PostgreSQL 56 MiB, API about 136 MB resident.
 
-That is well under 1 GB of the 12 GB planned, so memory is not the constraint. Disk is the larger item: the
+**What these numbers are.** Each is one sample taken after the tests had finished, so it is memory at rest, not
+peak memory, and the runner is not Oracle hardware. The NFR timings are averages per operation type over 10
+sequential workflow runs, and the 68.7 tx/s figure is a burst of 20 concurrent create-request transactions, not a
+sustained rate. Most of the 0.5 s per write is the orderer's 500 ms `BatchTimeout`. The full explanation is in
+[arm64-measurement-context.md](evidence/gp1-closure-2026-11-28/arm64-measurement-context.md).
+
+At rest, that is well under 1 GB of the 12 GB planned. Peak use under load has not been measured yet (§6). Disk is the larger item: the
 Fabric images alone take several GB (`fabric-ccenv` about 1 GB, `fabric-tools` about 0.9 GB, chaincode image
 about 0.7 GB in this environment), which is why §3 plans a 50 to 100 GB boot volume.
 
@@ -184,8 +206,18 @@ The whole stack used well under 1 GB of memory. Evidence:
 [evidence/github-arm64-2026-11-28/](evidence/github-arm64-2026-11-28/README.md).
 
 The runner is 4 vCPU and 16 GB; the planned server is 2 OCPU and 12 GB (an OCPU on Ampere A1 is one core). The
-run shows that WETHAQ works on arm64 and how much memory it uses. It does not prove the timings of the smaller
-server.
+run shows that WETHAQ works on arm64 and how much memory it uses at rest. It does not prove the timings of the
+smaller server.
+
+**Peak and limited runs (added in the GP1 closure, not run yet).** The workflow now samples every container, the
+API, the host and (when limited) the cgroup every 2 seconds, marks the phases (startup, 30 s idle, NFR checks, an
+extra load step of 30 workflow runs and 50 concurrent requests), and writes `resources-summary.md` (median and peak
+per phase), `storage.txt` (PostgreSQL and ledger sizes) and `timings.tsv` (network start phases). Its
+`a1_limits` input runs Docker and the API inside a systemd slice limited to `CPUQuota=200%`, `MemoryMax=12G` and no
+swap, and checks that the limit is in place before it starts. To run it: Actions → "Oracle Cloud ARM64 Readiness"
+→ Run workflow → branch `gp1-closure` → once with `a1_limits` unticked, once ticked. This is still a GitHub
+runner (Neoverse-N2), not an Oracle A1 instance (Ampere Altra): it shows whether WETHAQ fits in 2 CPUs and 12 GB,
+not the exact timings on Oracle.
 
 ## 7. Future GP2 deployment guide (not performed)
 
@@ -211,7 +243,7 @@ Placeholders: `<HOME_REGION>`, `<COMPARTMENT>`, `<VCN_NAME>`, `<SERVER_PUBLIC_IP
     untrusted users to the `docker` group.
 11. Confirm `uname -m` is `aarch64` and `docker info` reports `aarch64`.
 12. Clone the repository at the release tag that passed the arm64 workflow.
-13. Pin `fabric/install.sh`'s installer to a tag (§4.2), then run `./fabric/install.sh`. Check that
+13. Run `./fabric/install.sh` (pinned, §4.2). Check that
     `fabric/fabric-samples/bin/peer` is `ARM aarch64`.
 14. Start the network with `./fabric/up.sh` and check it with `./fabric/verify-network.sh`.
 15. Build the API image natively: `docker build -f wethaq-api/Dockerfile -t wethaq-api .`.
@@ -244,10 +276,11 @@ Placeholders: `<HOME_REGION>`, `<COMPARTMENT>`, `<VCN_NAME>`, `<SERVER_PUBLIC_IP
 | Off-instance backups to Object Storage and a restore drill on the server | DEFERRED TO GP2 |
 | Monitoring and alerting on the server | DEFERRED TO GP2 |
 | Chaincode runtime from Node.js 20 (EOL) to Node.js 22 | DEFERRED TO GP2 |
-| Pinning `install-fabric.sh` and the image digests | DEFERRED TO GP2 |
+| Pinning the Fabric installer and the image digests | COMPLETE AND VERIFIED on x86_64 in the GP1 closure (§4.2); confirm on GitHub arm64 |
+| Peak and 2 CPU / 12 GB measurements on the arm64 runner | IMPLEMENTED BUT NOT VERIFIED (§6) |
 | Production identity management (CA administrator credentials off the server, revocation procedures on real identities) | DEFERRED TO GP2 |
 
-## Sources (read 2026-11-27)
+## Sources (read 2026-11-27; the Oracle pages and nodejs.org re-read 2026-11-28)
 
 * Oracle, Always Free Resources: <https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm>
 * Oracle, Cloud Free Tier FAQ: <https://www.oracle.com/cloud/free/faq/>
@@ -257,5 +290,6 @@ Placeholders: `<HOME_REGION>`, `<COMPARTMENT>`, `<VCN_NAME>`, `<SERVER_PUBLIC_IP
 * GitHub Changelog, arm64 hosted runners for public repositories are generally available (2025-08-07):
   <https://github.blog/changelog/2025-08-07-arm64-hosted-runners-for-public-repositories-are-now-generally-available/>
 * Hyperledger, fabric-chaincode-node `COMPATIBILITY.md`: <https://github.com/hyperledger/fabric-chaincode-node/blob/main/COMPATIBILITY.md>
-* Hyperledger, `install-fabric.sh`: <https://github.com/hyperledger/fabric/blob/main/scripts/install-fabric.sh>
+* Node.js, Previous releases (release status): <https://nodejs.org/en/about/previous-releases>
+* Hyperledger, `install-fabric.sh` (no longer used, read for comparison): <https://github.com/hyperledger/fabric/blob/main/scripts/install-fabric.sh>
 * Node.js, Previous releases: <https://nodejs.org/en/about/previous-releases>

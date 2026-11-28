@@ -1,0 +1,45 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.64kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/node:22-bookworm-slim
+#2 DONE 0.0s
+
+#3 [ 1/15] FROM docker.io/library/node:22-bookworm-slim@sha256:be979e5523c76fa4d5ca4ebd3099078f220aa47ec39c48ad5b5df9314debd6eb
+#3 resolve docker.io/library/node:22-bookworm-slim@sha256:be979e5523c76fa4d5ca4ebd3099078f220aa47ec39c48ad5b5df9314debd6eb 0.0s done
+#3 DONE 0.0s
+
+#4 [internal] load build context
+#4 transferring context: 468.46kB 0.0s done
+#4 DONE 0.0s
+
+#5 [ 2/15] WORKDIR /app
+#5 CACHED
+
+#6 [ 3/15] COPY wethaq-api/package.json wethaq-api/package-lock.json wethaq-api/
+#6 CACHED
+
+#7 [ 4/15] RUN cd wethaq-api && npm ci --omit=dev --no-audit --no-fund
+#7 76.47 npm error Exit handler never called!
+#7 76.47 npm error This is an error with npm itself. Please report this error at:
+#7 76.47 npm error   <https://github.com/npm/cli/issues>
+#7 76.47 npm error A complete log of this run can be found in: /root/.npm/_logs/2026-11-28T17_51_47_527Z-debug-0.log
+#7 ERROR: process "/bin/sh -c cd wethaq-api && npm ci --omit=dev --no-audit --no-fund" did not complete successfully: exit code: 1
+------
+ > [ 4/15] RUN cd wethaq-api && npm ci --omit=dev --no-audit --no-fund:
+76.47 npm error Exit handler never called!
+76.47 npm error This is an error with npm itself. Please report this error at:
+76.47 npm error   <https://github.com/npm/cli/issues>
+76.47 npm error A complete log of this run can be found in: /root/.npm/_logs/2026-11-28T17_51_47_527Z-debug-0.log
+------
+Dockerfile:10
+--------------------
+   8 |     WORKDIR /app
+   9 |     COPY wethaq-api/package.json wethaq-api/package-lock.json wethaq-api/
+  10 | >>> RUN cd wethaq-api && npm ci --omit=dev --no-audit --no-fund
+  11 |     COPY wethaq-api/tsconfig.json wethaq-api/
+  12 |     COPY wethaq-api/src wethaq-api/src
+--------------------
+ERROR: failed to build: failed to solve: process "/bin/sh -c cd wethaq-api && npm ci --omit=dev --no-audit --no-fund" did not complete successfully: exit code: 1

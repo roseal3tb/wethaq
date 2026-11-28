@@ -1,0 +1,85 @@
+$ ./fabric/install.sh   (clean folder, linux-amd64, 2026-11-28T17:44:16Z)
+==> Cloning fabric-samples at 5789681b4f4d
+==> Downloading https://github.com/hyperledger/fabric/releases/download/v2.5.12/hyperledger-fabric-linux-amd64-2.5.12.tar.gz
+    SHA-256 verified: 248be10de7f030a85eaecee118043e84f7b107aa3a8d3c48e6208f5fce0543b6
+==> Downloading https://github.com/hyperledger/fabric-ca/releases/download/v1.5.15/hyperledger-fabric-ca-linux-amd64-1.5.15.tar.gz
+    SHA-256 verified: a4831c233ab7c1d9e039dc5badf4cf890719358442b5042f12d94b1d6f919289
+==> Binaries for linux-amd64 installed in fabric/fabric-samples/bin
+==> Pulling ghcr.io/hyperledger/fabric-peer@sha256:f5f3fb3b061a067df0d13ed109fe1109cc9cbf02207936438435fcf431a11440
+failed to copy: httpReadSeeker: failed open: failed to do request: Get "https://pkg-containers.githubusercontent.com/ghcr1/blobs/sha256:63a9820373a4f122cda21d3e039b7d7d7301d897edde88315cf81236d4503271?<signed URL parameters removed>": Forbidden (agent proxy: no rule or network setting allows this host)
+    not available from this registry, trying the next one
+==> Pulling docker.io/hyperledger/fabric-peer@sha256:18f7503cfc82f062708f93199d372e3f63b6a1b8ce168f20f387d2ce87aaf2eb
+==> Pulling ghcr.io/hyperledger/fabric-orderer@sha256:5a91a378ed13de92d1566781dede60baaca42265076f96b5921ad03b25184c6a
+failed to copy: httpReadSeeker: failed open: failed to do request: Get "https://pkg-containers.githubusercontent.com/ghcr1/blobs/sha256:d69cac8bbe8427ddeb3a4daf075f4c52a05ef7e7d06fae101507a5ce57fd08fd?<signed URL parameters removed>": Forbidden (agent proxy: no rule or network setting allows this host)
+    not available from this registry, trying the next one
+==> Pulling docker.io/hyperledger/fabric-orderer@sha256:d33a2714b6628d38a46b2e054d558e002cf2ee991828189741b3417c54e1ac0c
+==> Pulling ghcr.io/hyperledger/fabric-ccenv@sha256:72bda013702ad5a4103c00e6b58617110da69c496b60993e35c9d9e09c1a338e
+failed to copy: httpReadSeeker: failed open: failed to do request: Get "https://pkg-containers.githubusercontent.com/ghcr1/blobs/sha256:a39804456867c1eb56b0538b60031b04ac59d10470609e220f66c78d570eab6a?<signed URL parameters removed>": Forbidden (agent proxy: no rule or network setting allows this host)
+    not available from this registry, trying the next one
+==> Pulling docker.io/hyperledger/fabric-ccenv@sha256:14c6cca8d85535d4eb08de66be025d20e953e7deff34e1c90c3e4f4cae7d497f
+==> Pulling ghcr.io/hyperledger/fabric-baseos@sha256:f0dab8b4acd484e35c2303593c6ce850e3d000b77d86b25d2116cbcb67f8b6ff
+failed to copy: httpReadSeeker: failed open: failed to do request: Get "https://pkg-containers.githubusercontent.com/ghcr1/blobs/sha256:32d16a66e457e2e380d3be52493515cea5f91cd22b23d4c9a878f2f6767a24e5?<signed URL parameters removed>": Forbidden (agent proxy: no rule or network setting allows this host)
+    not available from this registry, trying the next one
+==> Pulling docker.io/hyperledger/fabric-baseos@sha256:9133efd86ef1ad7e7f7f8e9795d0e23287aab4caf6b1d7500cccfde9870940fd
+==> Pulling ghcr.io/hyperledger/fabric-tools@sha256:f7c8847907c68429e709e7426ba6dfc927e366d4fb90589f1a7861b2859ac8ec
+failed to copy: httpReadSeeker: failed open: failed to do request: Get "https://pkg-containers.githubusercontent.com/ghcr1/blobs/sha256:e33f0e76816462fc4a8b7d978d77ff3b0d24c98efc1fa365e75487a6e4872c7b?<signed URL parameters removed>": Forbidden (agent proxy: no rule or network setting allows this host)
+    not available from this registry, trying the next one
+==> Pulling docker.io/hyperledger/fabric-tools@sha256:c802f0bae7998bfac4371c02b1cb794216b746931f127ba6dfe3d336ba5e0238
+==> Pulling ghcr.io/hyperledger/fabric-ca@sha256:4704861f82be659372510b72c1e8b141563743e1f5840d8c094ded1df9253c68
+failed to copy: httpReadSeeker: failed open: failed to do request: Get "https://pkg-containers.githubusercontent.com/ghcr1/blobs/sha256:03492c5437b1559f8ec6dc255b5b762866c9379a411b3ae4ba24cd77f2cec18a?<signed URL parameters removed>": Forbidden (agent proxy: no rule or network setting allows this host)
+    not available from this registry, trying the next one
+==> Pulling docker.io/hyperledger/fabric-ca@sha256:1b64dc702bd400e14c8f452dedc0359b7dc06679b751b08937eb2bf2865fed40
+==> Images pulled by digest and tagged (2.5.12 / 1.5.15, 2.5 / 1.5, latest)
+
+Fabric is installed. Start the Wethaq network with: ./fabric/up.sh
+exit=0
+
+$ git -C fabric/fabric-samples rev-parse HEAD
+5789681b4f4d24e58fa40f19a69f5496892374b6
+
+$ fabric/fabric-samples/bin/peer version
+peer:
+ Version: v2.5.12
+ Commit SHA: af0b647
+ Go version: go1.23.5
+ OS/Arch: linux/amd64
+ Chaincode:
+  Base Docker Label: org.hyperledger.fabric
+  Docker Namespace: hyperledger
+
+
+$ fabric/fabric-samples/bin/fabric-ca-client version
+fabric-ca-client:
+ Version: v1.5.15
+ Go version: go1.23.5
+ OS/Arch: linux/amd64
+
+$ ./fabric/install.sh samples binary docker   (second run, same folder: idempotent)
+==> fabric-samples is already at the pinned commit 5789681b4f4d
+==> Downloading https://github.com/hyperledger/fabric/releases/download/v2.5.12/hyperledger-fabric-linux-amd64-2.5.12.tar.gz
+    SHA-256 verified: 248be10de7f030a85eaecee118043e84f7b107aa3a8d3c48e6208f5fce0543b6
+==> Downloading https://github.com/hyperledger/fabric-ca/releases/download/v1.5.15/hyperledger-fabric-ca-linux-amd64-1.5.15.tar.gz
+    SHA-256 verified: a4831c233ab7c1d9e039dc5badf4cf890719358442b5042f12d94b1d6f919289
+==> Binaries for linux-amd64 installed in fabric/fabric-samples/bin
+==> Pulling ghcr.io/hyperledger/fabric-peer@sha256:f5f3fb3b061a067df0d13ed109fe1109cc9cbf02207936438435fcf431a11440
+    not available from this registry, trying the next one
+==> Pulling docker.io/hyperledger/fabric-peer@sha256:18f7503cfc82f062708f93199d372e3f63b6a1b8ce168f20f387d2ce87aaf2eb
+==> Pulling ghcr.io/hyperledger/fabric-orderer@sha256:5a91a378ed13de92d1566781dede60baaca42265076f96b5921ad03b25184c6a
+    not available from this registry, trying the next one
+==> Pulling docker.io/hyperledger/fabric-orderer@sha256:d33a2714b6628d38a46b2e054d558e002cf2ee991828189741b3417c54e1ac0c
+==> Pulling ghcr.io/hyperledger/fabric-ccenv@sha256:72bda013702ad5a4103c00e6b58617110da69c496b60993e35c9d9e09c1a338e
+    not available from this registry, trying the next one
+==> Pulling docker.io/hyperledger/fabric-ccenv@sha256:14c6cca8d85535d4eb08de66be025d20e953e7deff34e1c90c3e4f4cae7d497f
+==> Pulling ghcr.io/hyperledger/fabric-baseos@sha256:f0dab8b4acd484e35c2303593c6ce850e3d000b77d86b25d2116cbcb67f8b6ff
+    not available from this registry, trying the next one
+==> Pulling docker.io/hyperledger/fabric-baseos@sha256:9133efd86ef1ad7e7f7f8e9795d0e23287aab4caf6b1d7500cccfde9870940fd
+==> Pulling ghcr.io/hyperledger/fabric-tools@sha256:f7c8847907c68429e709e7426ba6dfc927e366d4fb90589f1a7861b2859ac8ec
+    not available from this registry, trying the next one
+==> Pulling docker.io/hyperledger/fabric-tools@sha256:c802f0bae7998bfac4371c02b1cb794216b746931f127ba6dfe3d336ba5e0238
+==> Pulling ghcr.io/hyperledger/fabric-ca@sha256:4704861f82be659372510b72c1e8b141563743e1f5840d8c094ded1df9253c68
+    not available from this registry, trying the next one
+==> Pulling docker.io/hyperledger/fabric-ca@sha256:1b64dc702bd400e14c8f452dedc0359b7dc06679b751b08937eb2bf2865fed40
+==> Images pulled by digest and tagged (2.5.12 / 1.5.15, 2.5 / 1.5, latest)
+
+Fabric is installed. Start the Wethaq network with: ./fabric/up.sh
+exit=0

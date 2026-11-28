@@ -3,6 +3,41 @@
 This file was called `TEST_EVIDENCE.md` until pull request #13; evidence files written before then still use the
 old name.
 
+## GP1 closure (2026-11-28, branch `gp1-closure`)
+
+**Final regression, local.** At commit `d0835da` on Linux x86-64 (Node 22.23.5, npm 10.9.9, Docker 29.9.3,
+PostgreSQL 16), 17:42 to 17:53 UTC. Every output is in
+[evidence/gp1-closure-2026-11-28/regression/](evidence/gp1-closure-2026-11-28/regression/README.md).
+
+| Suite | Result |
+| --- | --- |
+| Dashboard type check, build, unit tests | pass; 20 of 20 |
+| ESLint | 0 errors, 106 warnings (reviewed, listed in the evidence README) |
+| Chaincode unit tests | 24 of 24 |
+| API type check and tests (local ledger) | pass; 109 passed, 7 skipped (the Fabric-only file) |
+| `npm audit` (dashboard, API, chaincode, production dependencies) | 0 vulnerabilities each |
+| Secret scan of tracked files | nothing found |
+| Demo Mode browser tests | 58 passed, 2 skipped (the new NFR2 test added 4) |
+| Live-mode browser tests | 9 of 9 on the re-run. The first run failed 6 tests because the regression script's Fabric variables (`DEMO_PASSWORD`, `LEDGER_MODE`) leaked into the tests' own API; nothing was changed between the runs |
+| Pinned `fabric/install.sh` | pass, both archives SHA-256 verified |
+| Fresh network (`up.sh --recreate`), migrations twice, seed | pass (network in 43 s) |
+| Fabric integration tests | 7 of 7 |
+| NFR on Fabric | 31 of 31 (slowest average write 540 ms, p95 reads 84 ms, 20 concurrent in 0.21 s) |
+| NFR with a wrong password | exit 1, as it must |
+| `stop.sh` then `start.sh` | ledger history and PostgreSQL counts identical; Fabric integration 7 of 7 afterwards |
+| Fabric browser test | 1 of 1 |
+| API production image build | fails in this sandbox only (npm inside Docker cannot reach the registry, B11); built on GitHub arm64 on 2026-11-28 |
+
+**On GitHub.** `fabric.yml` run 46169704428 on `main` (3347560), 28 Nov 2026, x64: 7 of 7, NFR 31 of 31, Fabric
+browser test passed, 4 m 42 s. The pull-request checks of #17 and #18 were read on GitHub and passed
+([github-runs.md](evidence/gp1-closure-2026-11-28/github-runs.md)). `fabric.yml` and the arm64 workflow have
+**not yet run on `gp1-closure`**.
+
+**Also checked:** a clean install with the pinned installer and a wrong-hash test
+([fabric-install/](evidence/gp1-closure-2026-11-28/fabric-install/README.md)); `up.sh` refusing to replace an
+existing network; axe before and after the heading fix, and 30 screenshots compared
+([accessibility/](evidence/gp1-closure-2026-11-28/accessibility/README.md)).
+
 ## GP1 submission update (2026-11-27, branch `gp1-final-readiness`)
 
 **Final regression, local.** At commit `4e134e7` on Linux x86-64 (Node 22.23.5, Docker 29.9.3, PostgreSQL 16,

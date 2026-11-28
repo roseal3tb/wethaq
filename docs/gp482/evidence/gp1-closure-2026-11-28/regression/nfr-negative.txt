@@ -1,0 +1,16 @@
+
+> wethaq-api@0.1.0 nfr
+> tsx src/cli/nfr.ts
+
+Wethaq NFR measurements against http://127.0.0.1:4000/api (ledger: fabric), 10 runs, 20 concurrent requests
+
+/home/user/roseal3tb/wethaq/wethaq-api/src/cli/nfr.ts:72
+    if (res.status !== 200) throw new Error(`Could not sign in as ${role}@wethaq.demo (${res.status} ${JSON.stringify(res.body)}). Is DEMO_PASSWORD right?`);
+                                  ^
+
+Error: Could not sign in as planner@wethaq.demo (401 {"error":"Incorrect email or password"}). Is DEMO_PASSWORD right?
+    at main (/home/user/roseal3tb/wethaq/wethaq-api/src/cli/nfr.ts:72:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async <anonymous> (/home/user/roseal3tb/wethaq/wethaq-api/src/cli/nfr.ts:242:7)
+
+Node.js v22.23.5

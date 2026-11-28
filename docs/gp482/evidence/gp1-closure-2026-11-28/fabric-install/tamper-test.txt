@@ -1,0 +1,6 @@
+$ (copy of fabric/install.sh with the expected linux-amd64 Fabric hash replaced by 64 zeros, run in an empty directory)
+$ ./install.sh binary
+==> Downloading https://github.com/hyperledger/fabric/releases/download/v2.5.12/hyperledger-fabric-linux-amd64-2.5.12.tar.gz
+install.sh: checksum mismatch for https://github.com/hyperledger/fabric/releases/download/v2.5.12/hyperledger-fabric-linux-amd64-2.5.12.tar.gz (expected 0000000000000000000000000000000000000000000000000000000000000000, got 248be10de7f030a85eaecee118043e84f7b107aa3a8d3c48e6208f5fce0543b6); nothing was installed
+exit code: 1
+$ ls fabric-samples   # empty: nothing was unpacked

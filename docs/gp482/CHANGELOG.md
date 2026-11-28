@@ -1,3 +1,31 @@
+# Change log — GP1 closure (branch `gp1-closure`, from `main` at `3347560`)
+
+## Fixes
+* `fabric/install.sh`: no longer downloads and runs `install-fabric.sh` from the `main` branch of hyperledger/fabric.
+  fabric-samples is checked out at a fixed commit, each release archive must match a recorded SHA-256 before it is
+  unpacked, and the six images are pulled by digest (ghcr.io first, Docker Hub second). Finding F16 closed.
+* `fabric/up.sh`: refuses to replace an existing network (containers or ledger volumes) unless the user types
+  `recreate` or passes `--recreate`; stops without changes when not interactive. `fabric/down.sh` now asks first.
+  Finding F18.
+* Accessibility, no visual change: panel titles are `<h2>` (were `<h3>` directly under the page `<h1>`), with every
+  CSS rule mirrored; the load-error state uses an `<h1>`. axe's heading-order finding is gone.
+
+## Tests and CI
+* New browser test for NFR2: the forecast chart's table alternative, and heading levels (4 screen sizes).
+* `oracle-arm64-readiness.yml`: samples resources every 2 s by phase, records peaks, storage and network start
+  phases, adds an extra load step (30 runs, 50 concurrent), and has an optional `a1_limits` input (2 CPUs, 12 GB, no
+  swap). New `.github/scripts/sample-resources.sh` and `summarize-resources.py`. `fabric/up.sh` can write phase
+  timings (`WETHAQ_PHASE_TIMINGS`).
+
+## Documentation and evidence
+* `evidence/gp1-closure-2026-11-28/`: GitHub runs (PR checks, a fresh `fabric.yml` run on `main`), installer
+  verification, accessibility before and after, arm64 measurement context, academic requirements check, final
+  regression.
+* New `UAT_AND_EXPERT_EVALUATION_KIT.md` (prepared, not executed) and `GP1_FINAL_SIGNOFF.md`.
+* Blockers reassessed with reason, justification, required work, dependencies and acceptance criteria for every
+  deferred item; traceability, discrepancies (with the phase-name question), security review, Oracle readiness,
+  backup, architecture and test reports updated.
+
 # Change log — first native arm64 run (branch `gp1-arm64-evidence`)
 
 * `evidence/github-arm64-2026-11-28/`: the artifact of the first *Oracle Cloud ARM64 Readiness* run (every step

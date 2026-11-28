@@ -1,0 +1,53 @@
+Wethaq NFR measurements against http://127.0.0.1:4000/api (ledger: fabric), 10 runs, 20 concurrent requests
+
+PASS  [Performance] Average time of each ledger write (one at a time) — slowest average 542 ms
+PASS  [Performance] Reads and sign-in (95th percentile) — slowest 101 ms
+PASS  [Performance] 20 concurrent shipment requests — 20/20 committed in 0.27 s (74.6 tx/s)
+PASS  [Reliability] Workflow runs without errors (10 × request, dispatch, transit, receipt) — 0 errors, 10/10 completed
+PASS  [Security] Data without signing in — 401
+PASS  [Security] Forged token — 401
+PASS  [Security] Admin token signed with another key — 401
+PASS  [Security] Expired token — 401
+PASS  [Security] Wrong password and unknown email give the same answer — 401 / 401, same message
+FAIL  [Security] SQL injection in the sign-in form — 429
+PASS  [Security] Planner adds a user — 403
+PASS  [Security] Dispatcher creates a shipment request — 403
+PASS  [Security] Receiver resets a password — 403
+PASS  [Security] Dispatcher changes a role — 403
+PASS  [Security] Planner records a dispatch (refused before the ledger) — 422, application, not submitted
+PASS  [Security] Receiver records a dispatch (refused before the ledger) — 422, application, not submitted
+PASS  [Security] Dispatcher confirms a receipt (refused before the ledger) — 422, application, not submitted
+PASS  [Security] A non-admin sees only their own user record — 1 user(s)
+PASS  [Security] Password hashes are never returned by the API — not present
+PASS  [Security] Passwords stored as bcrypt hashes — 8/8
+PASS  [Security] Security headers (helmet) — 4: x-content-type-options, content-security-policy, strict-transport-security, x-frame-options
+PASS  [Integrity] Completed shipments match the ledger — 10/10
+<repo>/wethaq-api/node_modules/pg-pool/index.js:45
+    Error.captureStackTrace(err)
+          ^
+
+error: new row for relation "shipments" violates check constraint "shipments_received_le_dispatched"
+    at <repo>/wethaq-api/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async main (<repo>/wethaq-api/src/cli/nfr.ts:172:5)
+    at async <anonymous> (<repo>/wethaq-api/src/cli/nfr.ts:238:7) {
+  length: 483,
+  severity: 'ERROR',
+  code: '23514',
+  detail: 'Failing row contains (SHP-2026-0051, SP-001, 5, 5, 10, Supplier, LOC-CW, Received, USR-001, 2026-11-27 20:48:02.501697+00, 2026-12-11 20:48:02.501697+00, 2026-12, NFR test run, REC-SP-001-CW, t, confirmed, 21d1398c27679893ee296e567ef589817c249dc6402316cec04ef4cfe361f9d4).',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'shipments',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'shipments_received_le_dispatched',
+  file: 'execMain.c',
+  line: '2109',
+  routine: 'ExecConstraints'
+}
+
+Node.js v22.23.5

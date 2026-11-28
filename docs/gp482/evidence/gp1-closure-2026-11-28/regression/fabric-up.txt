@@ -1,0 +1,620 @@
+# Fabric CA enrollment and registration secrets (fabric-samples defaults for this disposable test network) are shown as <redacted>.
+[0;34mUsing docker and docker compose[0m
+[0;34mStopping network[0m
+ Container ca_org2 Stopping 
+ Container ca_org1 Stopping 
+ Container orderer.example.com Stopping 
+ Container ca_orderer Stopping 
+ Container peer0.org1.example.com Stopping 
+ Container peer0.org2.example.com Stopping 
+ Container ca_org2 Stopped 
+ Container ca_org2 Removing 
+ Container peer0.org2.example.com Stopped 
+ Container peer0.org2.example.com Removing 
+ Container peer0.org1.example.com Stopped 
+ Container peer0.org1.example.com Removing 
+ Container ca_org1 Stopped 
+ Container orderer.example.com Stopped 
+ Container ca_org1 Removing 
+ Container orderer.example.com Removing 
+ Container ca_orderer Stopped 
+ Container ca_orderer Removing 
+ Container ca_org1 Removed 
+ Container ca_org2 Removed 
+ Container peer0.org1.example.com Removed 
+ Container ca_orderer Removed 
+ Container orderer.example.com Removed 
+ Container peer0.org2.example.com Removed 
+ Volume compose_peer0.org1.example.com Removing 
+ Network fabric_test Removing 
+ Volume compose_orderer.example.com Removing 
+ Volume compose_peer0.org1.example.com Removed 
+ Volume compose_peer0.org2.example.com Removing 
+ Volume compose_orderer.example.com Removed 
+ Volume compose_peer0.org2.example.com Removed 
+ Network fabric_test Removed 
+Error response from daemon: get docker_orderer.example.com: no such volume
+Error response from daemon: get docker_peer0.org1.example.com: no such volume
+Error response from daemon: get docker_peer0.org2.example.com: no such volume
+[0;34mRemoving remaining containers[0m
+[0;34mRemoving generated chaincode docker images[0m
+[0;34mUsing docker and docker compose[0m
+[0;34mCreating channel 'wethaq'.[0m
+[0;34mIf network is not up, starting nodes with CLI timeout of '5' tries and CLI delay of '3' seconds and using database 'leveldb with crypto from 'Certificate Authorities'[0m
+[0;34mBringing up network[0m
+[0;34mLOCAL_VERSION=v2.5.12[0m
+[0;34mDOCKER_IMAGE_VERSION=v2.5.12[0m
+[0;34mCA_LOCAL_VERSION=v1.5.15[0m
+[0;34mCA_DOCKER_IMAGE_VERSION=v1.5.15[0m
+[0;34mGenerating certificates using Fabric CA[0m
+ Network fabric_test Creating 
+ Network fabric_test Created 
+ Container ca_org2 Creating 
+ Container ca_org1 Creating 
+ Container ca_orderer Creating 
+ Container ca_orderer Created 
+ Container ca_org1 Created 
+ Container ca_org2 Created 
+ Container ca_org2 Starting 
+ Container ca_orderer Starting 
+ Container ca_org1 Starting 
+ Container ca_org2 Started 
+ Container ca_orderer Started 
+ Container ca_org1 Started 
++ fabric-ca-client getcainfo -u https://admin:<redacted>@localhost:7054 --caname ca-org1 --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/org1/ca-cert.pem
+2026/11/28 17:47:19 [INFO] Configuration file location: /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/fabric-ca-client-config.yaml
+2026/11/28 17:47:19 [INFO] TLS Enabled
+2026/11/28 17:47:19 [INFO] Stored root CA certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/msp/cacerts/localhost-7054-ca-org1.pem
+2026/11/28 17:47:19 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/msp/IssuerPublicKey
+2026/11/28 17:47:19 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/msp/IssuerRevocationPublicKey
++ res=0
+[0;34mCreating Org1 Identities[0m
+[0;34mEnrolling the CA admin[0m
++ fabric-ca-client enroll -u https://admin:<redacted>@localhost:7054 --caname ca-org1 --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/org1/ca-cert.pem
+2026/11/28 17:47:19 [INFO] Created a default configuration file at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/fabric-ca-client-config.yaml
+2026/11/28 17:47:19 [INFO] TLS Enabled
+2026/11/28 17:47:19 [INFO] generating key: &{A:ecdsa S:256}
+2026/11/28 17:47:19 [INFO] encoded CSR
+2026/11/28 17:47:19 [INFO] Stored client certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/msp/signcerts/cert.pem
+2026/11/28 17:47:19 [INFO] Stored root CA certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/msp/cacerts/localhost-7054-ca-org1.pem
+2026/11/28 17:47:19 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/msp/IssuerPublicKey
+2026/11/28 17:47:19 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/msp/IssuerRevocationPublicKey
+[0;34mRegistering peer0[0m
++ fabric-ca-client register --caname ca-org1 --id.name peer0 --id.secret <redacted> --id.type peer --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/org1/ca-cert.pem
+2026/11/28 17:47:19 [INFO] Configuration file location: /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/fabric-ca-client-config.yaml
+2026/11/28 17:47:19 [INFO] TLS Enabled
+2026/11/28 17:47:19 [INFO] TLS Enabled
+Password: <redacted>
+[0;34mRegistering user[0m
++ fabric-ca-client register --caname ca-org1 --id.name user1 --id.secret <redacted> --id.type client --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/org1/ca-cert.pem
+2026/11/28 17:47:20 [INFO] Configuration file location: /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/fabric-ca-client-config.yaml
+2026/11/28 17:47:20 [INFO] TLS Enabled
+2026/11/28 17:47:20 [INFO] TLS Enabled
+Password: <redacted>
+[0;34mRegistering the org admin[0m
++ fabric-ca-client register --caname ca-org1 --id.name org1admin --id.secret <redacted> --id.type admin --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/org1/ca-cert.pem
+2026/11/28 17:47:20 [INFO] Configuration file location: /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/fabric-ca-client-config.yaml
+2026/11/28 17:47:20 [INFO] TLS Enabled
+2026/11/28 17:47:20 [INFO] TLS Enabled
+Password: <redacted>
+[0;34mGenerating the peer0 msp[0m
++ fabric-ca-client enroll -u https://peer0:<redacted>@localhost:7054 --caname ca-org1 -M /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/org1/ca-cert.pem
+2026/11/28 17:47:20 [INFO] TLS Enabled
+2026/11/28 17:47:20 [INFO] generating key: &{A:ecdsa S:256}
+2026/11/28 17:47:20 [INFO] encoded CSR
+2026/11/28 17:47:20 [INFO] Stored client certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp/signcerts/cert.pem
+2026/11/28 17:47:20 [INFO] Stored root CA certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp/cacerts/localhost-7054-ca-org1.pem
+2026/11/28 17:47:20 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp/IssuerPublicKey
+2026/11/28 17:47:20 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp/IssuerRevocationPublicKey
+[0;34mGenerating the peer0-tls certificates, use --csr.hosts to specify Subject Alternative Names[0m
++ fabric-ca-client enroll -u https://peer0:<redacted>@localhost:7054 --caname ca-org1 -M /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls --enrollment.profile tls --csr.hosts peer0.org1.example.com --csr.hosts localhost --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/org1/ca-cert.pem
+2026/11/28 17:47:20 [INFO] TLS Enabled
+2026/11/28 17:47:20 [INFO] generating key: &{A:ecdsa S:256}
+2026/11/28 17:47:20 [INFO] encoded CSR
+2026/11/28 17:47:20 [INFO] Stored client certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/signcerts/cert.pem
+2026/11/28 17:47:20 [INFO] Stored TLS root CA certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/tlscacerts/tls-localhost-7054-ca-org1.pem
+2026/11/28 17:47:20 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/IssuerPublicKey
+2026/11/28 17:47:20 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/IssuerRevocationPublicKey
+[0;34mGenerating the user msp[0m
++ fabric-ca-client enroll -u https://user1:<redacted>@localhost:7054 --caname ca-org1 -M /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/org1/ca-cert.pem
+2026/11/28 17:47:20 [INFO] TLS Enabled
+2026/11/28 17:47:20 [INFO] generating key: &{A:ecdsa S:256}
+2026/11/28 17:47:20 [INFO] encoded CSR
+2026/11/28 17:47:20 [INFO] Stored client certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/signcerts/cert.pem
+2026/11/28 17:47:20 [INFO] Stored root CA certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/cacerts/localhost-7054-ca-org1.pem
+2026/11/28 17:47:20 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/IssuerPublicKey
+2026/11/28 17:47:20 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/IssuerRevocationPublicKey
+[0;34mGenerating the org admin msp[0m
++ fabric-ca-client enroll -u https://org1admin:<redacted>@localhost:7054 --caname ca-org1 -M /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/org1/ca-cert.pem
+2026/11/28 17:47:20 [INFO] TLS Enabled
+2026/11/28 17:47:20 [INFO] generating key: &{A:ecdsa S:256}
+2026/11/28 17:47:20 [INFO] encoded CSR
+2026/11/28 17:47:20 [INFO] Stored client certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/cert.pem
+2026/11/28 17:47:20 [INFO] Stored root CA certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/cacerts/localhost-7054-ca-org1.pem
+2026/11/28 17:47:20 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/IssuerPublicKey
+2026/11/28 17:47:20 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/IssuerRevocationPublicKey
+[0;34mCreating Org2 Identities[0m
+[0;34mEnrolling the CA admin[0m
++ fabric-ca-client enroll -u https://admin:<redacted>@localhost:8054 --caname ca-org2 --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/org2/ca-cert.pem
+2026/11/28 17:47:20 [INFO] Created a default configuration file at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/fabric-ca-client-config.yaml
+2026/11/28 17:47:20 [INFO] TLS Enabled
+2026/11/28 17:47:20 [INFO] generating key: &{A:ecdsa S:256}
+2026/11/28 17:47:20 [INFO] encoded CSR
+2026/11/28 17:47:20 [INFO] Stored client certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/msp/signcerts/cert.pem
+2026/11/28 17:47:20 [INFO] Stored root CA certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/msp/cacerts/localhost-8054-ca-org2.pem
+2026/11/28 17:47:20 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/msp/IssuerPublicKey
+2026/11/28 17:47:20 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/msp/IssuerRevocationPublicKey
+[0;34mRegistering peer0[0m
++ fabric-ca-client register --caname ca-org2 --id.name peer0 --id.secret <redacted> --id.type peer --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/org2/ca-cert.pem
+2026/11/28 17:47:20 [INFO] Configuration file location: /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/fabric-ca-client-config.yaml
+2026/11/28 17:47:20 [INFO] TLS Enabled
+2026/11/28 17:47:20 [INFO] TLS Enabled
+Password: <redacted>
+[0;34mRegistering user[0m
++ fabric-ca-client register --caname ca-org2 --id.name user1 --id.secret <redacted> --id.type client --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/org2/ca-cert.pem
+2026/11/28 17:47:20 [INFO] Configuration file location: /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/fabric-ca-client-config.yaml
+2026/11/28 17:47:20 [INFO] TLS Enabled
+2026/11/28 17:47:20 [INFO] TLS Enabled
+Password: <redacted>
+[0;34mRegistering the org admin[0m
++ fabric-ca-client register --caname ca-org2 --id.name org2admin --id.secret <redacted> --id.type admin --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/org2/ca-cert.pem
+2026/11/28 17:47:21 [INFO] Configuration file location: /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/fabric-ca-client-config.yaml
+2026/11/28 17:47:21 [INFO] TLS Enabled
+2026/11/28 17:47:21 [INFO] TLS Enabled
+Password: <redacted>
+[0;34mGenerating the peer0 msp[0m
++ fabric-ca-client enroll -u https://peer0:<redacted>@localhost:8054 --caname ca-org2 -M /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/msp --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/org2/ca-cert.pem
+2026/11/28 17:47:21 [INFO] TLS Enabled
+2026/11/28 17:47:21 [INFO] generating key: &{A:ecdsa S:256}
+2026/11/28 17:47:21 [INFO] encoded CSR
+2026/11/28 17:47:21 [INFO] Stored client certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/msp/signcerts/cert.pem
+2026/11/28 17:47:21 [INFO] Stored root CA certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/msp/cacerts/localhost-8054-ca-org2.pem
+2026/11/28 17:47:21 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/msp/IssuerPublicKey
+2026/11/28 17:47:21 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/msp/IssuerRevocationPublicKey
+[0;34mGenerating the peer0-tls certificates, use --csr.hosts to specify Subject Alternative Names[0m
++ fabric-ca-client enroll -u https://peer0:<redacted>@localhost:8054 --caname ca-org2 -M /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls --enrollment.profile tls --csr.hosts peer0.org2.example.com --csr.hosts localhost --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/org2/ca-cert.pem
+2026/11/28 17:47:21 [INFO] TLS Enabled
+2026/11/28 17:47:21 [INFO] generating key: &{A:ecdsa S:256}
+2026/11/28 17:47:21 [INFO] encoded CSR
+2026/11/28 17:47:21 [INFO] Stored client certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/signcerts/cert.pem
+2026/11/28 17:47:21 [INFO] Stored TLS root CA certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/tlscacerts/tls-localhost-8054-ca-org2.pem
+2026/11/28 17:47:21 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/IssuerPublicKey
+2026/11/28 17:47:21 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/IssuerRevocationPublicKey
+[0;34mGenerating the user msp[0m
++ fabric-ca-client enroll -u https://user1:<redacted>@localhost:8054 --caname ca-org2 -M /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/User1@org2.example.com/msp --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/org2/ca-cert.pem
+2026/11/28 17:47:21 [INFO] TLS Enabled
+2026/11/28 17:47:21 [INFO] generating key: &{A:ecdsa S:256}
+2026/11/28 17:47:21 [INFO] encoded CSR
+2026/11/28 17:47:21 [INFO] Stored client certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/User1@org2.example.com/msp/signcerts/cert.pem
+2026/11/28 17:47:21 [INFO] Stored root CA certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/User1@org2.example.com/msp/cacerts/localhost-8054-ca-org2.pem
+2026/11/28 17:47:21 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/User1@org2.example.com/msp/IssuerPublicKey
+2026/11/28 17:47:21 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/User1@org2.example.com/msp/IssuerRevocationPublicKey
+[0;34mGenerating the org admin msp[0m
++ fabric-ca-client enroll -u https://org2admin:<redacted>@localhost:8054 --caname ca-org2 -M /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/org2/ca-cert.pem
+2026/11/28 17:47:21 [INFO] TLS Enabled
+2026/11/28 17:47:21 [INFO] generating key: &{A:ecdsa S:256}
+2026/11/28 17:47:21 [INFO] encoded CSR
+2026/11/28 17:47:21 [INFO] Stored client certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/signcerts/cert.pem
+2026/11/28 17:47:21 [INFO] Stored root CA certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/cacerts/localhost-8054-ca-org2.pem
+2026/11/28 17:47:21 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/IssuerPublicKey
+2026/11/28 17:47:21 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/IssuerRevocationPublicKey
+[0;34mCreating Orderer Org Identities[0m
+[0;34mEnrolling the CA admin[0m
++ fabric-ca-client enroll -u https://admin:<redacted>@localhost:9054 --caname ca-orderer --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/ordererOrg/ca-cert.pem
+2026/11/28 17:47:21 [INFO] Created a default configuration file at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/fabric-ca-client-config.yaml
+2026/11/28 17:47:21 [INFO] TLS Enabled
+2026/11/28 17:47:21 [INFO] generating key: &{A:ecdsa S:256}
+2026/11/28 17:47:21 [INFO] encoded CSR
+2026/11/28 17:47:21 [INFO] Stored client certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/msp/signcerts/cert.pem
+2026/11/28 17:47:21 [INFO] Stored root CA certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/msp/cacerts/localhost-9054-ca-orderer.pem
+2026/11/28 17:47:21 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/msp/IssuerPublicKey
+2026/11/28 17:47:21 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/msp/IssuerRevocationPublicKey
+[0;34mRegistering orderer[0m
++ fabric-ca-client register --caname ca-orderer --id.name orderer --id.secret <redacted> --id.type orderer --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/ordererOrg/ca-cert.pem
+2026/11/28 17:47:21 [INFO] Configuration file location: /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/fabric-ca-client-config.yaml
+2026/11/28 17:47:21 [INFO] TLS Enabled
+2026/11/28 17:47:21 [INFO] TLS Enabled
+Password: <redacted>
+[0;34mGenerating the orderer MSP[0m
++ fabric-ca-client enroll -u https://orderer:<redacted>@localhost:9054 --caname ca-orderer -M /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/ordererOrg/ca-cert.pem
+2026/11/28 17:47:21 [INFO] TLS Enabled
+2026/11/28 17:47:21 [INFO] generating key: &{A:ecdsa S:256}
+2026/11/28 17:47:21 [INFO] encoded CSR
+2026/11/28 17:47:21 [INFO] Stored client certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/signcerts/cert.pem
+2026/11/28 17:47:21 [INFO] Stored root CA certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/cacerts/localhost-9054-ca-orderer.pem
+2026/11/28 17:47:21 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/IssuerPublicKey
+2026/11/28 17:47:21 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/IssuerRevocationPublicKey
+[0;34mGenerating the orderer TLS certificates, use --csr.hosts to specify Subject Alternative Names[0m
++ fabric-ca-client enroll -u https://orderer:<redacted>@localhost:9054 --caname ca-orderer -M /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls --enrollment.profile tls --csr.hosts orderer.example.com --csr.hosts localhost --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/ordererOrg/ca-cert.pem
+2026/11/28 17:47:21 [INFO] TLS Enabled
+2026/11/28 17:47:21 [INFO] generating key: &{A:ecdsa S:256}
+2026/11/28 17:47:21 [INFO] encoded CSR
+2026/11/28 17:47:21 [INFO] Stored client certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/signcerts/cert.pem
+2026/11/28 17:47:21 [INFO] Stored TLS root CA certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/tlscacerts/tls-localhost-9054-ca-orderer.pem
+2026/11/28 17:47:21 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/IssuerPublicKey
+2026/11/28 17:47:21 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/IssuerRevocationPublicKey
+[0;34mRegistering orderer2[0m
++ fabric-ca-client register --caname ca-orderer --id.name orderer2 --id.secret <redacted> --id.type orderer --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/ordererOrg/ca-cert.pem
+2026/11/28 17:47:21 [INFO] Configuration file location: /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/fabric-ca-client-config.yaml
+2026/11/28 17:47:21 [INFO] TLS Enabled
+2026/11/28 17:47:21 [INFO] TLS Enabled
+Password: <redacted>
+[0;34mGenerating the orderer2 MSP[0m
++ fabric-ca-client enroll -u https://orderer2:<redacted>@localhost:9054 --caname ca-orderer -M /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer2.example.com/msp --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/ordererOrg/ca-cert.pem
+2026/11/28 17:47:22 [INFO] TLS Enabled
+2026/11/28 17:47:22 [INFO] generating key: &{A:ecdsa S:256}
+2026/11/28 17:47:22 [INFO] encoded CSR
+2026/11/28 17:47:22 [INFO] Stored client certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer2.example.com/msp/signcerts/cert.pem
+2026/11/28 17:47:22 [INFO] Stored root CA certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer2.example.com/msp/cacerts/localhost-9054-ca-orderer.pem
+2026/11/28 17:47:22 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer2.example.com/msp/IssuerPublicKey
+2026/11/28 17:47:22 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer2.example.com/msp/IssuerRevocationPublicKey
+[0;34mGenerating the orderer2 TLS certificates, use --csr.hosts to specify Subject Alternative Names[0m
++ fabric-ca-client enroll -u https://orderer2:<redacted>@localhost:9054 --caname ca-orderer -M /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer2.example.com/tls --enrollment.profile tls --csr.hosts orderer2.example.com --csr.hosts localhost --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/ordererOrg/ca-cert.pem
+2026/11/28 17:47:22 [INFO] TLS Enabled
+2026/11/28 17:47:22 [INFO] generating key: &{A:ecdsa S:256}
+2026/11/28 17:47:22 [INFO] encoded CSR
+2026/11/28 17:47:22 [INFO] Stored client certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer2.example.com/tls/signcerts/cert.pem
+2026/11/28 17:47:22 [INFO] Stored TLS root CA certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer2.example.com/tls/tlscacerts/tls-localhost-9054-ca-orderer.pem
+2026/11/28 17:47:22 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer2.example.com/tls/IssuerPublicKey
+2026/11/28 17:47:22 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer2.example.com/tls/IssuerRevocationPublicKey
+[0;34mRegistering orderer3[0m
++ fabric-ca-client register --caname ca-orderer --id.name orderer3 --id.secret <redacted> --id.type orderer --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/ordererOrg/ca-cert.pem
+2026/11/28 17:47:22 [INFO] Configuration file location: /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/fabric-ca-client-config.yaml
+2026/11/28 17:47:22 [INFO] TLS Enabled
+2026/11/28 17:47:22 [INFO] TLS Enabled
+Password: <redacted>
+[0;34mGenerating the orderer3 MSP[0m
++ fabric-ca-client enroll -u https://orderer3:<redacted>@localhost:9054 --caname ca-orderer -M /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer3.example.com/msp --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/ordererOrg/ca-cert.pem
+2026/11/28 17:47:22 [INFO] TLS Enabled
+2026/11/28 17:47:22 [INFO] generating key: &{A:ecdsa S:256}
+2026/11/28 17:47:22 [INFO] encoded CSR
+2026/11/28 17:47:22 [INFO] Stored client certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer3.example.com/msp/signcerts/cert.pem
+2026/11/28 17:47:22 [INFO] Stored root CA certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer3.example.com/msp/cacerts/localhost-9054-ca-orderer.pem
+2026/11/28 17:47:22 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer3.example.com/msp/IssuerPublicKey
+2026/11/28 17:47:22 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer3.example.com/msp/IssuerRevocationPublicKey
+[0;34mGenerating the orderer3 TLS certificates, use --csr.hosts to specify Subject Alternative Names[0m
++ fabric-ca-client enroll -u https://orderer3:<redacted>@localhost:9054 --caname ca-orderer -M /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer3.example.com/tls --enrollment.profile tls --csr.hosts orderer3.example.com --csr.hosts localhost --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/ordererOrg/ca-cert.pem
+2026/11/28 17:47:22 [INFO] TLS Enabled
+2026/11/28 17:47:22 [INFO] generating key: &{A:ecdsa S:256}
+2026/11/28 17:47:22 [INFO] encoded CSR
+2026/11/28 17:47:22 [INFO] Stored client certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer3.example.com/tls/signcerts/cert.pem
+2026/11/28 17:47:22 [INFO] Stored TLS root CA certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer3.example.com/tls/tlscacerts/tls-localhost-9054-ca-orderer.pem
+2026/11/28 17:47:22 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer3.example.com/tls/IssuerPublicKey
+2026/11/28 17:47:22 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer3.example.com/tls/IssuerRevocationPublicKey
+[0;34mRegistering orderer4[0m
++ fabric-ca-client register --caname ca-orderer --id.name orderer4 --id.secret <redacted> --id.type orderer --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/ordererOrg/ca-cert.pem
+2026/11/28 17:47:22 [INFO] Configuration file location: /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/fabric-ca-client-config.yaml
+2026/11/28 17:47:22 [INFO] TLS Enabled
+2026/11/28 17:47:22 [INFO] TLS Enabled
+Password: <redacted>
+[0;34mGenerating the orderer4 MSP[0m
++ fabric-ca-client enroll -u https://orderer4:<redacted>@localhost:9054 --caname ca-orderer -M /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer4.example.com/msp --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/ordererOrg/ca-cert.pem
+2026/11/28 17:47:22 [INFO] TLS Enabled
+2026/11/28 17:47:22 [INFO] generating key: &{A:ecdsa S:256}
+2026/11/28 17:47:22 [INFO] encoded CSR
+2026/11/28 17:47:22 [INFO] Stored client certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer4.example.com/msp/signcerts/cert.pem
+2026/11/28 17:47:22 [INFO] Stored root CA certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer4.example.com/msp/cacerts/localhost-9054-ca-orderer.pem
+2026/11/28 17:47:22 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer4.example.com/msp/IssuerPublicKey
+2026/11/28 17:47:22 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer4.example.com/msp/IssuerRevocationPublicKey
+[0;34mGenerating the orderer4 TLS certificates, use --csr.hosts to specify Subject Alternative Names[0m
++ fabric-ca-client enroll -u https://orderer4:<redacted>@localhost:9054 --caname ca-orderer -M /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer4.example.com/tls --enrollment.profile tls --csr.hosts orderer4.example.com --csr.hosts localhost --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/ordererOrg/ca-cert.pem
+2026/11/28 17:47:22 [INFO] TLS Enabled
+2026/11/28 17:47:22 [INFO] generating key: &{A:ecdsa S:256}
+2026/11/28 17:47:22 [INFO] encoded CSR
+2026/11/28 17:47:22 [INFO] Stored client certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer4.example.com/tls/signcerts/cert.pem
+2026/11/28 17:47:22 [INFO] Stored TLS root CA certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer4.example.com/tls/tlscacerts/tls-localhost-9054-ca-orderer.pem
+2026/11/28 17:47:22 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer4.example.com/tls/IssuerPublicKey
+2026/11/28 17:47:22 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer4.example.com/tls/IssuerRevocationPublicKey
+[0;34mRegistering the orderer admin[0m
++ fabric-ca-client register --caname ca-orderer --id.name ordererAdmin --id.secret <redacted> --id.type admin --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/ordererOrg/ca-cert.pem
+2026/11/28 17:47:22 [INFO] Configuration file location: /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/fabric-ca-client-config.yaml
+2026/11/28 17:47:22 [INFO] TLS Enabled
+2026/11/28 17:47:22 [INFO] TLS Enabled
+Password: <redacted>
+[0;34mGenerating the admin msp[0m
++ fabric-ca-client enroll -u https://ordererAdmin:<redacted>@localhost:9054 --caname ca-orderer -M /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/users/Admin@example.com/msp --tls.certfiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/fabric-ca/ordererOrg/ca-cert.pem
+2026/11/28 17:47:23 [INFO] TLS Enabled
+2026/11/28 17:47:23 [INFO] generating key: &{A:ecdsa S:256}
+2026/11/28 17:47:23 [INFO] encoded CSR
+2026/11/28 17:47:23 [INFO] Stored client certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/users/Admin@example.com/msp/signcerts/cert.pem
+2026/11/28 17:47:23 [INFO] Stored root CA certificate at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/users/Admin@example.com/msp/cacerts/localhost-9054-ca-orderer.pem
+2026/11/28 17:47:23 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/users/Admin@example.com/msp/IssuerPublicKey
+2026/11/28 17:47:23 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/users/Admin@example.com/msp/IssuerRevocationPublicKey
+[0;34mGenerating CCP files for Org1 and Org2[0m
+time="2026-11-28T17:47:23Z" level=warning msg="Found orphan containers (ca_org2, ca_orderer, ca_org1) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up."
+ Volume compose_orderer.example.com Creating 
+ Volume compose_peer0.org2.example.com Creating 
+ Volume compose_peer0.org1.example.com Creating 
+ Volume compose_orderer.example.com Created 
+ Container orderer.example.com Creating 
+ Volume compose_peer0.org2.example.com Created 
+ Container peer0.org2.example.com Creating 
+ Volume compose_peer0.org1.example.com Created 
+ Container peer0.org1.example.com Creating 
+ Container peer0.org2.example.com Created 
+ Container peer0.org1.example.com Created 
+ Container orderer.example.com Created 
+ Container peer0.org2.example.com Starting 
+ Container peer0.org1.example.com Starting 
+ Container orderer.example.com Starting 
+ Container peer0.org2.example.com Started 
+ Container peer0.org1.example.com Started 
+ Container orderer.example.com Started 
+CONTAINER ID   IMAGE                               COMMAND                  CREATED                  STATUS                  PORTS                                                                    NAMES
+fd7cd1c0fdc4   hyperledger/fabric-orderer:latest   "orderer"                Less than a second ago   Up Less than a second   0.0.0.0:7050->7050/tcp, 0.0.0.0:7053->7053/tcp, 0.0.0.0:9443->9443/tcp   orderer.example.com
+8b367f9da886   hyperledger/fabric-peer:latest      "peer node start"        Less than a second ago   Up Less than a second   0.0.0.0:9051->9051/tcp, 7051/tcp, 0.0.0.0:9445->9445/tcp                 peer0.org2.example.com
+b165442d354d   hyperledger/fabric-peer:latest      "peer node start"        Less than a second ago   Up Less than a second   0.0.0.0:7051->7051/tcp, 0.0.0.0:9444->9444/tcp                           peer0.org1.example.com
+1e18dcb8e5f8   hyperledger/fabric-ca:latest        "sh -c 'fabric-ca-se…"   6 seconds ago            Up 6 seconds            0.0.0.0:8054->8054/tcp, 7054/tcp, 0.0.0.0:18054->18054/tcp               ca_org2
+00fa52fb5d85   hyperledger/fabric-ca:latest        "sh -c 'fabric-ca-se…"   6 seconds ago            Up 6 seconds            0.0.0.0:9054->9054/tcp, 7054/tcp, 0.0.0.0:19054->19054/tcp               ca_orderer
+3ddc71967050   hyperledger/fabric-ca:latest        "sh -c 'fabric-ca-se…"   6 seconds ago            Up 6 seconds            0.0.0.0:7054->7054/tcp, 0.0.0.0:17054->17054/tcp                         ca_org1
+[0;34mUsing docker and docker compose[0m
+[0;34mGenerating channel genesis block 'wethaq.block'[0m
+[0;34mUsing organization 1[0m
+/home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/../bin/configtxgen
++ '[' 0 -eq 1 ']'
++ configtxgen -profile ChannelUsingRaft -outputBlock ./channel-artifacts/wethaq.block -channelID wethaq
+[34m2026-11-28 17:47:23.848 UTC 0001 INFO[0m [common.tools.configtxgen] [34;1mmain[0m -> Loading configuration
+[34m2026-11-28 17:47:23.853 UTC 0002 INFO[0m [common.tools.configtxgen.localconfig] [34;1mcompleteInitialization[0m -> orderer type: etcdraft
+[34m2026-11-28 17:47:23.853 UTC 0003 INFO[0m [common.tools.configtxgen.localconfig] [34;1mcompleteInitialization[0m -> Orderer.EtcdRaft.Options unset, setting to tick_interval:"500ms" election_tick:10 heartbeat_tick:1 max_inflight_blocks:5 snapshot_interval_size:16777216 
+[34m2026-11-28 17:47:23.853 UTC 0004 INFO[0m [common.tools.configtxgen.localconfig] [34;1mLoad[0m -> Loaded configuration: /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/configtx/configtx.yaml
+[34m2026-11-28 17:47:23.854 UTC 0005 INFO[0m [common.tools.configtxgen] [34;1mdoOutputBlock[0m -> Generating genesis block
+[34m2026-11-28 17:47:23.854 UTC 0006 INFO[0m [common.tools.configtxgen] [34;1mdoOutputBlock[0m -> Creating application channel genesis block
+[34m2026-11-28 17:47:23.855 UTC 0007 INFO[0m [common.tools.configtxgen] [34;1mdoOutputBlock[0m -> Writing genesis block
++ res=0
+[0;34mCreating channel wethaq[0m
+[0;34mAdding orderers[0m
++ . scripts/orderer.sh wethaq
++ '[' 0 -eq 1 ']'
++ res=0
+Status: 201
+{
+	"name": "wethaq",
+	"url": "/participation/v1/channels/wethaq",
+	"consensusRelation": "consenter",
+	"status": "active",
+	"height": 1
+}
+
+[0;32mChannel 'wethaq' created[0m
+[0;34mJoining org1 peer to the channel...[0m
+[0;34mUsing organization 1[0m
++ peer channel join -b ./channel-artifacts/wethaq.block
++ res=0
+[34m2026-11-28 17:47:29.942 UTC 0001 INFO[0m [channelCmd] [34;1mInitCmdFactory[0m -> Endorser and orderer connections initialized
+[34m2026-11-28 17:47:29.956 UTC 0002 INFO[0m [channelCmd] [34;1mexecuteJoin[0m -> Successfully submitted proposal to join channel
+[0;34mJoining org2 peer to the channel...[0m
+[0;34mUsing organization 2[0m
++ peer channel join -b ./channel-artifacts/wethaq.block
++ res=0
+[34m2026-11-28 17:47:33.010 UTC 0001 INFO[0m [channelCmd] [34;1mInitCmdFactory[0m -> Endorser and orderer connections initialized
+[34m2026-11-28 17:47:33.022 UTC 0002 INFO[0m [channelCmd] [34;1mexecuteJoin[0m -> Successfully submitted proposal to join channel
+[0;34mSetting anchor peer for org1...[0m
+[0;34mUsing organization 1[0m
+[0;34mFetching channel config for channel wethaq[0m
+[0;34mUsing organization 1[0m
+[0;34mFetching the most recent configuration block for the channel[0m
+++ peer channel fetch config /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/config_block.pb -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com -c wethaq --tls --cafile /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
+[34m2026-11-28 17:47:33.067 UTC 0001 INFO[0m [channelCmd] [34;1mInitCmdFactory[0m -> Endorser and orderer connections initialized
+[34m2026-11-28 17:47:33.069 UTC 0002 INFO[0m [cli.common] [34;1mreadBlock[0m -> Received block: 0
+[34m2026-11-28 17:47:33.069 UTC 0003 INFO[0m [channelCmd] [34;1mfetch[0m -> Retrieving last config block: 0
+[34m2026-11-28 17:47:33.070 UTC 0004 INFO[0m [cli.common] [34;1mreadBlock[0m -> Received block: 0
+[0;34mDecoding config block to JSON and isolating config to /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/Org1MSPconfig.json[0m
+++ configtxlator proto_decode --input /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/config_block.pb --type common.Block --output /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/config_block.json
+++ jq '.data.data[0].payload.data.config' /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/config_block.json
+++ res=0
+[0;34mGenerating anchor peer update transaction for Org1 on channel wethaq[0m
+++ jq '.channel_group.groups.Application.groups.Org1MSP.values += {"AnchorPeers":{"mod_policy": "Admins","value":{"anchor_peers": [{"host": "peer0.org1.example.com","port": 7051}]},"version": "0"}}' /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/Org1MSPconfig.json
+++ res=0
+++ configtxlator proto_encode --input /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/Org1MSPconfig.json --type common.Config --output /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/original_config.pb
+++ configtxlator proto_encode --input /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/Org1MSPmodified_config.json --type common.Config --output /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/modified_config.pb
+++ configtxlator compute_update --channel_id wethaq --original /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/original_config.pb --updated /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/modified_config.pb --output /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/config_update.pb
+++ configtxlator proto_decode --input /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/config_update.pb --type common.ConfigUpdate --output /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/config_update.json
+++ jq .
++++ cat /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/config_update.json
+++ echo '{"payload":{"header":{"channel_header":{"channel_id":"wethaq", "type":2}},"data":{"config_update":{' '"channel_id":' '"wethaq",' '"isolated_data":' '{},' '"read_set":' '{' '"groups":' '{' '"Application":' '{' '"groups":' '{' '"Org1MSP":' '{' '"groups":' '{},' '"mod_policy":' '"",' '"policies":' '{' '"Admins":' '{' '"mod_policy":' '"",' '"policy":' null, '"version":' '"0"' '},' '"Endorsement":' '{' '"mod_policy":' '"",' '"policy":' null, '"version":' '"0"' '},' '"Readers":' '{' '"mod_policy":' '"",' '"policy":' null, '"version":' '"0"' '},' '"Writers":' '{' '"mod_policy":' '"",' '"policy":' null, '"version":' '"0"' '}' '},' '"values":' '{' '"MSP":' '{' '"mod_policy":' '"",' '"value":' null, '"version":' '"0"' '}' '},' '"version":' '"0"' '}' '},' '"mod_policy":' '"",' '"policies":' '{},' '"values":' '{},' '"version":' '"0"' '}' '},' '"mod_policy":' '"",' '"policies":' '{},' '"values":' '{},' '"version":' '"0"' '},' '"write_set":' '{' '"groups":' '{' '"Application":' '{' '"groups":' '{' '"Org1MSP":' '{' '"groups":' '{},' '"mod_policy":' '"Admins",' '"policies":' '{' '"Admins":' '{' '"mod_policy":' '"",' '"policy":' null, '"version":' '"0"' '},' '"Endorsement":' '{' '"mod_policy":' '"",' '"policy":' null, '"version":' '"0"' '},' '"Readers":' '{' '"mod_policy":' '"",' '"policy":' null, '"version":' '"0"' '},' '"Writers":' '{' '"mod_policy":' '"",' '"policy":' null, '"version":' '"0"' '}' '},' '"values":' '{' '"AnchorPeers":' '{' '"mod_policy":' '"Admins",' '"value":' '{' '"anchor_peers":' '[' '{' '"host":' '"peer0.org1.example.com",' '"port":' 7051 '}' ']' '},' '"version":' '"0"' '},' '"MSP":' '{' '"mod_policy":' '"",' '"value":' null, '"version":' '"0"' '}' '},' '"version":' '"1"' '}' '},' '"mod_policy":' '"",' '"policies":' '{},' '"values":' '{},' '"version":' '"0"' '}' '},' '"mod_policy":' '"",' '"policies":' '{},' '"values":' '{},' '"version":' '"0"' '}' '}}}}'
+++ configtxlator proto_encode --input /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/config_update_in_envelope.json --type common.Envelope --output /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/Org1MSPanchors.tx
+[34m2026-11-28 17:47:33.215 UTC 0001 INFO[0m [channelCmd] [34;1mInitCmdFactory[0m -> Endorser and orderer connections initialized
+[34m2026-11-28 17:47:33.226 UTC 0002 INFO[0m [channelCmd] [34;1mupdate[0m -> Successfully submitted channel update
+[0;32mAnchor peer set for org 'Org1MSP' on channel 'wethaq'[0m
+[0;34mSetting anchor peer for org2...[0m
+[0;34mUsing organization 2[0m
+[0;34mFetching channel config for channel wethaq[0m
+[0;34mUsing organization 2[0m
+[0;34mFetching the most recent configuration block for the channel[0m
+++ peer channel fetch config /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/config_block.pb -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com -c wethaq --tls --cafile /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
+[34m2026-11-28 17:47:33.281 UTC 0001 INFO[0m [channelCmd] [34;1mInitCmdFactory[0m -> Endorser and orderer connections initialized
+[34m2026-11-28 17:47:33.284 UTC 0002 INFO[0m [cli.common] [34;1mreadBlock[0m -> Received block: 1
+[34m2026-11-28 17:47:33.284 UTC 0003 INFO[0m [channelCmd] [34;1mfetch[0m -> Retrieving last config block: 1
+[34m2026-11-28 17:47:33.285 UTC 0004 INFO[0m [cli.common] [34;1mreadBlock[0m -> Received block: 1
+[0;34mDecoding config block to JSON and isolating config to /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/Org2MSPconfig.json[0m
+++ configtxlator proto_decode --input /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/config_block.pb --type common.Block --output /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/config_block.json
+++ jq '.data.data[0].payload.data.config' /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/config_block.json
+++ res=0
+[0;34mGenerating anchor peer update transaction for Org2 on channel wethaq[0m
+++ jq '.channel_group.groups.Application.groups.Org2MSP.values += {"AnchorPeers":{"mod_policy": "Admins","value":{"anchor_peers": [{"host": "peer0.org2.example.com","port": 9051}]},"version": "0"}}' /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/Org2MSPconfig.json
+++ res=0
+++ configtxlator proto_encode --input /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/Org2MSPconfig.json --type common.Config --output /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/original_config.pb
+++ configtxlator proto_encode --input /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/Org2MSPmodified_config.json --type common.Config --output /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/modified_config.pb
+++ configtxlator compute_update --channel_id wethaq --original /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/original_config.pb --updated /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/modified_config.pb --output /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/config_update.pb
+++ configtxlator proto_decode --input /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/config_update.pb --type common.ConfigUpdate --output /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/config_update.json
+++ jq .
++++ cat /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/config_update.json
+++ echo '{"payload":{"header":{"channel_header":{"channel_id":"wethaq", "type":2}},"data":{"config_update":{' '"channel_id":' '"wethaq",' '"isolated_data":' '{},' '"read_set":' '{' '"groups":' '{' '"Application":' '{' '"groups":' '{' '"Org2MSP":' '{' '"groups":' '{},' '"mod_policy":' '"",' '"policies":' '{' '"Admins":' '{' '"mod_policy":' '"",' '"policy":' null, '"version":' '"0"' '},' '"Endorsement":' '{' '"mod_policy":' '"",' '"policy":' null, '"version":' '"0"' '},' '"Readers":' '{' '"mod_policy":' '"",' '"policy":' null, '"version":' '"0"' '},' '"Writers":' '{' '"mod_policy":' '"",' '"policy":' null, '"version":' '"0"' '}' '},' '"values":' '{' '"MSP":' '{' '"mod_policy":' '"",' '"value":' null, '"version":' '"0"' '}' '},' '"version":' '"0"' '}' '},' '"mod_policy":' '"",' '"policies":' '{},' '"values":' '{},' '"version":' '"0"' '}' '},' '"mod_policy":' '"",' '"policies":' '{},' '"values":' '{},' '"version":' '"0"' '},' '"write_set":' '{' '"groups":' '{' '"Application":' '{' '"groups":' '{' '"Org2MSP":' '{' '"groups":' '{},' '"mod_policy":' '"Admins",' '"policies":' '{' '"Admins":' '{' '"mod_policy":' '"",' '"policy":' null, '"version":' '"0"' '},' '"Endorsement":' '{' '"mod_policy":' '"",' '"policy":' null, '"version":' '"0"' '},' '"Readers":' '{' '"mod_policy":' '"",' '"policy":' null, '"version":' '"0"' '},' '"Writers":' '{' '"mod_policy":' '"",' '"policy":' null, '"version":' '"0"' '}' '},' '"values":' '{' '"AnchorPeers":' '{' '"mod_policy":' '"Admins",' '"value":' '{' '"anchor_peers":' '[' '{' '"host":' '"peer0.org2.example.com",' '"port":' 9051 '}' ']' '},' '"version":' '"0"' '},' '"MSP":' '{' '"mod_policy":' '"",' '"value":' null, '"version":' '"0"' '}' '},' '"version":' '"1"' '}' '},' '"mod_policy":' '"",' '"policies":' '{},' '"values":' '{},' '"version":' '"0"' '}' '},' '"mod_policy":' '"",' '"policies":' '{},' '"values":' '{},' '"version":' '"0"' '}' '}}}}'
+++ configtxlator proto_encode --input /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/config_update_in_envelope.json --type common.Envelope --output /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/channel-artifacts/Org2MSPanchors.tx
+[34m2026-11-28 17:47:33.413 UTC 0001 INFO[0m [channelCmd] [34;1mInitCmdFactory[0m -> Endorser and orderer connections initialized
+[34m2026-11-28 17:47:33.423 UTC 0002 INFO[0m [channelCmd] [34;1mupdate[0m -> Successfully submitted channel update
+[0;32mAnchor peer set for org 'Org2MSP' on channel 'wethaq'[0m
+[0;32mChannel 'wethaq' joined[0m
+[0;34mUsing docker and docker compose[0m
+[0;34mdeploying chaincode-as-a-service on channel 'wethaq'[0m
+[0;34mUsing docker and docker compose[0m
+executing with the following
+- CHANNEL_NAME: [0;32mwethaq[0m
+- CC_NAME: [0;32mwethaq[0m
+- CC_SRC_PATH: [0;32m/home/user/roseal3tb/wethaq/chaincode/shipment[0m
+- CC_VERSION: [0;32m1.0[0m
+- CC_SEQUENCE: [0;32m1[0m
+- CC_END_POLICY: [0;32mAND('Org1MSP.peer','Org2MSP.peer')[0m
+- CC_COLL_CONFIG: [0;32mNA[0m
+- CC_INIT_FCN: [0;32mNA[0m
+- CCAAS_DOCKER_RUN: [0;32mfalse[0m
+- DELAY: [0;32m3[0m
+- MAX_RETRY: [0;32m5[0m
+- VERBOSE: [0;32mfalse[0m
+[0;34mNot building docker image; this the command we would have run[0m
+[0;34m   docker build -f /home/user/roseal3tb/wethaq/chaincode/shipment/Dockerfile -t wethaq_ccaas_image:latest --build-arg CC_SERVER_PORT=9999 /home/user/roseal3tb/wethaq/chaincode/shipment[0m
+[0;32mChaincode is packaged  {{.peername}}_wethaq_ccaas:9999[0m
+[0;34mInstalling chaincode on peer0.org1...[0m
+[0;34mUsing organization 1[0m
++ peer lifecycle chaincode queryinstalled --output json
++ jq -r 'try (.installed_chaincodes[].package_id)'
++ grep '^wethaq_1.0:570d7b7aa4bcdf6a716219e5ed61fa0e66f6a636d720da7044c080594717ee5f$'
++ test 1 -ne 0
++ peer lifecycle chaincode install wethaq.tar.gz
++ res=0
+[34m2026-11-28 17:47:33.628 UTC 0001 INFO[0m [cli.lifecycle.chaincode] [34;1msubmitInstallProposal[0m -> Installed remotely: response:<status:200 payload:"\nKwethaq_1.0:570d7b7aa4bcdf6a716219e5ed61fa0e66f6a636d720da7044c080594717ee5f\022\nwethaq_1.0" > 
+[34m2026-11-28 17:47:33.628 UTC 0002 INFO[0m [cli.lifecycle.chaincode] [34;1msubmitInstallProposal[0m -> Chaincode code package identifier: wethaq_1.0:570d7b7aa4bcdf6a716219e5ed61fa0e66f6a636d720da7044c080594717ee5f
+[0;32mChaincode is installed on peer0.org1[0m
+[0;34mInstall chaincode on peer0.org2...[0m
+[0;34mUsing organization 2[0m
++ peer lifecycle chaincode queryinstalled --output json
++ jq -r 'try (.installed_chaincodes[].package_id)'
++ grep '^wethaq_1.0:570d7b7aa4bcdf6a716219e5ed61fa0e66f6a636d720da7044c080594717ee5f$'
++ test 1 -ne 0
++ peer lifecycle chaincode install wethaq.tar.gz
++ res=0
+[34m2026-11-28 17:47:33.762 UTC 0001 INFO[0m [cli.lifecycle.chaincode] [34;1msubmitInstallProposal[0m -> Installed remotely: response:<status:200 payload:"\nKwethaq_1.0:570d7b7aa4bcdf6a716219e5ed61fa0e66f6a636d720da7044c080594717ee5f\022\nwethaq_1.0" > 
+[34m2026-11-28 17:47:33.762 UTC 0002 INFO[0m [cli.lifecycle.chaincode] [34;1msubmitInstallProposal[0m -> Chaincode code package identifier: wethaq_1.0:570d7b7aa4bcdf6a716219e5ed61fa0e66f6a636d720da7044c080594717ee5f
+[0;32mChaincode is installed on peer0.org2[0m
+[0;34mUsing organization 1[0m
++ peer lifecycle chaincode queryinstalled --output json
++ jq -r 'try (.installed_chaincodes[].package_id)'
++ grep '^wethaq_1.0:570d7b7aa4bcdf6a716219e5ed61fa0e66f6a636d720da7044c080594717ee5f$'
++ res=0
+wethaq_1.0:570d7b7aa4bcdf6a716219e5ed61fa0e66f6a636d720da7044c080594717ee5f
+[0;32mQuery installed successful on peer0.org1 on channel[0m
+[0;34mUsing organization 1[0m
++ peer lifecycle chaincode approveformyorg -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem --channelID wethaq --name wethaq --version 1.0 --package-id wethaq_1.0:570d7b7aa4bcdf6a716219e5ed61fa0e66f6a636d720da7044c080594717ee5f --sequence 1 --signature-policy 'AND('\''Org1MSP.peer'\'','\''Org2MSP.peer'\'')'
++ res=0
+[34m2026-11-28 17:47:34.397 UTC 0001 INFO[0m [chaincodeCmd] [34;1mClientWait[0m -> txid [d775046a860c68abe2864fbd9c5981dd55c0332f01d438bb09175564ed3675a0] committed with status (VALID) at localhost:7051
+[0;32mChaincode definition approved on peer0.org1 on channel 'wethaq'[0m
+[0;34mUsing organization 1[0m
+[0;34mChecking the commit readiness of the chaincode definition on peer0.org1 on channel 'wethaq'...[0m
+[0;34mAttempting to check the commit readiness of the chaincode definition on peer0.org1, Retry after 3 seconds.[0m
++ peer lifecycle chaincode checkcommitreadiness --channelID wethaq --name wethaq --version 1.0 --sequence 1 --signature-policy 'AND('\''Org1MSP.peer'\'','\''Org2MSP.peer'\'')' --output json
++ res=0
+{
+	"approvals": {
+		"Org1MSP": true,
+		"Org2MSP": false
+	}
+}
+[0;34mChecking the commit readiness of the chaincode definition successful on peer0.org1 on channel 'wethaq'[0m
+[0;34mUsing organization 2[0m
+[0;34mChecking the commit readiness of the chaincode definition on peer0.org2 on channel 'wethaq'...[0m
+[0;34mAttempting to check the commit readiness of the chaincode definition on peer0.org2, Retry after 3 seconds.[0m
++ peer lifecycle chaincode checkcommitreadiness --channelID wethaq --name wethaq --version 1.0 --sequence 1 --signature-policy 'AND('\''Org1MSP.peer'\'','\''Org2MSP.peer'\'')' --output json
++ res=0
+{
+	"approvals": {
+		"Org1MSP": true,
+		"Org2MSP": false
+	}
+}
+[0;34mChecking the commit readiness of the chaincode definition successful on peer0.org2 on channel 'wethaq'[0m
+[0;34mUsing organization 2[0m
++ peer lifecycle chaincode approveformyorg -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem --channelID wethaq --name wethaq --version 1.0 --package-id wethaq_1.0:570d7b7aa4bcdf6a716219e5ed61fa0e66f6a636d720da7044c080594717ee5f --sequence 1 --signature-policy 'AND('\''Org1MSP.peer'\'','\''Org2MSP.peer'\'')'
++ res=0
+[34m2026-11-28 17:47:41.096 UTC 0001 INFO[0m [chaincodeCmd] [34;1mClientWait[0m -> txid [8c927da5a95b6dc39bf1d104d9cfc7cb61dcf26ac0b4a07b34b20022394e5d96] committed with status (VALID) at localhost:9051
+[0;32mChaincode definition approved on peer0.org2 on channel 'wethaq'[0m
+[0;34mUsing organization 1[0m
+[0;34mChecking the commit readiness of the chaincode definition on peer0.org1 on channel 'wethaq'...[0m
+[0;34mAttempting to check the commit readiness of the chaincode definition on peer0.org1, Retry after 3 seconds.[0m
++ peer lifecycle chaincode checkcommitreadiness --channelID wethaq --name wethaq --version 1.0 --sequence 1 --signature-policy 'AND('\''Org1MSP.peer'\'','\''Org2MSP.peer'\'')' --output json
++ res=0
+{
+	"approvals": {
+		"Org1MSP": true,
+		"Org2MSP": true
+	}
+}
+[0;34mChecking the commit readiness of the chaincode definition successful on peer0.org1 on channel 'wethaq'[0m
+[0;34mUsing organization 2[0m
+[0;34mChecking the commit readiness of the chaincode definition on peer0.org2 on channel 'wethaq'...[0m
+[0;34mAttempting to check the commit readiness of the chaincode definition on peer0.org2, Retry after 3 seconds.[0m
++ peer lifecycle chaincode checkcommitreadiness --channelID wethaq --name wethaq --version 1.0 --sequence 1 --signature-policy 'AND('\''Org1MSP.peer'\'','\''Org2MSP.peer'\'')' --output json
++ res=0
+{
+	"approvals": {
+		"Org1MSP": true,
+		"Org2MSP": true
+	}
+}
+[0;34mChecking the commit readiness of the chaincode definition successful on peer0.org2 on channel 'wethaq'[0m
+[0;34mUsing organization 1[0m
+[0;34mUsing organization 2[0m
++ peer lifecycle chaincode commit -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem --channelID wethaq --name wethaq --peerAddresses localhost:7051 --tlsRootCertFiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem --peerAddresses localhost:9051 --tlsRootCertFiles /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/tlsca/tlsca.org2.example.com-cert.pem --version 1.0 --sequence 1 --signature-policy 'AND('\''Org1MSP.peer'\'','\''Org2MSP.peer'\'')'
++ res=0
+[34m2026-11-28 17:47:47.778 UTC 0001 INFO[0m [chaincodeCmd] [34;1mClientWait[0m -> txid [58a4e0a88a15465778a47b6ceefd3e08500f14973c4dfb57c34cbaf8ad75b704] committed with status (VALID) at localhost:7051
+[34m2026-11-28 17:47:47.779 UTC 0002 INFO[0m [chaincodeCmd] [34;1mClientWait[0m -> txid [58a4e0a88a15465778a47b6ceefd3e08500f14973c4dfb57c34cbaf8ad75b704] committed with status (VALID) at localhost:9051
+[0;32mChaincode definition committed on channel 'wethaq'[0m
+[0;34mUsing organization 1[0m
+[0;34mQuerying chaincode definition on peer0.org1 on channel 'wethaq'...[0m
+[0;34mAttempting to Query committed status on peer0.org1, Retry after 3 seconds.[0m
++ peer lifecycle chaincode querycommitted --channelID wethaq --name wethaq
++ res=0
+Committed chaincode definition for chaincode 'wethaq' on channel 'wethaq':
+Version: 1.0, Sequence: 1, Endorsement Plugin: escc, Validation Plugin: vscc, Approvals: [Org1MSP: true, Org2MSP: true]
+[0;32mQuery chaincode definition successful on peer0.org1 on channel 'wethaq'[0m
+[0;34mUsing organization 2[0m
+[0;34mQuerying chaincode definition on peer0.org2 on channel 'wethaq'...[0m
+[0;34mAttempting to Query committed status on peer0.org2, Retry after 3 seconds.[0m
++ peer lifecycle chaincode querycommitted --channelID wethaq --name wethaq
++ res=0
+Committed chaincode definition for chaincode 'wethaq' on channel 'wethaq':
+Version: 1.0, Sequence: 1, Endorsement Plugin: escc, Validation Plugin: vscc, Approvals: [Org1MSP: true, Org2MSP: true]
+[0;32mQuery chaincode definition successful on peer0.org2 on channel 'wethaq'[0m
+[0;34mNot starting docker containers; these are the commands we would have run[0m
+[0;34m    docker run --rm -d --name peer0org1_wethaq_ccaas                    --network fabric_test                   -e CHAINCODE_SERVER_ADDRESS=0.0.0.0:9999                   -e CHAINCODE_ID=wethaq_1.0:570d7b7aa4bcdf6a716219e5ed61fa0e66f6a636d720da7044c080594717ee5f -e CORE_CHAINCODE_ID_NAME=wethaq_1.0:570d7b7aa4bcdf6a716219e5ed61fa0e66f6a636d720da7044c080594717ee5f                     wethaq_ccaas_image:latest[0m
+[0;34m    docker run --rm -d --name peer0org2_wethaq_ccaas                    --network fabric_test                   -e CHAINCODE_SERVER_ADDRESS=0.0.0.0:9999                   -e CHAINCODE_ID=wethaq_1.0:570d7b7aa4bcdf6a716219e5ed61fa0e66f6a636d720da7044c080594717ee5f -e CORE_CHAINCODE_ID_NAME=wethaq_1.0:570d7b7aa4bcdf6a716219e5ed61fa0e66f6a636d720da7044c080594717ee5f                     wethaq_ccaas_image:latest[0m
+[0;34mChaincode initialization is not required[0m
+2026/11/28 17:47:54 [INFO] Configuration file location: /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/fabric-ca-client-config.yaml
+2026/11/28 17:47:54 [INFO] TLS Enabled
+2026/11/28 17:47:54 [INFO] TLS Enabled
+2026/11/28 17:47:54 [INFO] TLS Enabled
+2026/11/28 17:47:54 [INFO] generating key: &{A:ecdsa S:256}
+2026/11/28 17:47:54 [INFO] encoded CSR
+2026/11/28 17:47:54 [INFO] Stored client certificate at /home/user/roseal3tb/wethaq/fabric/identities/org1/wethaq-app/msp/signcerts/cert.pem
+2026/11/28 17:47:54 [INFO] Stored root CA certificate at /home/user/roseal3tb/wethaq/fabric/identities/org1/wethaq-app/msp/cacerts/localhost-7054-ca-org1.pem
+2026/11/28 17:47:54 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/identities/org1/wethaq-app/msp/IssuerPublicKey
+2026/11/28 17:47:54 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/identities/org1/wethaq-app/msp/IssuerRevocationPublicKey
+Org1MSP: enrolled wethaq-app (notAfter=Nov 28 17:48:00 2027 GMT)
+2026/11/28 17:47:54 [INFO] Configuration file location: /home/user/roseal3tb/wethaq/fabric/fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/fabric-ca-client-config.yaml
+2026/11/28 17:47:54 [INFO] TLS Enabled
+2026/11/28 17:47:54 [INFO] TLS Enabled
+2026/11/28 17:47:54 [INFO] TLS Enabled
+2026/11/28 17:47:54 [INFO] generating key: &{A:ecdsa S:256}
+2026/11/28 17:47:54 [INFO] encoded CSR
+2026/11/28 17:47:54 [INFO] Stored client certificate at /home/user/roseal3tb/wethaq/fabric/identities/org2/wethaq-app/msp/signcerts/cert.pem
+2026/11/28 17:47:54 [INFO] Stored root CA certificate at /home/user/roseal3tb/wethaq/fabric/identities/org2/wethaq-app/msp/cacerts/localhost-8054-ca-org2.pem
+2026/11/28 17:47:54 [INFO] Stored Issuer public key at /home/user/roseal3tb/wethaq/fabric/identities/org2/wethaq-app/msp/IssuerPublicKey
+2026/11/28 17:47:54 [INFO] Stored Issuer revocation public key at /home/user/roseal3tb/wethaq/fabric/identities/org2/wethaq-app/msp/IssuerRevocationPublicKey
+Org2MSP: enrolled wethaq-app (notAfter=Nov 28 17:48:00 2027 GMT)
+Wethaq Fabric network (wethaq / wethaq)
+  ok   container orderer.example.com
+  ok   container peer0.org1.example.com
+  ok   container peer0.org2.example.com
+  ok   container ca_org1
+  ok   container ca_org2
+  ok   container ca_orderer
+  ok   container peer0org1_wethaq_ccaas
+  ok   container peer0org2_wethaq_ccaas
+  ok   peer0.org1 joined wethaq
+  ok   peer0.org2 joined wethaq
+  ok   chaincode definition sequence 1, version 1.0, approved by Org1MSP and Org2MSP
+  ok   chaincode answers queries
+  ok   Org1MSP wethaq-app certificate valid for 30+ days
+  ok   Org2MSP wethaq-app certificate valid for 30+ days
+
+Fabric network is running with the wethaq chaincode.
+Next, in wethaq-api (LEDGER_MODE=fabric in .env): npm run seed -- --reset && npm run dev

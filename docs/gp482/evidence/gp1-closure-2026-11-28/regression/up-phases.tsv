@@ -1,0 +1,5 @@
+up.sh: remove any previous network	3	0
+up.sh: CAs, orderer, peers and channel	17	0
+up.sh: chaincode build, install, approve, commit	21	0
+up.sh: application identities	0	0
+up.sh: verify-network	1	0
