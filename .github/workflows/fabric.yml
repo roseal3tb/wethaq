@@ -49,7 +49,7 @@ jobs:
           npm install --no-audit --no-fund
           (cd wethaq-api && npm ci --no-audit --no-fund)
       - name: Pull the chaincode's base image (Docker Hub, then the public.ecr.aws and mirror.gcr.io copies; bounded attempts)
-        run: echo "WETHAQ_NODE_IMAGE=$(.github/scripts/pull-image.sh node:20-bookworm-slim public.ecr.aws/docker/library/node:20-bookworm-slim mirror.gcr.io/library/node:20-bookworm-slim)" >> "$GITHUB_ENV"
+        run: echo "WETHAQ_NODE_IMAGE=$(.github/scripts/pull-image.sh node:22-bookworm-slim public.ecr.aws/docker/library/node:22-bookworm-slim mirror.gcr.io/library/node:22-bookworm-slim)" >> "$GITHUB_ENV"
       - name: Install Fabric
         run: ./fabric/install.sh
       - name: Start the network (CA, channel, chaincode, identities) and verify it

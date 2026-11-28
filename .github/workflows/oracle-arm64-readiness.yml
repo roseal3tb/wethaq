@@ -125,7 +125,7 @@ jobs:
           for c in peer orderer ccenv baseos tools; do check "fabric-$c 2.5.12" "hyperledger/fabric-$c:2.5.12"; done
           check "fabric-ca 1.5.15" hyperledger/fabric-ca:1.5.15
           check "node 22 (API)" node:22-bookworm-slim public.ecr.aws/docker/library/node:22-bookworm-slim mirror.gcr.io/library/node:22-bookworm-slim
-          check "node 20 (chaincode)" node:20-bookworm-slim public.ecr.aws/docker/library/node:20-bookworm-slim mirror.gcr.io/library/node:20-bookworm-slim
+          check "node 22 (chaincode)" node:22-bookworm-slim public.ecr.aws/docker/library/node:22-bookworm-slim mirror.gcr.io/library/node:22-bookworm-slim
           check "postgres 16" postgres:16-alpine public.ecr.aws/docker/library/postgres:16-alpine mirror.gcr.io/library/postgres:16-alpine
           check "caddy 2 (web server)" caddy:2 public.ecr.aws/docker/library/caddy:2 mirror.gcr.io/library/caddy:2
           cat "$EVIDENCE/image-manifests.tsv"
@@ -153,7 +153,7 @@ jobs:
           set -e
           pick() { .github/scripts/pull-image.sh "$@"; }
           echo "API_BASE=$(pick "$NODE_IMAGE" node:22-bookworm-slim public.ecr.aws/docker/library/node:22-bookworm-slim mirror.gcr.io/library/node:22-bookworm-slim)" >> "$GITHUB_ENV"
-          echo "WETHAQ_NODE_IMAGE=$(pick "$CHAINCODE_NODE_IMAGE" node:20-bookworm-slim public.ecr.aws/docker/library/node:20-bookworm-slim mirror.gcr.io/library/node:20-bookworm-slim)" >> "$GITHUB_ENV"
+          echo "WETHAQ_NODE_IMAGE=$(pick "$CHAINCODE_NODE_IMAGE" node:22-bookworm-slim public.ecr.aws/docker/library/node:22-bookworm-slim mirror.gcr.io/library/node:22-bookworm-slim)" >> "$GITHUB_ENV"
           echo "PG_IMAGE=$(pick postgres:16-alpine public.ecr.aws/docker/library/postgres:16-alpine mirror.gcr.io/library/postgres:16-alpine)" >> "$GITHUB_ENV"
 
       - name: Start the resource sampler (about every 2 s, until the measurement step)
