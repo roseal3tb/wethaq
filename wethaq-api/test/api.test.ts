@@ -159,3 +159,94 @@ describe('alerts and users', () => {
     expect((await request(app).patch('/api/users/USR-004').set(as('Admin')).send({ active: false })).status).toBe(400);
   });
 });
+
+describe('cancellation, partial receipts and returns (chaincode version 2, B5)', () => {
+  const create = async (qty = 10) => {
+    const res = await request(app).post('/api/shipments').set(as('Planner')).send({ partId: 'SP-004', location: 'Deployment Site', qty, month: '2026-12', note: 'Planner reviewed' });
+    expect(res.status).toBe(201);
+    return res.body.id as string;
+  };
+  const op = (role: string, id: string, path: string, qty = 0) => request(app).post(`/api/shipments/${id}/${path}`).set(as(role)).send({ qty, note: 'ok' });
+  const onHand = async (location: string) => (await request(app).get('/api/inventory').set(as('Admin'))).body.find((r: any) => r.partId === 'SP-004' && r.location === location);
+  const shipment = async (id: string) => (await state()).shipments.find((x: any) => x.id === id);
+  const verified = async (id: string) => (await request(app).get(`/api/shipments/${id}/verify`).set(as('Admin'))).body;
+
+  it('cancels a requested shipment (Dispatcher only) and refuses later steps', async () => {
+    const id = await create();
+    expect((await op('Planner', id, 'cancel')).body).toMatchObject({ passed: false, source: 'application', failedRule: 'authorizedOrg' });
+    const res = await op('Dispatcher', id, 'cancel');
+    expect(res.status, res.body.reason).toBe(200);
+    expect(await shipment(id)).toMatchObject({ status: 'Cancelled' });
+    expect((await op('Dispatcher', id, 'dispatch', 10)).body).toMatchObject({ passed: false, source: 'chaincode', failedRule: 'validTransition' });
+    expect(await verified(id)).toMatchObject({ match: true });
+  });
+
+  it('puts the stock of a cancelled dispatch back at the origin', async () => {
+    const id = await create();
+    const before = (await onHand('Central Warehouse')).onHand;
+    expect((await op('Dispatcher', id, 'dispatch', 6)).status).toBe(200);
+    expect((await onHand('Central Warehouse')).onHand).toBe(before - 6);
+    expect((await op('Dispatcher', id, 'cancel')).status).toBe(200);
+    expect((await onHand('Central Warehouse')).onHand).toBe(before);
+    expect(await shipment(id)).toMatchObject({ status: 'Cancelled', dispatchedQty: 6 });
+    const records = (await state()).transactions.filter((t: any) => t.shipmentId === id).map((t: any) => `${t.type}:${t.quantity}`);
+    expect(records).toContain('CANCELLATION:6');
+  });
+
+  it('records partial receipts, counts what is outstanding as in transit, and closes with the rest', async () => {
+    const id = await create();
+    const site = await onHand('Deployment Site');
+    await op('Dispatcher', id, 'dispatch', 10);
+    expect((await onHand('Deployment Site')).inTransit).toBe(site.inTransit + 10);
+    expect((await op('Receiver', id, 'receive-partial', 10)).body).toMatchObject({ passed: false, failedRule: 'validQuantity' });
+    expect((await op('Receiver', id, 'receive-partial', 4)).status).toBe(200);
+    expect(await shipment(id)).toMatchObject({ status: 'Partially Received', receivedQty: 4 });
+    expect(await onHand('Deployment Site')).toMatchObject({ onHand: site.onHand + 4, inTransit: site.inTransit + 6 });
+    expect(await verified(id)).toMatchObject({ match: true });
+    expect((await op('Receiver', id, 'receive', 7)).body).toMatchObject({ passed: false, failedRule: 'validQuantity' });
+    expect((await op('Receiver', id, 'receive', 6)).status).toBe(200);
+    const s = await shipment(id);
+    expect(s).toMatchObject({ status: 'Received', dispatchedQty: 10, receivedQty: 10 });
+    expect(s.events.map((e: any) => e.status)).toEqual(['Requested', 'Dispatched', 'Partially Received', 'Received']);
+    expect(await onHand('Deployment Site')).toMatchObject({ onHand: site.onHand + 10, inTransit: site.inTransit });
+    expect((await state()).alerts.some((a: any) => a.type === 'Discrepancy' && a.shipmentId === id)).toBe(false);
+  });
+
+  it('raises a discrepancy when a partly received shipment is closed short', async () => {
+    const id = await create();
+    await op('Dispatcher', id, 'dispatch', 10);
+    await op('Receiver', id, 'receive-partial', 5);
+    await op('Receiver', id, 'receive', 3);
+    expect((await state()).alerts.find((a: any) => a.type === 'Discrepancy' && a.shipmentId === id)?.detail).toBe(`${id}: dispatched 10, received 8`);
+  });
+
+  it('returns received items: stock moves back to the origin, once', async () => {
+    const id = await create();
+    await op('Dispatcher', id, 'dispatch', 10);
+    await op('Receiver', id, 'receive', 10);
+    const [warehouse, site] = [(await onHand('Central Warehouse')).onHand, (await onHand('Deployment Site')).onHand];
+    expect((await op('Dispatcher', id, 'return', 2)).body).toMatchObject({ passed: false, source: 'application' });
+    expect((await op('Receiver', id, 'return', 11)).body).toMatchObject({ passed: false, failedRule: 'validQuantity' });
+    expect((await op('Receiver', id, 'return', 3)).status).toBe(200);
+    expect(await shipment(id)).toMatchObject({ status: 'Returned', receivedQty: 10, returnedQty: 3 });
+    expect((await onHand('Central Warehouse')).onHand).toBe(warehouse + 3);
+    expect((await onHand('Deployment Site')).onHand).toBe(site - 3);
+    expect((await op('Receiver', id, 'return', 1)).body).toMatchObject({ passed: false, failedRule: 'validTransition' });
+    expect(await verified(id)).toMatchObject({ match: true });
+    await db.query('UPDATE shipments SET returned_qty = 2 WHERE shipment_id = $1', [id]);
+    expect((await verified(id)).differences).toEqual(['Returned quantity: database 2, ledger 3']);
+  });
+
+  it('lists the new states and record types', async () => {
+    expect((await request(app).get('/api/shipments?status=Returned').set(as('Admin'))).body.total).toBeGreaterThan(0);
+    expect((await request(app).get('/api/shipments?status=Cancelled').set(as('Admin'))).body.total).toBe(2);
+    expect((await request(app).get('/api/ledger/records?type=PARTIAL_RECEIPT').set(as('Admin'))).body.total).toBe(2);
+    expect((await request(app).get('/api/shipments?status=Lost').set(as('Admin'))).status).toBe(400);
+  });
+
+  it('refuses a reporting row that breaks the quantity rules of the new states', async () => {
+    const id = await create();
+    await expect(db.query(`UPDATE shipments SET status = 'Partially Received', dispatched_qty = 5, received_qty = 5 WHERE shipment_id = $1`, [id])).rejects.toThrow(/shipments_status_quantities/);
+    await expect(db.query(`UPDATE shipments SET status = 'Cancelled', dispatched_qty = 5, received_qty = 1 WHERE shipment_id = $1`, [id])).rejects.toThrow(/shipments_status_quantities/);
+  });
+});

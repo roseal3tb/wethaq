@@ -5,6 +5,10 @@ Status as of 28 November 2026 (GP1 closure), branch `gp1-closure`. All items wer
 [REQUIREMENTS_TRACEABILITY.md](REQUIREMENTS_TRACEABILITY.md) is complete and verified. Because of the items below, the
 project is **not** complete in every respect, and no completion percentage is given.
 
+**Update, start of GP2 (28 November 2026, branch `gp2-start`).** B5, B7 and B16 were done and verified locally,
+including an upgrade of a running Fabric network with 81 existing shipments from chaincode version 1 to version 2
+on Node.js 22. The GitHub Fabric and arm64 workflows have not run on this branch yet. Evidence: [evidence/gp2-start-2026-11-28/](evidence/gp2-start-2026-11-28/README.md).
+
 Status labels: COMPLETE AND VERIFIED, IMPLEMENTED BUT NOT VERIFIED, PARTIALLY COMPLETE, BLOCKED, DEFERRED TO GP2,
 NOT APPLICABLE.
 
@@ -19,9 +23,9 @@ the next phase. See [evidence/gp1-closure-2026-11-28/academic-requirements-verif
 | B2 | Hosted deployment on Oracle Cloud | DEFERRED TO GP2 |
 | B3 | Revoking the superseded live `wethaq-app` certificate | IMPLEMENTED BUT NOT VERIFIED on a live identity |
 | B4 | Merge of `gp1-final-readiness` | COMPLETE AND VERIFIED |
-| B5 | Cancellation, return and multi-step partial receipt | DEFERRED TO GP2 |
+| B5 | Cancellation, return and multi-step partial receipt | COMPLETE AND VERIFIED locally (GP2); GitHub runs pending; the lifecycle is a proposal for the supervisor |
 | B6 | Importing a real parts catalogue and inventory | NOT APPLICABLE in GP1 |
-| B7 | Splitting the 951 KB dashboard bundle | DEFERRED TO GP2 |
+| B7 | Splitting the 951 KB dashboard bundle | COMPLETE AND VERIFIED (GP2) |
 | B8 | Accessibility (NFR2) | NFR2 criteria COMPLETE AND VERIFIED; colour contrast PARTIALLY COMPLETE (documented risk) |
 | B9 | User acceptance testing and expert evaluation | DEFERRED TO GP2 (materials prepared, not executed) |
 | B10 | Independent security review | BLOCKED |
@@ -30,7 +34,7 @@ the next phase. See [evidence/gp1-closure-2026-11-28/academic-requirements-verif
 | B13 | Registry pull limits | COMPLETE AND VERIFIED (handled) |
 | B14 | Native arm64 run | COMPLETE AND VERIFIED (GitHub-hosted runner) |
 | B15 | GitHub Actions on the Node 24 runtime, PR checks | COMPLETE AND VERIFIED |
-| B16 | Chaincode runtime on Node.js 20 (end of life) | DEFERRED TO GP2 |
+| B16 | Chaincode runtime on Node.js 20 (end of life) | COMPLETE AND VERIFIED locally (GP2); GitHub Fabric and arm64 runs pending |
 | B17 | Fabric installer pinned and checksum-verified | COMPLETE AND VERIFIED (local x86_64, GitHub x64 and arm64) |
 | B18 | Peak memory and CPU under a 2 CPU / 12 GB limit | COMPLETE AND VERIFIED on a GitHub arm64 runner (not Oracle hardware) |
 | B19 | Accidental replacement of an existing network | COMPLETE AND VERIFIED |
@@ -64,13 +68,25 @@ the next phase. See [evidence/gp1-closure-2026-11-28/academic-requirements-verif
 * **Acceptance criteria.** Smoke checks pass over HTTPS on the server; `fabric.yml`-equivalent checks pass there;
   only ports 22 (admin range), 80 and 443 open; off-instance backup and one restore drill done; evidence recorded.
 
-### B5. Cancellation, return and multi-step partial receipt: DEFERRED TO GP2
+### B5. Cancellation, return and multi-step partial receipt: COMPLETE AND VERIFIED locally (GP2)
+
+* **Done in GP2.** Chaincode version 2 adds `Cancel` (Org1, from Requested or Dispatched), `ReceivePartial` (Org2,
+  less than is still outstanding, to Partially Received) and `Return` (Org2, from Received, up to the received
+  quantity). `Receive` also closes a Partially Received shipment; received quantities add up. The five rules and their
+  priority are unchanged. The API has `POST /shipments/:id/cancel`, `/receive-partial` and `/return`; migration 006
+  adds the states, record types and `returned_qty`. Inventory: a cancelled dispatch goes back to the origin, a return
+  moves stock from the destination to the origin, and what is outstanding counts as in transit. The dashboard shows
+  the actions in live mode only; demo mode is unchanged. Upgraded on a running network with
+  `./fabric/upgrade-chaincode.sh 2.0`: the 81 existing shipments still verify and the sampled histories are
+  byte-identical. Tests: chaincode 34, API 116, Fabric integration 9, live browser 10, NFR 31 of 31. Evidence: [evidence/gp2-start-2026-11-28/](evidence/gp2-start-2026-11-28/README.md).
+* **Still open.** The lifecycle (who may cancel, up to which state; one return per shipment) is a proposal and should
+  be agreed with the supervisor. The GitHub Fabric and arm64 workflows must run on the branch.
 
 * **Reason.** It needs new chaincode functions and rules, a chaincode upgrade endorsed by both organizations, and new
   dashboard actions. That is a high-risk change to the agreed lifecycle right before submission.
 * **Academic justification.** GP481 §6.6 lists it as future work (item 5).
-* **Current status.** PARTIALLY COMPLETE in behaviour: a short receipt is accepted, recorded on the ledger and raises
-  a Discrepancy alert. No cancellation, no return, no second receipt for the rest.
+* **Status before GP2.** PARTIALLY COMPLETE in behaviour: a short receipt is accepted, recorded on the ledger and
+  raises a Discrepancy alert. No cancellation, no return, no second receipt for the rest.
 * **Required work.** States `Cancelled` and `Returned`; transitions and rules (who may cancel, up to which state;
   return quantity ≤ received); `ReceiveRemainder` or a partial flag; chaincode version 2 and upgrade with
   `fabric/upgrade-chaincode.sh`; API routes; dashboard actions; inventory effects.
@@ -78,12 +94,17 @@ the next phase. See [evidence/gp1-closure-2026-11-28/academic-requirements-verif
 * **Acceptance criteria.** Chaincode tests with accepted and rejected cases for each new rule; Fabric integration
   tests for each new path; the NFR integrity checks still pass; the upgrade keeps all earlier ledger records.
 
-### B7. Splitting the dashboard bundle: DEFERRED TO GP2
+### B7. Splitting the dashboard bundle: COMPLETE AND VERIFIED (GP2)
+
+* **Done in GP2.** `vite.config.ts` puts third-party code in vendor chunks (charts, React, UI parts, icons). The
+  largest chunk is 442 kB (117 kB gzipped); Vite no longer warns. The chunks load with the page, so behaviour and
+  appearance are unchanged: the demo browser tests pass on the development server and on the production build
+  (58 passed, 2 skipped). Evidence: [evidence/gp2-start-2026-11-28/](evidence/gp2-start-2026-11-28/README.md).
 
 * **Reason.** A build change to the frontend. The brief rules out redesigning the frontend, and the warning does not
   affect correctness.
 * **Academic justification.** GP481 §5.9 says the bundle should be split "in a later iteration".
-* **Current status.** 951 KB (274 KB gzipped); Vite reports a chunk over 500 kB.
+* **Status before GP2.** 951 KB (274 KB gzipped); Vite reported a chunk over 500 kB.
 * **Required work.** Lazy-load the page components with `React.lazy`, or `manualChunks` for the chart library.
 * **Dependencies.** None.
 * **Acceptance criteria.** No chunk over 500 kB; all demo, live and Fabric browser tests pass; screenshots
@@ -104,12 +125,18 @@ the next phase. See [evidence/gp1-closure-2026-11-28/academic-requirements-verif
 * **Acceptance criteria.** As proposed in the kit: completed sheets for every participant, task completion and SUS
   reported as measured, whether or not they reach the proposed targets (80 % task completion, SUS 68).
 
-### B16. Chaincode runtime on Node.js 20: DEFERRED TO GP2
+### B16. Chaincode runtime on Node.js 20: COMPLETE AND VERIFIED locally (GP2)
+
+* **Done in GP2.** The chaincode image and the workflows' fallbacks use `node:22-bookworm-slim` (the same image and
+  digest as the API), and the chaincode tests in the quality checks run on Node 22. The local network was upgraded
+  to chaincode version 2.0 (sequence 2) on Node 22.23.5; the earlier ledger history still verifies (81 of 81).
+  The local image was built from host-installed dependencies because of B11; CI builds it with the Dockerfile.
+  Still to do: run `fabric.yml` and the arm64 workflow on the branch. Evidence: [evidence/gp2-start-2026-11-28/](evidence/gp2-start-2026-11-28/README.md).
 
 * **Reason.** Node.js 20 is end of life (nodejs.org, checked 28 Nov 2026; Node 22 and 24 are LTS). Changing the
   chaincode runtime without a verified Fabric run right before submission is a high-risk change.
 * **Academic justification.** Not in the GP481 report; a maintenance item.
-* **Current status.** The chaincode image uses `node:20-bookworm-slim`. Its libraries (fabric-shim and
+* **Status before GP2.** The chaincode image used `node:20-bookworm-slim`. Its libraries (fabric-shim and
   fabric-contract-api 2.5.8) support Node 22. The chaincode unit tests already run on Node 22 in CI.
 * **Required work.** Try it first without a code change: set the repository variable `CHAINCODE_NODE_IMAGE`
   (arm64 workflow) or `WETHAQ_CHAINCODE_NODE_IMAGE` (quality checks) to `node:22-bookworm-slim`. If those pass,

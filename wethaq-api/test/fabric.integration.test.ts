@@ -101,4 +101,42 @@ describe.runIf(RUN)('Hyperledger Fabric integration', () => {
     expect(all.length).toBeGreaterThanOrEqual(4);
     expect(all.map(r => r.operation)).toEqual(expect.arrayContaining(['request', 'dispatch', 'transit']));
   });
+
+  describe('chaincode version 2: cancellation, partial receipts and returns (B5)', () => {
+    const create = async (qty: number) => {
+      const res = await call('POST', '/shipments', 'planner', { partId: 'SP-012', location: 'Deployment Site', qty, month: '2026-12', note: 'Fabric integration test, version 2' });
+      expect(res.status).toBe(201);
+      return res.body.id as string;
+    };
+    const step = async (role: string, shipmentId: string, path: string, qty = 0) => {
+      const res = await call('POST', `/shipments/${shipmentId}/${path}`, role, { qty, note: 'Fabric integration test' });
+      expect(res.status, `${path}: ${res.body.reason ?? res.body.error}`).toBe(200);
+      expect((await client.transactionStatus(res.body.txId)).state).toBe('valid');
+      return res.body;
+    };
+
+    it('cancels a dispatched shipment on Fabric and verifies it on the peer', async () => {
+      const shipmentId = await create(5);
+      await step('dispatcher', shipmentId, 'dispatch', 5);
+      await step('dispatcher', shipmentId, 'cancel');
+      expect(await client.read(shipmentId)).toMatchObject({ status: 'Cancelled', dispatchedQty: 5 });
+      expect((await call('GET', `/shipments/${shipmentId}/verify`, 'admin')).body).toMatchObject({ status: 'verified', match: true });
+    });
+
+    it('records partial receipts and a return on Fabric', async () => {
+      const shipmentId = await create(9);
+      await step('dispatcher', shipmentId, 'dispatch', 9);
+      await step('receiver', shipmentId, 'receive-partial', 4);
+      expect(await client.read(shipmentId)).toMatchObject({ status: 'Partially Received', receivedQty: 4 });
+      const over = await call('POST', `/shipments/${shipmentId}/receive`, 'receiver', { qty: 6 });
+      expect(over.status).toBe(422);
+      expect((await client.readRecord(over.body.txId))).toMatchObject({ status: 'Rejected', failedRule: 'validQuantity' });
+      await step('receiver', shipmentId, 'receive', 5);
+      await step('receiver', shipmentId, 'return', 2);
+      expect(await client.read(shipmentId)).toMatchObject({ status: 'Returned', receivedQty: 9, returnedQty: 2 });
+      expect((await call('GET', `/shipments/${shipmentId}/verify`, 'admin')).body).toMatchObject({ status: 'verified', match: true });
+      const ops = (await client.history(shipmentId)).map(r => `${r.operation}:${r.status}`);
+      expect(ops).toEqual(['request:Committed', 'dispatch:Committed', 'receivePartial:Committed', 'receive:Rejected', 'receive:Committed', 'return:Committed']);
+    });
+  });
 });

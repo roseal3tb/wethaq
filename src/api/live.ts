@@ -3,7 +3,10 @@
  * Enabled when the dashboard is started with VITE_WETHAQ_LIVE=true (npm run dev:live).
  * Vite proxies /api to the local API service (see vite.config.ts).
  */
-import type { AppData, Role, DemoUser, Inventory } from '../types';
+import type { AppData, Role, DemoUser, Inventory, Operation } from '../types';
+
+/** API paths of the ledger operations (wethaq-api/src/app.ts). */
+const OPERATION_PATH: Record<Operation, string> = { dispatch: 'dispatch', transit: 'transit', receive: 'receive', receivePartial: 'receive-partial', cancel: 'cancel', return: 'return' };
 
 export const LIVE = import.meta.env.VITE_WETHAQ_LIVE === 'true';
 /**
@@ -86,7 +89,7 @@ export const liveApi = {
   state: () => request<LiveState>('GET', '/state'),
   analytics: <T = unknown>(name: string) => request<AnalyticsResult<T>>('GET', `/analytics/${encodeURIComponent(name)}`),
   createShipment: (p: { partId: string; location: string; qty: number; month: string; note: string }, key = newIdempotencyKey()) => request<{ id: string; txId?: string; block?: number; pending?: boolean; message?: string }>('POST', '/shipments', p, key),
-  operate: (op: 'dispatch' | 'transit' | 'receive', shipmentId: string, qty: number, note: string, key = newIdempotencyKey()) => request<LedgerResult | PendingResult>('POST', `/shipments/${encodeURIComponent(shipmentId)}/${op}`, { qty, note }, key),
+  operate: (op: Operation, shipmentId: string, qty: number, note: string, key = newIdempotencyKey()) => request<LedgerResult | PendingResult>('POST', `/shipments/${encodeURIComponent(shipmentId)}/${OPERATION_PATH[op]}`, { qty, note }, key),
   invalid: (scenario: string, shipmentId?: string) => request<LedgerResult | PendingResult>('POST', '/demo/invalid', { scenario, shipmentId }),
   verify: (shipmentId: string) => request<VerifyResult>('GET', `/shipments/${encodeURIComponent(shipmentId)}/verify`),
   ack: (id: string, note?: string) => request<{ ok: boolean }>('POST', `/alerts/${encodeURIComponent(id)}/ack`, { note }),

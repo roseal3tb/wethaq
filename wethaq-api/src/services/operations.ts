@@ -30,7 +30,7 @@ import { audit } from './audit.js';
 import { HttpError, locationId, orgName, recordId } from './common.js';
 import { checkShortage, raiseAlert, resolveAlert } from './inventory.js';
 
-export type OperationKind = 'request' | 'dispatch' | 'transit' | 'receive' | 'demo';
+export type OperationKind = 'request' | 'dispatch' | 'transit' | 'receive' | 'receivePartial' | 'cancel' | 'return' | 'demo';
 
 export interface OperationOptions {
   /** false for seeded history: the seeded baseline inventory already includes those movements. */
@@ -64,7 +64,7 @@ interface OperationRow {
   block: number | null; response: OperationResponse | null; attempts: number; created_at: Date | string; updated_at: Date | string; applied_at: Date | string | null;
 }
 
-const TX_TYPE: Record<LedgerOperation | 'request', string> = { request: 'REQUEST', dispatch: 'DISPATCH', transit: 'STATUS_CHANGE', receive: 'RECEIPT' };
+const TX_TYPE: Record<LedgerOperation | 'request', string> = { request: 'REQUEST', dispatch: 'DISPATCH', transit: 'STATUS_CHANGE', receive: 'RECEIPT', receivePartial: 'PARTIAL_RECEIPT', cancel: 'CANCELLATION', return: 'RETURN' };
 
 export const pendingKey = (txId: string) => `pending:${txId}`;
 
@@ -236,7 +236,7 @@ async function insertRecord(q: Queryable, r: LedgerRecord, block: number | undef
   return res.rows.length > 0;
 }
 
-interface ShipmentRow { shipment_id: string; part_id: string; dispatched_qty: number | null; from_location: string; to_location: string; status: string; }
+interface ShipmentRow { shipment_id: string; part_id: string; dispatched_qty: number | null; received_qty: number | null; from_location: string; to_location: string; status: string; }
 
 /** The side effects of a newly inserted record: shipment status, timeline, inventory and alerts. */
 async function project(q: Queryable, r: LedgerRecord, op: OperationRow | undefined) {
@@ -266,11 +266,14 @@ async function project(q: Queryable, r: LedgerRecord, op: OperationRow | undefin
     return;
   }
 
+  const receipt = r.operation === 'receive' || r.operation === 'receivePartial';
   const dispatched = r.operation === 'dispatch' ? r.quantity : shipment.dispatched_qty;
-  const received = r.operation === 'receive' ? r.quantity : null;
+  // Received quantities add up across partial receipts and the final receipt (chaincode version 2).
+  const received = receipt ? (shipment.received_qty ?? 0) + r.quantity : null;
+  const returned = r.operation === 'return' ? r.quantity : null;
   await q.query(
-    `UPDATE shipments SET status = $2, dispatched_qty = $3, received_qty = COALESCE($4, received_qty), last_tx_id = $5, ledger_state = 'confirmed' WHERE shipment_id = $1`,
-    [r.shipmentId, r.toStatus, dispatched, received, r.txId]);
+    `UPDATE shipments SET status = $2, dispatched_qty = $3, received_qty = COALESCE($4, received_qty), returned_qty = COALESCE($5, returned_qty), last_tx_id = $6, ledger_state = 'confirmed' WHERE shipment_id = $1`,
+    [r.shipmentId, r.toStatus, dispatched, received, returned, r.txId]);
   await q.query('INSERT INTO shipment_events (shipment_id, status, time, actor_id, tx_id, note) VALUES ($1, $2, $3, $4, $5, $6)', [r.shipmentId, r.toStatus, r.timestamp, actor, id, note]);
 
   if (options.adjustInventory !== false) {
@@ -279,15 +282,24 @@ async function project(q: Queryable, r: LedgerRecord, op: OperationRow | undefin
       await q.query('UPDATE inventory SET on_hand = GREATEST(0, on_hand - $3), updated_at = now() WHERE part_id = $1 AND location_id = $2', [shipment.part_id, from, r.quantity]);
       await checkShortage(q, shipment.part_id, from, r.timestamp);
     }
-    if (r.operation === 'receive') {
+    if (receipt) {
       await q.query('UPDATE inventory SET on_hand = on_hand + $3, updated_at = now() WHERE part_id = $1 AND location_id = $2', [shipment.part_id, shipment.to_location, r.quantity]);
       await checkShortage(q, shipment.part_id, shipment.to_location, r.timestamp);
     }
+    // A cancelled dispatch puts the stock back where it left; a return moves it from the destination back to the origin.
+    if (r.operation === 'cancel' && r.fromStatus === 'Dispatched' && from && r.quantity > 0) {
+      await q.query('UPDATE inventory SET on_hand = on_hand + $3, updated_at = now() WHERE part_id = $1 AND location_id = $2', [shipment.part_id, from, r.quantity]);
+    }
+    if (r.operation === 'return') {
+      await q.query('UPDATE inventory SET on_hand = GREATEST(0, on_hand - $3), updated_at = now() WHERE part_id = $1 AND location_id = $2', [shipment.part_id, shipment.to_location, r.quantity]);
+      await checkShortage(q, shipment.part_id, shipment.to_location, r.timestamp);
+      if (from) await q.query('UPDATE inventory SET on_hand = on_hand + $3, updated_at = now() WHERE part_id = $1 AND location_id = $2', [shipment.part_id, from, r.quantity]);
+    }
   }
-  if (r.operation === 'receive' && r.quantity !== dispatched) {
+  if (r.operation === 'receive' && received !== dispatched) {
     await raiseAlert(q, {
       type: 'Discrepancy', severity: 'High', title: 'Receipt quantity mismatch',
-      detail: `${r.shipmentId}: dispatched ${dispatched}, received ${r.quantity}`, partId: shipment.part_id, shipmentId: r.shipmentId,
+      detail: `${r.shipmentId}: dispatched ${dispatched}, received ${received}`, partId: shipment.part_id, shipmentId: r.shipmentId,
       at: r.timestamp, dedupeKey: `discrepancy:${r.shipmentId}`
     });
   }

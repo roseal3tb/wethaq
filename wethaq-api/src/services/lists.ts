@@ -7,6 +7,7 @@ import type { Queryable } from '../db.js';
 import type { Ledger } from '../ledger/types.js';
 import { HttpError, LOCATIONS, locationId } from './common.js';
 import { ALERTS_SQL, EVENTS_SQL, SHIPMENTS_SQL, mapAlert, mapEvent, mapRecord, mapShipment } from './state.js';
+import { LEDGER_STATUSES } from '../../../chaincode/shipment/src/rules.js';
 
 type Query = Record<string, unknown>;
 
@@ -53,7 +54,7 @@ class Where {
 }
 
 const SHIPMENT_ID = /^[A-Za-z0-9-]{1,64}$/;
-const STATUSES = ['Requested', 'Dispatched', 'In Transit', 'Received'] as const;
+const STATUSES = LEDGER_STATUSES;
 
 async function page<T>(q: Queryable, select: string, count: string, where: Where, order: string, { limit, offset }: { limit: number; offset: number }, map: (row: Record<string, any>) => T): Promise<Page<T>> {
   const l = where.next();
@@ -86,7 +87,7 @@ export async function listShipments(q: Queryable, query: Query) {
 export async function listLedgerRecords(q: Queryable, query: Query) {
   const where = new Where()
     .add(p => `shipment_id = ${p}`, one(query, 'shipmentId', undefined, SHIPMENT_ID))
-    .add(p => `type = ${p}`, one(query, 'type', ['REQUEST', 'DISPATCH', 'STATUS_CHANGE', 'RECEIPT', 'ATTEMPT']))
+    .add(p => `type = ${p}`, one(query, 'type', ['REQUEST', 'DISPATCH', 'STATUS_CHANGE', 'RECEIPT', 'PARTIAL_RECEIPT', 'CANCELLATION', 'RETURN', 'ATTEMPT']))
     .add(p => `status = ${p}`, one(query, 'status', ['Committed', 'Rejected']))
     .add(p => `source = ${p}`, one(query, 'source', ['chaincode', 'application']))
     .add(p => `timestamp >= ${p}`, date(query, 'from'))

@@ -192,8 +192,18 @@ stateDiagram-v2
   Dispatched --> InTransit: MarkInTransit (Org1, Dispatcher)
   Dispatched --> Received: Receive (Org2, Receiver), 1 to dispatched qty
   InTransit --> Received: Receive (Org2, Receiver), 1 to dispatched qty
+  Dispatched --> PartiallyReceived: ReceivePartial (Org2, Receiver), less than outstanding
+  InTransit --> PartiallyReceived: ReceivePartial (Org2, Receiver), less than outstanding
+  PartiallyReceived --> PartiallyReceived: ReceivePartial, less than outstanding
+  PartiallyReceived --> Received: Receive (Org2, Receiver), 1 to outstanding qty
+  Requested --> Cancelled: Cancel (Org1, Dispatcher)
+  Dispatched --> Cancelled: Cancel (Org1, Dispatcher)
+  Received --> Returned: Return (Org2, Receiver), 1 to received qty
   Received --> [*]
+  Cancelled --> [*]
+  Returned --> [*]
   InTransit: In Transit
+  PartiallyReceived: Partially Received
   note right of Received
     Any other step is rejected by the chaincode and
     recorded as a Rejected transaction with the failed rule:
@@ -202,6 +212,6 @@ stateDiagram-v2
   end note
 ```
 
-A receipt below the dispatched quantity is accepted and raises a *Receipt quantity mismatch* alert. A role
+Partial receipts, cancellation and returns were added in chaincode version 2 (GP2) and are offered in live mode only. A final receipt that leaves the total below the dispatched quantity is accepted and raises a *Receipt quantity mismatch* alert. A role
 that may not perform an operation is refused by the API before anything reaches the ledger; that attempt is stored
 off-chain as a rejected attempt with an alert and an audit entry.

@@ -164,8 +164,10 @@ export function createApp({ db, ledger, config, bus = new EventBus() }: { db: Db
     send(res, result);
   }));
 
-  for (const op of ['dispatch', 'transit', 'receive'] as const) {
-    api.post(`/shipments/:id/${op}`, auth, wrap(async (req, res) => {
+  // Paths for the operations; the version 2 ones (GP2, B5) are receive-partial, cancel and return.
+  const OPERATION_PATHS = { dispatch: 'dispatch', transit: 'transit', receive: 'receive', receivePartial: 'receive-partial', cancel: 'cancel', return: 'return' } as const;
+  for (const [op, path] of Object.entries(OPERATION_PATHS) as [keyof typeof OPERATION_PATHS, string][]) {
+    api.post(`/shipments/:id/${path}`, auth, wrap(async (req, res) => {
       const result = await operate(db, ledger, req.user!, op, req.params.id, req.body?.qty, req.body?.note, {}, ctx(req));
       changed(result.status === 200 ? 'ShipmentUpdated' : result.status === 202 ? 'OperationPending' : 'OperationRejected', req.params.id);
       send(res, result);

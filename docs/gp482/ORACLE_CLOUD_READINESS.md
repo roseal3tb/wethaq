@@ -96,7 +96,7 @@ digests at that time; tags can move, so GP2 should pin these digests (or newer o
 | `hyperledger/fabric-tools:2.5.12` | `sha256:c802f0bae7998bfac4371c02b1cb794216b746931f127ba6dfe3d336ba5e0238` | yes |
 | `hyperledger/fabric-ca:1.5.15` | `sha256:1b64dc702bd400e14c8f452dedc0359b7dc06679b751b08937eb2bf2865fed40` | yes |
 | `node:22-bookworm-slim` (API) | `sha256:be979e5523c76fa4d5ca4ebd3099078f220aa47ec39c48ad5b5df9314debd6eb` | yes (`arm64/v8`) |
-| `node:20-bookworm-slim` (chaincode) | `sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0` | yes (`arm64/v8`) |
+| `node:20-bookworm-slim` (chaincode until GP2; now `node:22-bookworm-slim`, the API's image above) | `sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0` | yes (`arm64/v8`) |
 | `postgres:16-alpine` | `sha256:f2f98726820d0342055351c6e9d36e705f5bfffb3dd53ff556325114b08afb6d` | yes (`arm64/v8`) |
 | `caddy:2` | `sha256:4851e54a46b206517c574821bb5cc67f170d2156041e9fbc4c9193b45e84a75b` | yes (`arm64/v8`) |
 
@@ -137,6 +137,10 @@ From `wethaq-api/package-lock.json` and `chaincode/shipment/package-lock.json`:
 * Build-only tools (rolldown, lightningcss) ship `linux-arm64-gnu` binaries.
 
 ### 4.5 Chaincode runtime: Node.js 20
+
+**Update, start of GP2.** The chaincode now runs on `node:22-bookworm-slim` (REMAINING_BLOCKERS.md, B16). It was
+verified locally by upgrading a running network to chaincode version 2.0; the arm64 workflow has not run on it yet.
+The text below is the GP1 decision.
 
 The chaincode image uses `node:20-bookworm-slim`. Node.js 20 is end-of-life (nodejs.org lists it as EOL;
 22 and 24 are LTS). The chaincode uses `fabric-shim` and `fabric-contract-api` 2.5.8, which per
@@ -284,7 +288,7 @@ Placeholders: `<HOME_REGION>`, `<COMPARTMENT>`, `<VCN_NAME>`, `<SERVER_PUBLIC_IP
 | Production deployment of the Fabric network, API and dashboard on Oracle Cloud | DEFERRED TO GP2 |
 | Off-instance backups to Object Storage and a restore drill on the server | DEFERRED TO GP2 |
 | Monitoring and alerting on the server | DEFERRED TO GP2 |
-| Chaincode runtime from Node.js 20 (EOL) to Node.js 22 | DEFERRED TO GP2 |
+| Chaincode runtime from Node.js 20 (EOL) to Node.js 22 | COMPLETE AND VERIFIED locally in GP2; the arm64 workflow still has to run (B16) |
 | Pinning the Fabric installer and the image digests | COMPLETE AND VERIFIED in the GP1 closure, locally and on GitHub x64 and arm64 (§4.2) |
 | Peak and 2 CPU / 12 GB measurements on the arm64 runner | COMPLETE AND VERIFIED on GitHub (§6); measure again on the Oracle instance in GP2 |
 | Production identity management (CA administrator credentials off the server, revocation procedures on real identities) | DEFERRED TO GP2 |

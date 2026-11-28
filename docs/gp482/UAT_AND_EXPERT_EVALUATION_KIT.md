@@ -81,7 +81,7 @@ partly / disagree, with a comment.
 | --- | --- |
 | Domain | The four roles match how requests, dispatch and receipt are separated in practice |
 | Domain | The five transaction rules (authorized organization, valid reference, valid transition, quantity, no duplicate) cover the main errors |
-| Domain | Missing workflows (cancellation, returns, partial receipt in several steps) are acceptable for a prototype |
+| Domain | Cancellation, returns and partial receipts (live mode, chaincode version 2) match how the organizations would handle them |
 | Forecasting | Comparing methods with RMSSE on rolling origins is appropriate for intermittent demand |
 | Inventory | The (s, S) policy comparison and its trade-off (fill rate against average stock) are presented fairly |
 | Ledger | Endorsement by both organizations is a suitable trust model for transfers between two organizations |

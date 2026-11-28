@@ -78,7 +78,7 @@ export interface Ledger {
   readonly kind: 'local' | 'fabric';
   /** Prepares the registration of a planner's request (submitted through Org1, the issuing organization). */
   prepareRegister(input: { shipmentId: string; partId: string; requestedQty: number }): Promise<PreparedTransaction>;
-  /** Prepares a dispatch, in-transit or receipt operation, signed by the given organization's identity. */
+  /** Prepares a dispatch, in-transit, receipt, partial receipt, cancellation or return, signed by the given organization's identity. */
   prepareSubmit(input: { operation: LedgerOperation; shipmentId: string; qty: number; org: OrgMsp }): Promise<PreparedTransaction>;
   /** Shortcuts: prepare and submit at once (used by tools that do not need durable tracking). */
   registerRequest(input: { shipmentId: string; partId: string; requestedQty: number }): Promise<LedgerOutcome>;

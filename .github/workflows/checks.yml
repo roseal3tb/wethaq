@@ -170,7 +170,7 @@ jobs:
       - name: Set up Node.js with the npm cache
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: chaincode/shipment/package-lock.json
       - name: Install
@@ -218,7 +218,7 @@ jobs:
           set -e
           pick() { .github/scripts/pull-image.sh "$@"; }
           echo "API_BASE=$(pick "$NODE_IMAGE" node:22-bookworm-slim public.ecr.aws/docker/library/node:22-bookworm-slim mirror.gcr.io/library/node:22-bookworm-slim)" >> "$GITHUB_ENV"
-          echo "CC_BASE=$(pick "$CHAINCODE_NODE_IMAGE" node:20-bookworm-slim public.ecr.aws/docker/library/node:20-bookworm-slim mirror.gcr.io/library/node:20-bookworm-slim)" >> "$GITHUB_ENV"
+          echo "CC_BASE=$(pick "$CHAINCODE_NODE_IMAGE" node:22-bookworm-slim public.ecr.aws/docker/library/node:22-bookworm-slim mirror.gcr.io/library/node:22-bookworm-slim)" >> "$GITHUB_ENV"
           echo "PG_IMAGE=$(pick postgres:16-alpine public.ecr.aws/docker/library/postgres:16-alpine mirror.gcr.io/library/postgres:16-alpine)" >> "$GITHUB_ENV"
       - name: Build the API image from the pulled base image
         run: docker build -f wethaq-api/Dockerfile --build-arg NODE_IMAGE="$API_BASE" -t wethaq-api:ci .

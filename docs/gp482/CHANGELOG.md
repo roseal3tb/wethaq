@@ -1,3 +1,15 @@
+# Change log — start of GP2 (branch `gp2-start`, from `main` at `4d07717`)
+
+* **B7, bundle split.** `vite.config.ts` puts third-party code in vendor chunks; the largest is 442 kB (117 kB
+  gzipped) instead of one 951 kB chunk. No change in behaviour or appearance.
+* **B16, chaincode on Node.js 22.** The chaincode image, its tests in the quality checks and the workflows' registry
+  fallbacks use `node:22-bookworm-slim`.
+* **B5, cancellation, partial receipts and returns.** Chaincode version 2.0.0 (`Cancel`, `ReceivePartial`, `Return`;
+  `Receive` closes a Partially Received shipment), API routes `/cancel`, `/receive-partial` and `/return`, migration
+  006, inventory effects, OpenAPI, and live-mode actions in the dashboard. Demo mode is unchanged.
+* Verified locally, including an upgrade of a running network from version 1 to 2.0 with 81 existing shipments:
+  [evidence/gp2-start-2026-11-28/](evidence/gp2-start-2026-11-28/README.md).
+
 # Change log — GP1 closure (branch `gp1-closure`, from `main` at `3347560`)
 
 ## Phase names

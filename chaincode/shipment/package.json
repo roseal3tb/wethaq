@@ -1,6 +1,6 @@
 {
   "name": "wethaq-shipment-chaincode",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Wethaq shipment chaincode: applies the five transfer rules and records every attempt",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",

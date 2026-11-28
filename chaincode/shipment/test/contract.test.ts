@@ -169,4 +169,92 @@ describe('ShipmentContract', () => {
     expect(bad.match).toBe(false); expect(bad.differences).toHaveLength(2);
     expect((await run(contract.VerifyShipment(ctx('Org1MSP'), 'SHP-NOPE', '{}'))).found).toBe(false);
   });
+
+  describe('version 2: cancellation, partial receipts and returns (B5)', () => {
+    const id = 'SHP-2026-0001';
+    const dispatch = (qty = '10') => contract.Dispatch(ctx('Org1MSP'), id, qty);
+
+    it('cancels a requested shipment from Org1 only', async () => {
+      expect((await run(contract.Cancel(ctx('Org2MSP'), id))).failedRule).toBe('authorizedOrg');
+      const result = await run(contract.Cancel(ctx('Org1MSP'), id));
+      expect(result).toMatchObject({ passed: true, shipment: { status: 'Cancelled' }, record: { operation: 'cancel', quantity: 0, fromStatus: 'Requested', toStatus: 'Cancelled' } });
+      expect((await run(dispatch())).failedRule).toBe('validTransition');
+    });
+
+    it('cancels a dispatched shipment and records the dispatched quantity', async () => {
+      await dispatch('7');
+      const result = await run(contract.Cancel(ctx('Org1MSP'), id));
+      expect(result).toMatchObject({ passed: true, shipment: { status: 'Cancelled', dispatchedQty: 7 }, record: { quantity: 7, fromStatus: 'Dispatched' } });
+      expect((await run(contract.Receive(ctx('Org2MSP'), id, '7'))).failedRule).toBe('validTransition');
+    });
+
+    it('does not cancel once the shipment is in transit', async () => {
+      await dispatch(); await contract.MarkInTransit(ctx('Org1MSP'), id);
+      expect((await run(contract.Cancel(ctx('Org1MSP'), id))).failedRule).toBe('validTransition');
+    });
+
+    it('adds partial receipts up and closes the shipment with the last part', async () => {
+      await dispatch();
+      const first = await run(contract.ReceivePartial(ctx('Org2MSP'), id, '4'));
+      expect(first).toMatchObject({ passed: true, shipment: { status: 'Partially Received', receivedQty: 4 }, record: { operation: 'receivePartial', quantity: 4 } });
+      const second = await run(contract.ReceivePartial(ctx('Org2MSP'), id, '3'));
+      expect(second.shipment).toMatchObject({ status: 'Partially Received', receivedQty: 7 });
+      // only 3 are outstanding
+      expect((await run(contract.Receive(ctx('Org2MSP'), id, '4'))).failedRule).toBe('validQuantity');
+      const last = await run(contract.Receive(ctx('Org2MSP'), id, '3'));
+      expect(last).toMatchObject({ passed: true, shipment: { status: 'Received', receivedQty: 10 }, record: { quantity: 3, fromStatus: 'Partially Received' } });
+      expect((await run(contract.Receive(ctx('Org2MSP'), id, '1'))).failedRule).toBe('noDuplicate');
+      expect((await run(contract.ReceivePartial(ctx('Org2MSP'), id, '1'))).failedRule).toBe('noDuplicate');
+    });
+
+    it('closes a partly received shipment short, as a single short receipt does', async () => {
+      await dispatch(); await contract.ReceivePartial(ctx('Org2MSP'), id, '6');
+      expect((await run(contract.Receive(ctx('Org2MSP'), id, '2'))).shipment).toMatchObject({ status: 'Received', dispatchedQty: 10, receivedQty: 8 });
+    });
+
+    it('rejects a partial receipt that would cover everything outstanding, and one from Org1', async () => {
+      await dispatch();
+      const all = await run(contract.ReceivePartial(ctx('Org2MSP'), id, '10'));
+      expect(all).toMatchObject({ passed: false, failedRule: 'validQuantity', reason: expect.stringContaining('below the 10 still outstanding') });
+      expect((await run(contract.ReceivePartial(ctx('Org1MSP'), id, '2'))).failedRule).toBe('authorizedOrg');
+      expect((await run(contract.Cancel(ctx('Org1MSP'), id))).passed).toBe(true);
+      expect((await run(contract.ReceivePartial(ctx('Org2MSP'), id, '2'))).failedRule).toBe('validTransition');
+    });
+
+    it('returns up to the received quantity, once, from Org2', async () => {
+      await dispatch(); await contract.Receive(ctx('Org2MSP'), id, '9');
+      expect((await run(contract.Return(ctx('Org1MSP'), id, '2'))).failedRule).toBe('authorizedOrg');
+      expect((await run(contract.Return(ctx('Org2MSP'), id, '10'))).failedRule).toBe('validQuantity');
+      const result = await run(contract.Return(ctx('Org2MSP'), id, '2'));
+      expect(result).toMatchObject({ passed: true, shipment: { status: 'Returned', receivedQty: 9, returnedQty: 2 }, record: { operation: 'return', quantity: 2, fromStatus: 'Received', toStatus: 'Returned' } });
+      expect((await run(contract.Return(ctx('Org2MSP'), id, '1'))).failedRule).toBe('validTransition');
+      expect((await run(contract.Receive(ctx('Org2MSP'), id, '1'))).failedRule).toBe('noDuplicate');
+    });
+
+    it('does not return what has not been fully received', async () => {
+      await dispatch(); await contract.ReceivePartial(ctx('Org2MSP'), id, '4');
+      expect((await run(contract.Return(ctx('Org2MSP'), id, '1'))).failedRule).toBe('validTransition');
+    });
+
+    it('reads a version 1 shipment the same way', async () => {
+      // A version 1 receipt stored receivedQty with status Received and no returnedQty field.
+      await dispatch(); await contract.Receive(ctx('Org2MSP'), id, '10');
+      const stored = JSON.parse(await contract.ReadShipment(ctx('Org1MSP'), id));
+      expect(stored).not.toHaveProperty('returnedQty');
+      expect((await run(contract.ReceivePartial(ctx('Org2MSP'), id, '1'))).failedRule).toBe('noDuplicate');
+      const verified = JSON.parse(await contract.VerifyShipment(ctx('Org1MSP'), id, JSON.stringify({ status: 'Received', receivedQty: 10 })));
+      expect(verified).toMatchObject({ found: true, match: true });
+    });
+
+    it('queries and verifies the new operations', async () => {
+      await dispatch(); await contract.ReceivePartial(ctx('Org2MSP'), id, '5'); await contract.Receive(ctx('Org2MSP'), id, '5'); await contract.Return(ctx('Org2MSP'), id, '1');
+      for (const op of ['receivePartial', 'return']) {
+        const page = JSON.parse(await contract.QueryTransactionRecords(ctx('Org1MSP'), id, op, 'Committed', '50', ''));
+        expect(page.records).toHaveLength(1);
+      }
+      await expect(contract.QueryTransactionRecords(ctx('Org1MSP'), id, 'refund', '', '50', '')).rejects.toThrow(/Invalid operation/);
+      const verified = JSON.parse(await contract.VerifyShipment(ctx('Org1MSP'), id, JSON.stringify({ status: 'Returned', receivedQty: 10, returnedQty: 2 })));
+      expect(verified).toMatchObject({ match: false, differences: ['Returned quantity: database 2, ledger 1'] });
+    });
+  });
 });

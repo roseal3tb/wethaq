@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import type { Db, Queryable } from '../db.js';
-import { applyOperation, checkRules, compareShipment, NEXT_STATUS, type LedgerRecord, type LedgerShipment } from '../../../chaincode/shipment/src/rules.js';
+import { applyOperation, checkRules, compareShipment, NEXT_STATUS, recordQuantity, type LedgerRecord, type LedgerShipment } from '../../../chaincode/shipment/src/rules.js';
 import type { Ledger, LedgerCommitEvent, LedgerOutcome, PreparedTransaction } from './types.js';
 
 const EVENT_NAME = (record: LedgerRecord) => record.operation === 'request' ? 'ShipmentRegistered' : record.status === 'Rejected' ? 'OperationRejected' : 'ShipmentUpdated';
@@ -46,7 +46,7 @@ export function localLedger(db: Db): Ledger {
         const check = checkRules(operation, current, qty, org);
         const record: LedgerRecord = {
           docType: 'record', txId, shipmentId, partId: current?.partId ?? 'N/A', operation,
-          quantity: operation === 'transit' ? (current?.dispatchedQty ?? 0) : (Number.isFinite(qty) ? qty : 0), org,
+          quantity: recordQuantity(operation, current, qty), org,
           fromStatus: current?.status, toStatus: check.passed ? NEXT_STATUS[operation] : undefined,
           status: check.passed ? 'Committed' : 'Rejected', failedRule: check.failedRule, reason: check.reason, timestamp
         };

@@ -10,6 +10,7 @@ export const ROLES: Role[] = ['Planner', 'Dispatcher', 'Receiver', 'Admin'];
 /** User-level permissions, checked by the API before anything is submitted to the ledger (Section 4.3.6). */
 export const PERMISSIONS = {
   request: ['Planner'], dispatch: ['Dispatcher'], transit: ['Dispatcher'], receive: ['Receiver'],
+  receivePartial: ['Receiver'], cancel: ['Dispatcher'], return: ['Receiver'],
   manageUsers: ['Admin'], ack: ROLES, demo: ROLES
 } satisfies Record<string, Role[]>;
 export type Action = keyof typeof PERMISSIONS;

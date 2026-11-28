@@ -73,14 +73,14 @@ integration (7 passed); *NFR* = 31 of 31 on Fabric (locally and on GitHub x64 an
 | Single-server deployment configuration | `deploy/compose.yml`, `Caddyfile`, `production.env.example` | COMPLETE AND VERIFIED locally | full workflow through Caddy on Fabric; CSP browser check | passed | hosted deployment (B2) |
 | Hosted deployment | — | DEFERRED TO GP2 | — | — | B2; [ORACLE_CLOUD_READINESS.md](ORACLE_CLOUD_READINESS.md). WETHAQ has not been deployed to Oracle Cloud during GP1 |
 | arm64 (Ampere A1) readiness | `oracle-arm64-readiness.yml`; ORACLE_CLOUD_READINESS.md §4 | COMPLETE AND VERIFIED on a GitHub-hosted arm64 runner | static audit; native run 46166121729 (2026-11-28) | every step passed; NFR 31 of 31; all containers linux/arm64 | deployment to Oracle Cloud (B2, GP2) |
-| Chaincode runtime off Node.js 20 (end-of-life) | `chaincode/shipment/Dockerfile` | DEFERRED TO GP2 | — | — | B16 |
+| Chaincode runtime off Node.js 20 (end-of-life) | `chaincode/shipment/Dockerfile` | COMPLETE AND VERIFIED locally (GP2) | upgrade of the local network to version 2.0 on Node 22; Fabric integration tests | 81 of 81 shipments verify; 9 passed | GitHub `fabric.yml` and arm64 runs (B16) |
 | CI: validate, lint, API, migrations, chaincode, analysis, Docker, secrets, audit, browser, Fabric, arm64 | `.github/workflows/*.yml`, `.github/scripts/pull-image.sh` | COMPLETE AND VERIFIED | GitHub Actions on pull requests #13 to #15 and #17 (#17 reported by the owner); `fabric.yml` on 2026-11-27; `oracle-arm64-readiness.yml` on 2026-11-28 | quality checks #27 and browser QA #23 passed; `fabric.yml` 7 of 7 integration; arm64 run NFR 31 of 31 | — |
-| Lint | `eslint.config.js` | COMPLETE AND VERIFIED | `npx eslint .` | 0 errors, 106 warnings | warnings in existing code |
+| Lint | `eslint.config.js` | COMPLETE AND VERIFIED | `npx eslint .` | 0 errors, 113 warnings in GP2 (106 in GP1; the 7 new ones are `any` in the new API tests, the same pattern as the existing tests) | warnings in existing code |
 | Dependencies | three `package-lock.json` | COMPLETE AND VERIFIED | `npm audit` | 0 vulnerabilities | — |
 | No secrets in the repository | `.gitignore`; CI *secrets* job | COMPLETE AND VERIFIED | the job's patterns on the tree and history | 0 findings | — |
 | Security review | [SECURITY_AUDIT.md](SECURITY_AUDIT.md) | COMPLETE AND VERIFIED (the team's own review) | code and configuration review; tests named there | — | independent review (B10) |
 | Demo mode and visual design unchanged | dashboard | COMPLETE AND VERIFIED | demo e2e | 54 passed | — |
-| Cancellation, returns, multi-step partial receipts | — | PARTIALLY COMPLETE | short receipt test (chaincode, API) | passed | B5 |
+| Cancellation, returns, multi-step partial receipts | `chaincode/shipment/src/rules.ts`, `contract.ts`; `wethaq-api/src/services/operations.ts`; migration 006; `src/pages/Shipments.tsx` | COMPLETE AND VERIFIED locally (GP2) | chaincode, API, Fabric integration and live browser tests | 34, 116, 9 and 10 passed | lifecycle to agree with the supervisor; GitHub runs (B5) |
 | Per-user Fabric identities | — | NOT APPLICABLE to this design (one identity per organization; F9) | — | — | — |
 | User acceptance testing and expert evaluation | — | BLOCKED (no results exist; none are reported) | — | — | B9 |
 | macOS and WSL2 | scripts and docs | IMPLEMENTED BUT NOT VERIFIED | Linux only on this branch | — | B12 |

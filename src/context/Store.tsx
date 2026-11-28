@@ -171,7 +171,7 @@ export function Provider({ children }: { children: React.ReactNode; }) {
     if (LIVE) {
       try {
         const result = await liveApi.operate(operation, shipmentId, qty, note); mine(result.txId); await refresh();
-        const label = operation === 'dispatch' ? 'Dispatch' : operation === 'transit' ? 'In-transit update' : 'Receipt';
+        const label = ({ dispatch: 'Dispatch', transit: 'In-transit update', receive: 'Receipt', receivePartial: 'Partial receipt', cancel: 'Cancellation', return: 'Return' } as const)[operation];
         if (result.pending) { notify(`${label} submitted — waiting for the ledger to confirm transaction ${result.transactionId}`); return { passed: true, pending: true, rules: v.rules }; }
         notify(result.passed ? `${label} committed on ${ledger === 'local' ? 'the local development ledger' : 'Fabric'} · block ${result.block}` : `Rejected by ${result.source === 'application' ? 'the application' : 'the smart contract'}: ${result.reason}`);
         return ledgerCheck(result, v);

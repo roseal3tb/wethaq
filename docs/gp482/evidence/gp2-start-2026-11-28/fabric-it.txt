@@ -1,0 +1,13 @@
+
+> wethaq-api@0.1.0 test:fabric
+> FABRIC_IT=1 vitest run test/fabric.integration.test.ts
+
+
+ RUN  v4.1.12 /home/user/roseal3tb/wethaq/wethaq-api
+
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  19:20:38
+   Duration  7.80s (transform 77ms, setup 0ms, import 185ms, tests 7.53s, environment 0ms)
+
