@@ -58,6 +58,64 @@ test('A request goes through dispatch, transit and receipt on the ledger and ver
   await expect(page.locator('tbody tr').filter({ hasText: shipmentId }).filter({ hasText: 'Committed' })).toHaveCount(3);
 });
 
+test('A partial receipt, the rest, a return and a cancellation are recorded on the ledger (chaincode version 2)', async ({ page }) => {
+  async function request(qty: string) {
+    await page.goto('/inventory?search=SP-002&location=Distribution+Center');
+    await page.locator('tbody tr').first().press('Enter');
+    await page.getByRole('button', { name: 'Create shipment request' }).click();
+    await page.getByRole('spinbutton', { name: 'Requested quantity' }).fill(qty);
+    await page.getByRole('textbox', { name: 'Review note (required)' }).fill('Live test, version 2');
+    await page.getByRole('button', { name: 'Confirm request' }).click();
+    await expect(page).toHaveURL(/\/shipments\?search=SHP-/);
+    return new URL(page.url()).searchParams.get('search')!;
+  }
+  async function submit(action: string, qty?: string) {
+    await page.getByRole('button', { name: action, exact: true }).click();
+    if (qty) await page.getByRole('dialog').getByRole('spinbutton').fill(qty);
+    await page.getByRole('button', { name: 'Submit to ledger' }).click();
+    await expect(page.getByText(/committed on the local development ledger · block \d+/).last()).toBeVisible();
+  }
+  await signIn(page, 'planner');
+  await expect(page).toHaveURL(/\/overview/);
+  const kept = await request('6');
+  const dropped = await request('3');
+
+  await switchRole(page, 'Dispatcher');
+  await page.goto(`/shipments?search=${dropped}`);
+  await page.locator('tbody tr').filter({ hasText: dropped }).press('Enter');
+  await submit('Cancel shipment');
+  await page.getByRole('button', { name: 'Close detail panel' }).click();
+  await expect(page.locator('tbody tr').filter({ hasText: dropped })).toContainText('Cancelled');
+
+  await page.goto(`/shipments?search=${kept}`);
+  const record = page.locator('tbody tr').filter({ hasText: kept });
+  await record.press('Enter');
+  await submit('Record dispatch');
+  await page.getByRole('button', { name: 'Close detail panel' }).click();
+
+  await switchRole(page, 'Receiver');
+  await record.press('Enter');
+  await submit('Record partial receipt', '2');
+  await expect(page.getByRole('dialog').getByText('Partially Received').first()).toBeVisible();
+  await page.getByRole('button', { name: 'Close detail panel' }).click();
+  await expect(record).toContainText('Partially Received');
+  await record.press('Enter');
+  await submit('Confirm receipt', '4');
+  await page.getByRole('button', { name: 'Close detail panel' }).click();
+  await expect(record).toContainText('Received');
+  await record.press('Enter');
+  await submit('Record return', '1');
+  await page.getByRole('button', { name: 'Verify against ledger' }).click();
+  await expect(page.getByText('The database record matches the ledger')).toBeVisible();
+  await page.getByRole('button', { name: 'Close detail panel' }).click();
+  await expect(record).toContainText('Returned');
+
+  await page.getByRole('tab', { name: /^Ledger/ }).click();
+  for (const type of ['PARTIAL_RECEIPT', 'RECEIPT', 'RETURN']) await expect(page.locator('tbody tr').filter({ hasText: kept }).filter({ hasText: type }).first()).toBeVisible();
+  await page.goto(`/shipments?tab=ledger&search=${dropped}`);
+  await expect(page.locator('tbody tr').filter({ hasText: dropped }).filter({ hasText: 'CANCELLATION' })).toHaveCount(1);
+});
+
 test('A rejection demonstration is rejected by the smart-contract rules', async ({ page }) => {
   await signIn(page, 'admin');
   await expect(page).toHaveURL(/\/overview/);
