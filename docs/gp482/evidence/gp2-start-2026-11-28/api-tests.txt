@@ -1,0 +1,9 @@
+
+ RUN  v4.1.12 /home/user/roseal3tb/wethaq/wethaq-api
+
+
+ Test Files  10 passed | 1 skipped (11)
+      Tests  116 passed | 9 skipped (125)
+   Start at  19:23:28
+   Duration  11.42s (transform 562ms, setup 0ms, import 2.25s, tests 27.49s, environment 1ms)
+

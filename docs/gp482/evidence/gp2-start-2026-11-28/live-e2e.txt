@@ -1,0 +1,16 @@
+
+Running 10 tests using 1 worker
+
+  ✓   1 e2e-live/live.spec.ts:16:1 › A wrong password is refused by the API (1.4s)
+  ✓   2 e2e-live/live.spec.ts:22:1 › A request goes through dispatch, transit and receipt on the ledger and verifies (14.8s)
+  ✓   3 e2e-live/live.spec.ts:61:1 › A partial receipt, the rest, a return and a cancellation are recorded on the ledger (chaincode version 2) (23.4s)
+  ✓   4 e2e-live/live.spec.ts:119:1 › A rejection demonstration is rejected by the smart-contract rules (2.1s)
+  ✓   5 e2e-live/live.spec.ts:130:1 › A new user gets a temporary password and must change it at first sign-in (4.6s)
+  ✓   6 e2e-live/live.spec.ts:162:1 › A change made by another user appears without reloading the page (2.9s)
+  ✓   7 e2e-live/live.spec.ts:176:1 › The forecasting page reads the analysis results from the API, with their checksum (1.8s)
+  ✓   8 e2e-live/live.spec.ts:187:1 › Signing out ends the session on the server, not only in the browser (963ms)
+  ✓   9 e2e-live/live.spec.ts:199:1 › An expired or ended session returns to the sign-in page and shows no data (1.1s)
+  ✓  10 e2e-live/live.spec.ts:208:1 › When the API cannot be reached, the dashboard says so and shows no demonstration data (829ms)
+
+  10 passed (57.8s)
+exit 0

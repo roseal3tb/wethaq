@@ -1,0 +1,9 @@
+
+ RUN  v4.1.12 /home/user/roseal3tb/wethaq
+
+
+ Test Files  3 passed (3)
+      Tests  20 passed (20)
+   Start at  19:23:40
+   Duration  219ms (transform 220ms, setup 0ms, import 286ms, tests 61ms, environment 0ms)
+

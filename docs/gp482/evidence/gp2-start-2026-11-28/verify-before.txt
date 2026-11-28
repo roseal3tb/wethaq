@@ -1,0 +1,15 @@
+Wethaq Fabric network (wethaq / wethaq)
+  ok   container orderer.example.com
+  ok   container peer0.org1.example.com
+  ok   container peer0.org2.example.com
+  ok   container ca_org1
+  ok   container ca_org2
+  ok   container ca_orderer
+  ok   container peer0org1_wethaq_ccaas
+  ok   container peer0org2_wethaq_ccaas
+  ok   peer0.org1 joined wethaq
+  ok   peer0.org2 joined wethaq
+  ok   chaincode definition sequence 1, version 1.0, approved by Org1MSP and Org2MSP
+  ok   chaincode answers queries
+  ok   Org1MSP wethaq-app certificate valid for 30+ days
+  ok   Org2MSP wethaq-app certificate valid for 30+ days

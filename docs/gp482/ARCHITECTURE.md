@@ -248,9 +248,11 @@ In Fabric mode the comparison runs on the peer (`VerifyShipment`).
   signed envelope, so it cannot commit later through this API.
 * The local development ledger is for development and tests only and is not Hyperledger Fabric.
 * No IoT, GPS or sensor data; a committed transaction records a permitted workflow step, not physical delivery.
-* Cancellation and return workflows (GP481 §6.6, item 5) are not implemented. A receipt of fewer items than were
-  dispatched is accepted and raises a Discrepancy alert, but the rest cannot be received later (the no-duplicate rule
-  allows one receipt per shipment). See [REMAINING_BLOCKERS.md](REMAINING_BLOCKERS.md).
+* Chaincode version 2 (GP2) adds cancellation (Org1, from Requested or Dispatched), partial receipts (Org2, the
+  shipment stays Partially Received until the rest is received) and returns (Org2, from Received, up to the received
+  quantity), under the same five rules. They are offered in the dashboard's live mode only. A final receipt of fewer
+  items than were dispatched still closes the shipment and raises a Discrepancy alert. See
+  [REMAINING_BLOCKERS.md](REMAINING_BLOCKERS.md) (B5).
 * Diagrams for components, sign-in, data flow, Fabric topology and the shipment lifecycle are in [DIAGRAMS.md](DIAGRAMS.md);
   deployment, rollback and troubleshooting in [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md); backup, restore, revocation
   and recovery in [BACKUP_AND_RECOVERY.md](BACKUP_AND_RECOVERY.md).

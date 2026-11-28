@@ -1,0 +1,39 @@
+
+> wethaq-api@0.1.0 nfr
+> tsx src/cli/nfr.ts
+
+Wethaq NFR measurements against http://127.0.0.1:4000/api (ledger: fabric), 10 runs, 20 concurrent requests
+
+PASS  [Performance] Average time of each ledger write (one at a time) — slowest average 538 ms
+PASS  [Performance] Reads and sign-in (95th percentile) — slowest 77 ms
+PASS  [Performance] 20 concurrent shipment requests — 20/20 committed in 0.21 s (94.2 tx/s)
+PASS  [Reliability] Workflow runs without errors (10 × request, dispatch, transit, receipt) — 0 errors, 10/10 completed
+PASS  [Security] Data without signing in — 401
+PASS  [Security] Forged token — 401
+PASS  [Security] Admin token signed with another key — 401
+PASS  [Security] Expired token — 401
+PASS  [Security] Wrong password and unknown email give the same answer — 401 / 401, same message
+PASS  [Security] SQL injection in the sign-in form — 401
+PASS  [Security] Planner adds a user — 403
+PASS  [Security] Dispatcher creates a shipment request — 403
+PASS  [Security] Receiver resets a password — 403
+PASS  [Security] Dispatcher changes a role — 403
+PASS  [Security] Planner records a dispatch (refused before the ledger) — 422, application, not submitted
+PASS  [Security] Receiver records a dispatch (refused before the ledger) — 422, application, not submitted
+PASS  [Security] Dispatcher confirms a receipt (refused before the ledger) — 422, application, not submitted
+PASS  [Security] A non-admin sees only their own user record — 1 user(s)
+PASS  [Security] Password hashes are never returned by the API — not present
+PASS  [Security] Passwords stored as bcrypt hashes — 8/8
+PASS  [Security] Security headers (helmet) — 4: x-content-type-options, content-security-policy, strict-transport-security, x-frame-options
+PASS  [Integrity] Completed shipments match the ledger — 10/10
+PASS  [Integrity] A change made directly in PostgreSQL is detected — detected: Received quantity: database 4, ledger 5
+PASS  [Integrity] A second receipt is refused by the smart contract — 422, noDuplicate (chaincode, block 145)
+PASS  [Integrity] Earlier ledger records are unchanged; the attempt is appended — unchanged, +1 record
+PASS  [Integrity] The shipment state is unchanged after the rejected attempt — unchanged
+PASS  [Reliability] Rule noDuplicate: Duplicate receipt — rejected by noDuplicate (chaincode)
+PASS  [Reliability] Rule authorizedOrg: Unauthorized organization — rejected by authorizedOrg (chaincode)
+PASS  [Reliability] Rule validTransition: Invalid status transition — rejected by validTransition (chaincode)
+PASS  [Reliability] Rule validQuantity: Quantity exceeds dispatched — rejected by validQuantity (chaincode)
+PASS  [Reliability] Rule validReference: Unknown shipment reference — rejected by validReference (chaincode)
+
+31 of 31 checks passed. Report: nfr-results/nfr-2026-11-28T19-22-16.md

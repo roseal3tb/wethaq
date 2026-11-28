@@ -1,0 +1,3 @@
+> tsx src/cli/migrate.ts
+
+Applied: 006_cancel_partial_return.sql
