@@ -132,3 +132,20 @@ test('Login rejects malformed email and renders the decorative login animation',
   await page.getByRole('button', { name: 'Sign in to Wethaq' }).click();
   await expect(page).toHaveURL(/\/overview$/);
 });
+
+test('The forecast chart has a table alternative and panel headings sit under the page heading (NFR2)', async ({ page }) => {
+  await page.goto('/forecasts?part=RAF0002');
+  await signIn(page);
+  await expect(page.getByRole('heading', { level: 1, name: /Demand\s*forecasting/ })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Demand history & forecast' })).toBeVisible();
+  const toggle = page.getByRole('button', { name: 'View as table' });
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  await toggle.click();
+  const viewChart = page.getByRole('button', { name: 'View chart' });
+  await expect(viewChart).toHaveAttribute('aria-pressed', 'true');
+  const table = page.getByRole('table').filter({ has: page.getByRole('columnheader', { name: 'PHASE' }) });
+  await expect(table).toBeVisible();
+  expect(await table.getByRole('row').count()).toBeGreaterThan(10);
+  await viewChart.click();
+  await expect(page.getByRole('button', { name: 'View as table' })).toHaveAttribute('aria-pressed', 'false');
+});

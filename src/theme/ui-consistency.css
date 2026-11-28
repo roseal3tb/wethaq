@@ -117,7 +117,8 @@ html[data-theme='dark'] .app-shell {
 /* Keep overview section surfaces and the same grid across both color themes. */
 .overview-page .panel {background:var(--ui-surface); min-width:0;}
 .overview-page .panel-heading {align-items:flex-start;}
-.overview-page .panel-heading h3 {line-height:1.25;}
+.overview-page .panel-heading h3,
+.overview-page .panel-heading h2 {line-height:1.25;}
 .overview-page .panel-heading p {line-height:1.5;}
 .overview-page .overview-primary > .panel {min-width:0; align-self:stretch;}
 .overview-page .chart-box.compact {height:246px;}
@@ -326,7 +327,8 @@ html[data-theme] .overview-page .overview-bottom {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--workspace-gap);
 }
-html[data-theme] .overview-page .panel-heading h3 {
+html[data-theme] .overview-page .panel-heading h3,
+html[data-theme] .overview-page .panel-heading h2 {
   line-height: 1.2;
   font-size: 21px;
 }

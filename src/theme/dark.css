@@ -14,7 +14,7 @@ html[data-theme="dark"] .panel,html[data-theme="dark"] .kpi,html[data-theme="dar
 html[data-theme="dark"] .filters-panel,html[data-theme="dark"] .demo-panel,html[data-theme="dark"] .network-banner,
 html[data-theme="dark"] .chart-action,html[data-theme="dark"] .overview-trust{background:var(--card);color:var(--ink);border-color:var(--border)}
 html[data-theme="dark"] h1,html[data-theme="dark"] h2,html[data-theme="dark"] h3,html[data-theme="dark"] h4,
-html[data-theme="dark"] .header-page,html[data-theme="dark"] .panel-heading h3,html[data-theme="dark"] .kpi-value,
+html[data-theme="dark"] .header-page,html[data-theme="dark"] .panel-heading h3,html[data-theme="dark"] .panel-heading h2,html[data-theme="dark"] .kpi-value,
 html[data-theme="dark"] .record-strong,html[data-theme="dark"] .mini-table strong,html[data-theme="dark"] .detail-grid strong,
 html[data-theme="dark"] .detail-kpis strong{color:#F1F4F7}
 html[data-theme="dark"] .eyebrow,html[data-theme="dark"] .soft-label{color:#C2D28C}
