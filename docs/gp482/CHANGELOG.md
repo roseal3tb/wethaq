@@ -7,6 +7,11 @@
 * `fabric/up.sh`: refuses to replace an existing network (containers or ledger volumes) unless the user types
   `recreate` or passes `--recreate`; stops without changes when not interactive. `fabric/down.sh` now asks first.
   Finding F18.
+* PostgreSQL readiness checks (`checks.yml`, `fabric.yml`, the arm64 workflow, `deploy/compose.yml`) now ask over TCP
+  (`pg_isready -h 127.0.0.1`). The official image first runs a temporary server on the Unix socket only, to create
+  the database, then restarts. A socket check could see that temporary server, pass, and then fail during the restart,
+  which is what failed the *Database* job of pull request #20 ("/run/postgresql:5432 - rejecting connections").
+  Reproduced locally: the socket answered at 3.1 s, stopped at 3.3 s, and TCP answered only from 3.4 s.
 * Accessibility, no visual change: panel titles are `<h2>` (were `<h3>` directly under the page `<h1>`), with every
   CSS rule mirrored; the load-error state uses an `<h1>`. axe's heading-order finding is gone.
 

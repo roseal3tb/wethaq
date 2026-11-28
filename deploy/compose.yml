@@ -25,7 +25,7 @@ services:
     # Not published on the host: only the API reaches the database.
     networks: [internal]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U wethaq -d wethaq"]
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U wethaq -d wethaq"]
       interval: 5s
       timeout: 3s
       retries: 30

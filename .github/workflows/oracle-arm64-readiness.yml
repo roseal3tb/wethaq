@@ -168,7 +168,7 @@ jobs:
           set -e
           docker run -d --name wethaq-pg -p 127.0.0.1:5432:5432 \
             -e POSTGRES_USER=wethaq -e POSTGRES_PASSWORD=wethaq -e POSTGRES_DB=wethaq "$PG_IMAGE"
-          .github/scripts/timed.sh "PostgreSQL ready" sh -c 'for i in $(seq 1 60); do docker exec wethaq-pg pg_isready -U wethaq -q && exit 0; sleep 1; done; exit 1'
+          .github/scripts/timed.sh "PostgreSQL ready" sh -c 'for i in $(seq 1 60); do docker exec wethaq-pg pg_isready -h 127.0.0.1 -U wethaq -q && exit 0; sleep 1; done; exit 1'
           if [ -n "${WETHAQ_SLICE:-}" ]; then
             grep "$WETHAQ_SLICE" "/proc/$(docker inspect --format '{{.State.Pid}}' wethaq-pg)/cgroup" | tee -a "$EVIDENCE/limits.txt"
           fi

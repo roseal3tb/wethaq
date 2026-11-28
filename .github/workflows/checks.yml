@@ -110,8 +110,8 @@ jobs:
           PG_IMAGE=$(.github/scripts/pull-image.sh postgres:16-alpine public.ecr.aws/docker/library/postgres:16-alpine mirror.gcr.io/library/postgres:16-alpine)
           docker run -d --name wethaq-pg -p 127.0.0.1:5432:5432 \
             -e POSTGRES_USER=wethaq -e POSTGRES_PASSWORD=wethaq -e POSTGRES_DB=wethaq "$PG_IMAGE"
-          for i in $(seq 1 60); do docker exec wethaq-pg pg_isready -U wethaq -q && break; sleep 1; done
-          docker exec wethaq-pg pg_isready -U wethaq
+          for i in $(seq 1 60); do docker exec wethaq-pg pg_isready -h 127.0.0.1 -U wethaq -q && break; sleep 1; done
+          docker exec wethaq-pg pg_isready -h 127.0.0.1 -U wethaq
       - name: Set up Node.js with the npm cache
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -229,7 +229,7 @@ jobs:
           set -e
           docker network create wethaq-ci
           docker run -d --name db --network wethaq-ci -e POSTGRES_USER=wethaq -e POSTGRES_PASSWORD=wethaq -e POSTGRES_DB=wethaq "$PG_IMAGE"
-          for i in $(seq 1 30); do docker exec db pg_isready -U wethaq && break; sleep 2; done
+          for i in $(seq 1 30); do docker exec db pg_isready -h 127.0.0.1 -U wethaq && break; sleep 2; done
           docker run -d --name api --network wethaq-ci -p 127.0.0.1:4000:4000 \
             -e DATABASE_URL=postgres://wethaq:wethaq@db:5432/wethaq -e JWT_SECRET="$(openssl rand -hex 32)" -e NODE_ENV=production wethaq-api:ci
           for i in $(seq 1 60); do curl -fs http://127.0.0.1:4000/api/health/ready && break; sleep 2; done
