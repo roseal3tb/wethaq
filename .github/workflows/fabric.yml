@@ -26,7 +26,7 @@ jobs:
             -e POSTGRES_USER=wethaq -e POSTGRES_PASSWORD=wethaq -e POSTGRES_DB=wethaq "$PG_IMAGE"
           for i in $(seq 1 60); do docker exec wethaq-pg pg_isready -U wethaq -q && break; sleep 1; done
           docker exec wethaq-pg pg_isready -U wethaq
-      - name: Sign in to Docker Hub when credentials are configured (the Fabric images come from Docker Hub)
+      - name: Sign in to Docker Hub when credentials are configured (base images; Fabric images come from ghcr.io first, Docker Hub second)
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
