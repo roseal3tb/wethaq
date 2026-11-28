@@ -1,6 +1,6 @@
 import type { Db, Queryable } from '../db.js';
 import { LedgerError, type Ledger, type LedgerOperation, type OrgMsp } from '../ledger/types.js';
-import { checkRules } from '../../../chaincode/shipment/src/rules.js';
+import { checkRules, LEDGER_OPERATIONS, NO_QUANTITY } from '../../../chaincode/shipment/src/rules.js';
 import { allowed, type ApiUser } from '../auth.js';
 import { audit } from './audit.js';
 import { HttpError, locationId, shortId } from './common.js';
@@ -13,10 +13,10 @@ export interface LedgerResult {
   source?: 'chaincode' | 'application'; transactionId: string; txId?: string; block?: number;
 }
 
-const ACTION_LABEL: Record<LedgerOperation, string> = { dispatch: 'dispatch', transit: 'in-transit update', receive: 'receipt' };
+const ACTION_LABEL: Record<LedgerOperation, string> = { dispatch: 'dispatch', transit: 'in-transit update', receive: 'receipt', receivePartial: 'partial receipt', cancel: 'cancellation', return: 'return' };
 
 interface ShipmentRow {
-  shipment_id: string; part_id: string; requested_qty: number; dispatched_qty: number | null; received_qty: number | null;
+  shipment_id: string; part_id: string; requested_qty: number; dispatched_qty: number | null; received_qty: number | null; returned_qty: number | null;
   from_location: string; to_location: string; status: string; ledger_state: 'pending' | 'confirmed' | 'failed'; last_tx_id: string | null;
 }
 const getShipment = async (q: Queryable, id: string) => (await q.query<ShipmentRow>('SELECT * FROM shipments WHERE shipment_id = $1', [id])).rows[0];
@@ -78,15 +78,15 @@ export async function createShipment(db: Db, ledger: Ledger, user: ApiUser, inpu
 export interface OperateOptions { adjustInventory?: boolean; }
 
 /**
- * Records a dispatch, in-transit update or receipt.
+ * Records a dispatch, in-transit update, receipt, partial receipt, cancellation or return.
  * 1. The API checks the user's role (application layer). A failure is recorded off-chain only.
  * 2. The operation is submitted to the ledger as the user's peer organization; the chaincode applies the five rules.
  * 3. The reporting copy in PostgreSQL is updated from the committed ledger record (services/operations.ts).
  */
 export async function operate(db: Db, ledger: Ledger, user: ApiUser, operation: LedgerOperation, shipmentId: string, qty: number, note: string, options: OperateOptions = {}, ctx: RequestContext = {}): Promise<OperationResponse> {
-  if (!['dispatch', 'transit', 'receive'].includes(operation)) throw new HttpError(404, 'Unknown operation');
+  if (!LEDGER_OPERATIONS.includes(operation)) throw new HttpError(404, 'Unknown operation');
   if (typeof shipmentId !== 'string' || !/^[A-Za-z0-9-]{1,64}$/.test(shipmentId)) throw new HttpError(400, 'Invalid shipment reference');
-  const quantity = operation === 'transit' ? 0 : Number(qty);
+  const quantity = NO_QUANTITY.includes(operation) ? 0 : Number(qty);
   const cleanNote = typeof note === 'string' ? note.trim().slice(0, 1000) : '';
   const shipment = await getShipment(db, shipmentId);
 
@@ -158,7 +158,7 @@ export async function verifyShipment(db: Db, ledger: Ledger, shipmentId: string)
   const open = (await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM ledger_operations WHERE shipment_id = $1 AND applied_at IS NULL AND state IN ('submitting', 'unknown')`, [shipmentId])).rows[0].n;
   if (row.ledger_state === 'failed') return { ...base, status: 'failed' as VerifyStatus, onLedger: false, match: false, differences: ['The ledger registration of this request was not committed'] };
   if (row.ledger_state === 'pending' || open > 0) return { ...base, status: 'pending' as VerifyStatus, onLedger: false, match: false, differences: ['A ledger transaction for this shipment is waiting for confirmation'] };
-  const expected = { partId: row.part_id, requestedQty: row.requested_qty, status: row.status, dispatchedQty: row.dispatched_qty ?? undefined, receivedQty: row.received_qty ?? undefined, ...(row.last_tx_id ? { lastTxId: row.last_tx_id } : {}) };
+  const expected = { partId: row.part_id, requestedQty: row.requested_qty, status: row.status, dispatchedQty: row.dispatched_qty ?? undefined, receivedQty: row.received_qty ?? undefined, returnedQty: row.returned_qty ?? undefined, ...(row.last_tx_id ? { lastTxId: row.last_tx_id } : {}) };
   try {
     const result = await ledger.verify(shipmentId, expected);
     if (!result.found) return { ...base, status: 'not_found' as VerifyStatus, onLedger: false, match: false, differences: result.differences };

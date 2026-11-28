@@ -42,7 +42,7 @@ describe('migrations', () => {
   });
   it('records every migration once', async () => {
     const names = (await db.query<{ name: string }>('SELECT name FROM schema_migrations ORDER BY name')).rows.map(r => r.name);
-    expect(names).toEqual(['001_init.sql', '002_password_policy.sql', '003_ledger_sync.sql', '004_integrity.sql', '005_sessions.sql']);
+    expect(names).toEqual(['001_init.sql', '002_password_policy.sql', '003_ledger_sync.sql', '004_integrity.sql', '005_sessions.sql', '006_cancel_partial_return.sql']);
   });
 });
 

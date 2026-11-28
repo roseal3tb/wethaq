@@ -7,7 +7,7 @@ import {
   type ChaincodeEvent, type CloseableAsyncIterable, type Contract, type Gateway, type Network
 } from '@hyperledger/fabric-gateway';
 import { common, peer } from '@hyperledger/fabric-protos';
-import type { LedgerRecord, LedgerShipment } from '../../../chaincode/shipment/src/rules.js';
+import { NO_QUANTITY, type LedgerRecord, type LedgerShipment } from '../../../chaincode/shipment/src/rules.js';
 import { logger } from '../logger.js';
 import { LedgerError, type Ledger, type LedgerCommitEvent, type LedgerHealth, type LedgerOperation, type LedgerOutcome, type OrgMsp, type PreparedTransaction, type TransactionStatus, type VerifyOutcome } from './types.js';
 
@@ -32,7 +32,7 @@ const ORGS = {
   Org2MSP: { domain: 'org2.example.com', endpoint: 'org2Endpoint', dir: 'org2' }
 } as const;
 
-const FUNCTION: Record<LedgerOperation, string> = { dispatch: 'Dispatch', transit: 'MarkInTransit', receive: 'Receive' };
+const FUNCTION: Record<LedgerOperation, string> = { dispatch: 'Dispatch', transit: 'MarkInTransit', receive: 'Receive', receivePartial: 'ReceivePartial', cancel: 'Cancel', return: 'Return' };
 const decoder = new TextDecoder();
 const TX_CODE = Object.fromEntries(Object.entries(peer.TxValidationCode).map(([name, code]) => [code, name])) as Record<number, string>;
 
@@ -174,7 +174,7 @@ export async function fabricLedger(cfg: FabricConfig): Promise<Ledger> {
   const ledger: Ledger = {
     kind: 'fabric',
     async prepareRegister({ shipmentId, partId, requestedQty }) { return prepare('Org1MSP', 'RegisterRequest', [shipmentId, partId, String(requestedQty)]); },
-    async prepareSubmit({ operation, shipmentId, qty, org }) { return prepare(org, FUNCTION[operation], operation === 'transit' ? [shipmentId] : [shipmentId, String(qty)]); },
+    async prepareSubmit({ operation, shipmentId, qty, org }) { return prepare(org, FUNCTION[operation], NO_QUANTITY.includes(operation) ? [shipmentId] : [shipmentId, String(qty)]); },
     registerRequest: async input => (await ledger.prepareRegister(input)).submit(),
     submit: async input => (await ledger.prepareSubmit(input)).submit(),
     async read(shipmentId) {

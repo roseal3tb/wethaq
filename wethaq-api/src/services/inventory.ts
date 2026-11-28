@@ -31,8 +31,8 @@ export async function inventoryPositions(q: Queryable, filter: { partId?: string
   const rows = (await q.query<Record<string, any>>(
     `SELECT i.*, COALESCE(t.in_transit, 0)::int AS in_transit
        FROM inventory i
-       LEFT JOIN (SELECT part_id, to_location, SUM(COALESCE(dispatched_qty, 0)) AS in_transit
-                    FROM shipments WHERE status IN ('Dispatched', 'In Transit') GROUP BY part_id, to_location) t
+       LEFT JOIN (SELECT part_id, to_location, SUM(COALESCE(dispatched_qty, 0) - COALESCE(received_qty, 0)) AS in_transit
+                    FROM shipments WHERE status IN ('Dispatched', 'In Transit', 'Partially Received') GROUP BY part_id, to_location) t
          ON t.part_id = i.part_id AND t.to_location = i.location_id
       ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
       ORDER BY i.part_id, i.location_id`, params)).rows;

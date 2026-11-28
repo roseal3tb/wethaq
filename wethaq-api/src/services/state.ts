@@ -13,7 +13,7 @@ export const ALERTS_SQL = 'SELECT a.*, u.name AS resolved_by FROM alerts a LEFT 
 /** Row mappers shared by /state and the list endpoints (the dashboard's types in src/types.ts). */
 export const mapEvent = (e: Record<string, any>) => ({ status: e.status, time: iso(e.time), actor: e.actor, org: e.org, txId: opt(e.tx_id), note: opt(e.note) });
 export const mapShipment = (s: Record<string, any>, events: ReturnType<typeof mapEvent>[]) => ({
-  id: s.shipment_id, partId: s.part_id, quantity: s.requested_qty, dispatchedQty: opt(s.dispatched_qty), receivedQty: opt(s.received_qty),
+  id: s.shipment_id, partId: s.part_id, quantity: s.requested_qty, dispatchedQty: opt(s.dispatched_qty), receivedQty: opt(s.received_qty), returnedQty: opt(s.returned_qty),
   from: s.from_location, to: locationName(s.to_location), status: s.status, requestedBy: s.requested_by_name, requestedAt: iso(s.requested_at),
   forecastMonth: s.forecast_month, note: s.review_note, expectedAt: iso(s.expected_at), recommendationId: opt(s.recommendation_id),
   createdInSession: s.created_live, ledgerState: s.ledger_state, lastTxId: opt(s.last_tx_id), events
