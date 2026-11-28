@@ -1,0 +1,10 @@
+
+> wethaq-api@0.1.0 migrate
+> tsx src/cli/migrate.ts
+
+Database is up to date
+
+> wethaq-api@0.1.0 migrate
+> tsx src/cli/migrate.ts
+
+Database is up to date

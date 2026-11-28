@@ -1,0 +1,1 @@
+Fabric network stopped (ledger kept). Start it again with ./fabric/start.sh

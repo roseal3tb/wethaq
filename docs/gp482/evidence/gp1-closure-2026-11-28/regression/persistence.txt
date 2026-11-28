@@ -1,0 +1,2 @@
+before stop: shipments, max block in PostgreSQL = 79 77 
+after start: 79 77 

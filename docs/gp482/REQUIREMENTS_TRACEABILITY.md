@@ -1,7 +1,10 @@
 # Wethaq: requirements traceability
 
-Status as of 2026-11-27 (GP1 submission), branch `gp1-final-readiness`. The test results are those of the final run
-in [FINAL_TEST_REPORT.md](FINAL_TEST_REPORT.md) (GP1 update). The final report is [FINAL_COMPLETION_REPORT.md](FINAL_COMPLETION_REPORT.md).
+Status as of 2026-11-28 (GP1 closure), branch `gp1-closure`. The test results are those of the closure regression
+in [FINAL_TEST_REPORT.md](FINAL_TEST_REPORT.md) (GP1 closure) and of `fabric.yml` run 46169704428 on GitHub. The
+requirement wording was checked against Tables 4.4 and 4.5 of the GP481 report
+([academic-requirements-verification.md](evidence/gp1-closure-2026-11-28/academic-requirements-verification.md)); no
+university requirements document was available. The final report is [FINAL_COMPLETION_REPORT.md](FINAL_COMPLETION_REPORT.md).
 
 Status labels:
 * **COMPLETE AND VERIFIED**: implemented, and the verification named in the row was run and passed.
@@ -11,9 +14,9 @@ Status labels:
 * **DEFERRED TO GP2**: deliberately left for the second project phase, with the reason recorded.
 * **NOT APPLICABLE**: does not apply to this system.
 
-Abbreviations: *API tests* = `wethaq-api` vitest (109 passed); *chaincode tests* = 24 passed; *demo e2e* = 54
+Abbreviations: *API tests* = `wethaq-api` vitest (109 passed); *chaincode tests* = 24 passed; *demo e2e* = 58
 passed; *live e2e* = 9 passed; *Fabric e2e* = the full workflow on Fabric (1 passed); *Fabric IT* = Fabric
-integration (7 passed); *NFR* = 31 of 31 on Fabric.
+integration (7 passed); *NFR* = 31 of 31 on Fabric (locally and on GitHub x64 and arm64).
 
 ## 1. GP481 functional requirements (Table 4.4)
 
@@ -36,13 +39,13 @@ integration (7 passed); *NFR* = 31 of 31 on Fabric.
 
 | Requirement | Implementation location | Current status | Verification method | Test result | Remaining work |
 | --- | --- | --- | --- | --- | --- |
-| NFR1 usability at four screen sizes | dashboard CSS (unchanged) | COMPLETE AND VERIFIED | demo e2e at 390, 430, 768, 1440 px | 54 passed | — |
-| NFR2 accessibility | dashboard | PARTIALLY COMPLETE | keyboard and focus tests in demo e2e; automated axe check on 7 pages, both colour schemes | passed; 4 kinds of axe finding fixed without visual change | colour contrast, heading order, manual screen-reader test (B8) |
+| NFR1 usability at four screen sizes | dashboard CSS (unchanged) | COMPLETE AND VERIFIED | demo e2e at 390, 430, 768, 1440 px | 58 passed | — |
+| NFR2 keyboard navigation, visible focus, reduced motion, table alternative for the main chart | `src/styles.css` (`:focus-visible`, `prefers-reduced-motion`); `Forecasts.tsx` *View as table*; `UI.tsx` panel `<h2>` | COMPLETE AND VERIFIED for the four named criteria (visible focus styled, not asserted by a test) | `responsive.spec.ts` keyboard and focus-return tests; `workflows.spec.ts` NFR2 test (table alternative, heading levels); axe on 7 pages, both themes | passed; heading order fixed without visual change | colour contrast below 4.5:1 (not an NFR2 criterion; documented risk, B8); manual screen-reader test; not WCAG conformance |
 | NFR3 transparency | live ledger wording; analytics provenance and `check` | COMPLETE AND VERIFIED | live e2e; analytics-files tests | passed | — |
 | NFR4 CSV without formulas | `src/utils` export | COMPLETE AND VERIFIED | dashboard unit tests; demo e2e | passed | — |
 | NFR5 passwords and tokens protected, server authorization | `auth.ts`, `config.ts`, `app.ts`, migration 005 | COMPLETE AND VERIFIED | NFR (17 security checks); sessions tests; SECURITY_AUDIT.md | passed | open findings F5 to F13 |
 | NFR6 accepted record cannot be changed | Fabric ledger; chaincode `noDuplicate`; verification | COMPLETE AND VERIFIED | NFR integrity checks (5) | passed | — |
-| NFR7 performance | measured by `wethaq-api/src/cli/nfr.ts` | COMPLETE AND VERIFIED (one machine) | NFR performance checks | 543 ms average write; 115 ms p95 reads; 76.2 tx/s | not a capacity test |
+| NFR7 performance | measured by `wethaq-api/src/cli/nfr.ts` (target 2,000 ms set by the script; the report gives no number) | COMPLETE AND VERIFIED on the test machines | NFR performance checks | closure regression: 540 ms slowest average write, 84 ms p95 reads, 20/20 in 0.21 s; GitHub x64: 536 ms, 127 ms, 0.31 s | not a capacity test; peaks under a 2 CPU / 12 GB limit not yet run (B18) |
 
 ## 3. GP482 completion areas
 

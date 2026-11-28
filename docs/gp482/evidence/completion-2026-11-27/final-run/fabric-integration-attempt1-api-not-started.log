@@ -1,0 +1,24 @@
+
+ RUN  v4.1.12 <repo>/wethaq-api
+
+ ❯ test/fabric.integration.test.ts (7 tests | 7 skipped) 57ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/fabric.integration.test.ts > Hyperledger Fabric integration
+TypeError: fetch failed
+ ❯ call test/fabric.integration.test.ts:23:15
+
+ ❯ test/fabric.integration.test.ts:37:19
+
+Caused by: Error: connect ECONNREFUSED 127.0.0.1:4000
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -111, code: 'ECONNREFUSED', syscall: 'connect', address: '127.0.0.1', port: 4000 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 skipped (7)
+   Start at  20:47:07
+   Duration  523ms (transform 114ms, setup 0ms, import 322ms, tests 57ms, environment 0ms)
+

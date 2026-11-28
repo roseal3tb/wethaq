@@ -1,6 +1,6 @@
 # Wethaq: security review
 
-Date: 2026-11-27, updated for the GP1 submission on branch `gp1-final-readiness`. This is the development team's own review of the code and configuration in
+Date: 2026-11-27, updated for the GP1 submission on branch `gp1-final-readiness`, and on 2026-11-28 for the GP1 closure on branch `gp1-closure`. This is the development team's own review of the code and configuration in
 this repository. It is **not** an independent audit, a penetration test or a certification. Each finding has its
 status and how it was checked. Where nothing was run, the status says so.
 
@@ -58,16 +58,17 @@ Severity is the team's judgement for this prototype on one machine. It is not a 
 | F10 | The audit trigger stops application UPDATE and DELETE, but the table owner can drop it or TRUNCATE the table | Low | **Accepted**: documented. Separating the owner role from the API's role is recommended for a real installation |
 | F11 | The test network uses fabric-samples defaults: one orderer, one peer per organization, CA registrar passwords from the samples, TLS certificates created by the scripts | High for production, acceptable for the prototype | **Accepted limitation**: not a production network. A real deployment needs its own CAs, changed registrar secrets, several orderers and HSM or protected key storage |
 | F12 | PostgreSQL connections inside `deploy/compose.yml` are not encrypted | Low | **Accepted**: the database is only on an internal Docker network on the same host. Use TLS if the database moves to another host |
-| F13 | `actions/setup-node` was referenced by its tag (`@v4`), not a commit SHA | Low | **Fixed on `gp1-final-readiness`**: every action is pinned by full commit SHA (`actions/checkout` v7.0.1, `actions/setup-node` v7.1.0, `actions/upload-artifact` v7.0.2, all on Node 24). Effective once the pull-request checks pass on GitHub |
+| F13 | `actions/setup-node` was referenced by its tag (`@v4`), not a commit SHA | Low | **Fixed and verified**: every action is pinned by full commit SHA (`actions/checkout` v7.0.1, `actions/setup-node` v7.1.0, `actions/upload-artifact` v7.0.2, all on the Node 24 actions runtime). The pull-request checks passed on GitHub (quality checks #30 and #31, browser QA #26 and #27), with no Node 20 deprecation annotation ([github-runs.md](evidence/gp1-closure-2026-11-28/github-runs.md)) |
 | F14 | A new database on a channel that already has shipments produces ids the chaincode refuses (no data is corrupted; the request fails with 502) | Low | **Documented** (DEPLOYMENT_GUIDE.md §9): use a new channel per installation |
-| F15 | The NFR script exited 0 when a check failed, so the manual Fabric workflow reported success with 30 of 31 checks (a 429 on the sign-in SQL-injection check) | Medium (a security check could fail unnoticed) | **Fixed on `gp1-final-readiness`**: exit code 1 on any failed check, and a 65 s wait for the sign-in rate-limit window. Verified locally and on GitHub (arm64 run, 2026-11-28: 31 of 31) |
-| F16 | `fabric/install.sh` downloads Hyperledger's `install-fabric.sh` from the `main` branch (not pinned) | Low | **Open, GP2**: pin to a tag or commit before using it on a server (ORACLE_CLOUD_READINESS.md §4.2) |
+| F15 | The NFR script exited 0 when a check failed, so the manual Fabric workflow reported success with 30 of 31 checks (a 429 on the sign-in SQL-injection check) | Medium (a security check could fail unnoticed) | **Fixed on `gp1-final-readiness`**: exit code 1 on any failed check, and a 65 s wait for the sign-in rate-limit window. Verified locally, on GitHub arm64 (run 46166121729: 31 of 31) and on GitHub x64 (`fabric.yml` run 46169704428 on `main`: 31 of 31). The closure regression also ran the NFR script with a wrong password and checked that it exits 1 |
+| F16 | `fabric/install.sh` downloads Hyperledger's `install-fabric.sh` from the `main` branch (not pinned) | Low | **Fixed on `gp1-closure`, verified on x86_64**: the upstream helper is no longer run. fabric-samples is pinned to a commit, the release archives to SHA-256s, and the images to digests; a wrong hash stops the install before anything is unpacked ([fabric-install/](evidence/gp1-closure-2026-11-28/fabric-install/README.md)). Still to run on GitHub (x64 and arm64) after the branch is pushed. Limitation: Hyperledger publishes no checksum files, so the hashes are trust on first use |
 | F17 | The chaincode image is based on Node.js 20, which is end-of-life | Medium for a deployment, none for the local prototype | **Deferred to GP2**: move to Node 22 with a verified run (ORACLE_CLOUD_READINESS.md §4.5) |
+| F18 | `fabric/up.sh` removed an existing network (ledger volumes included) without asking, and `fabric/down.sh` did the same. Running it by mistake instead of `start.sh` would delete the ledger | Medium (data loss) | **Fixed and verified**: `up.sh` refuses when network containers or ledger volumes exist, unless the user types `recreate` or passes `--recreate`; in a non-interactive shell it stops with exit 1 and changes nothing. `down.sh` now asks first. Tested on the existing local network |
 
 ## 4. Not done
 
 * No independent review, penetration test or automated web scan (such as OWASP ZAP).
-* No load or denial-of-service testing beyond 20 concurrent requests.
+* No load or denial-of-service testing beyond 20 concurrent requests (50 once the arm64 workflow's extra load step has run).
 * No review of a hosted environment, because none exists.
 * The Fabric test network's own configuration was not hardened (F11).
 
@@ -77,7 +78,7 @@ Severity is the team's judgement for this prototype on one machine. It is not a 
 2. Keep `deploy/production.env` out of the repository, readable only by its owner, and generate every secret with
    `openssl rand -hex 32`.
 3. After every identity renewal, revoke the superseded certificate (F5).
-4. Run the manual Fabric and arm64 workflows and confirm the NFR security checks pass on GitHub (F15). Never open
+4. Run the manual Fabric and arm64 workflows on the release branch and confirm the NFR security checks pass on GitHub (F15, F16). Never open
    PostgreSQL, the Fabric ports, the API's port 4000 or the Docker socket to the internet
    (ORACLE_CLOUD_READINESS.md §7, step 6).
 5. Have someone outside the team review the system before it holds real data.

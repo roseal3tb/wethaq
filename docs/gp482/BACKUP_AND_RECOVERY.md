@@ -81,6 +81,13 @@ network:
 Two earlier drill runs failed and are kept with their causes: a bug in the drill script, then an orderer that was
 not ready after the restart, which led to `wait_for_orderer`.
 
+**Restarting is not re-creating.** Use `./fabric/stop.sh` and `./fabric/start.sh` for routine restarts: they keep
+the ledger. The closure regression of 2026-11-28 checked this: the ledger history of a shipment and the PostgreSQL
+counts were identical before and after, and the Fabric integration tests passed afterwards
+([evidence](evidence/gp1-closure-2026-11-28/regression/README.md)). `./fabric/up.sh` creates a new network and
+deletes the old ledger, so since the GP1 closure it refuses when a network exists, unless you type `recreate` or
+pass `--recreate`. `./fabric/down.sh` now asks first, like `reset.sh`. Take a backup before either.
+
 ## 4. After restoring an older ledger: PostgreSQL is ahead
 
 If the ledger is restored from a backup, PostgreSQL may hold transactions that the ledger no longer has. The API

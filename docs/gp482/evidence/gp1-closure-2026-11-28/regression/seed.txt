@@ -1,0 +1,8 @@
+
+> wethaq-api@0.1.0 seed
+> tsx src/cli/seed.ts --reset
+
+Note: --reset clears PostgreSQL only. Restart the Fabric network to clear the ledger.
+Seeded 4 organizations, 8 users, 60 parts and 180 inventory positions
+Replayed 48 shipments through the fabric ledger (120 transactions)
+Recorded 5 rejected demonstration attempts

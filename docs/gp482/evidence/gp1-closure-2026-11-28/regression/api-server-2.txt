@@ -1,0 +1,17 @@
+
+> wethaq-api@0.1.0 start
+> tsx src/server.ts
+
+Wethaq API listening on http://127.0.0.1:4000/api (ledger: fabric)
+{"time":"2026-11-28T17:51:07.679Z","level":"info","event":"http","requestId":"1e3f9ac1-1b3f-4b2a-8034-3e6e0d18edf1","method":"GET","path":"/health/ready","status":200,"ms":17}
+{"time":"2026-11-28T17:51:08.465Z","level":"info","event":"http","requestId":"5cc70778-4ad4-4f09-b0b6-0484630e2549","method":"POST","path":"/auth/login","status":200,"ms":110}
+{"time":"2026-11-28T17:51:08.544Z","level":"info","event":"http","requestId":"a3e23b86-d0d5-4bb8-8727-c1e200689dd4","method":"POST","path":"/auth/login","status":200,"ms":72}
+{"time":"2026-11-28T17:51:08.619Z","level":"info","event":"http","requestId":"cdcfad7a-1fa5-4c96-a3fb-68231ab88ff4","method":"POST","path":"/auth/login","status":200,"ms":72}
+{"time":"2026-11-28T17:51:08.692Z","level":"info","event":"http","requestId":"b72294ac-cf85-427f-84bf-fd80f6897d13","method":"POST","path":"/auth/login","status":200,"ms":71}
+{"time":"2026-11-28T17:51:08.709Z","level":"info","event":"http","requestId":"f6178180-39af-4ca1-832e-a131e1cfa8ec","method":"GET","path":"/health/ready","status":200,"ms":13}
+{"time":"2026-11-28T17:51:09.266Z","level":"info","event":"http","requestId":"29d33800-0823-49b3-befe-6cbfcb5ef90e","method":"POST","path":"/shipments","status":201,"ms":555}
+{"time":"2026-11-28T17:51:09.360Z","level":"info","event":"http","requestId":"54cdd0f6-f803-4ce5-8a46-7b40d94b3837","method":"GET","path":"/shipments/SHP-2026-0080/verify","status":200,"ms":24}
+{"time":"2026-11-28T17:51:09.902Z","level":"info","event":"http","requestId":"84bfe8aa-1c6e-4af3-8adf-0e093faca465","method":"POST","path":"/shipments/SHP-2026-0080/dispatch","status":422,"ms":539}
+{"time":"2026-11-28T17:51:10.461Z","level":"info","event":"http","requestId":"06e8a650-fb19-45cd-8a54-3a37b36b737f","method":"POST","path":"/shipments/SHP-2026-0080/dispatch","status":200,"ms":547}
+{"time":"2026-11-28T17:51:10.467Z","level":"info","event":"http","requestId":"d0d104fe-53bb-4db0-931a-219304e6ac45","method":"POST","path":"/shipments/SHP-2026-0080/dispatch","status":200,"ms":4}
+{"time":"2026-11-28T17:51:11.043Z","level":"info","event":"http","requestId":"d6315222-e8a0-45d2-bfe7-8cf6002c1632","method":"GET","path":"/admin/sync-status","status":200,"ms":11}

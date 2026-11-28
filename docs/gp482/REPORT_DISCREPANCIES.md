@@ -32,12 +32,12 @@ the wording. Statuses use the labels of [REQUIREMENTS_TRACEABILITY.md](REQUIREME
 | ID | GP481 status | Now | Note |
 | --- | --- | --- | --- |
 | NFR1 usability at four screen sizes | tested | **COMPLETE AND VERIFIED**: 54 demonstration browser tests at 390, 430, 768 and 1440 px | unchanged design |
-| NFR2 accessibility | partly tested | **PARTIALLY COMPLETE**: keyboard and focus tests exist for the menus; no full accessibility audit (for example with axe) was run | still partial; do not claim WCAG conformance |
+| NFR2 accessibility | partly tested | **COMPLETE AND VERIFIED for the four criteria the report names** (keyboard navigation, visible focus, reduced motion, table alternative), with a new test for the table alternative and heading levels. An automated axe check was run; colour contrast below 4.5:1 remains and is documented (B8) | the report can say the NFR2 criteria are met and tested, that an automated check was run, and that contrast is a known issue. Do not claim WCAG conformance; no screen-reader or user test was done |
 | NFR3 transparency of synthetic, simulated and real data | implemented | **COMPLETE AND VERIFIED**: the live ledger tab names Fabric or the local development ledger; analytics answers carry provenance and say the results are precomputed | — |
 | NFR4 CSV exports without formulas | implemented and tested | **COMPLETE AND VERIFIED** (unchanged tests) | — |
 | NFR5 passwords and tokens protected, server authorization | pending | **COMPLETE AND VERIFIED** for the prototype (see [SECURITY_AUDIT.md](SECURITY_AUDIT.md)) | no independent security review; limitations F5 to F13 |
 | NFR6 accepted ledger record cannot be changed | pending | **COMPLETE AND VERIFIED**: a second receipt is refused by the chaincode and earlier records are unchanged; a change made directly in PostgreSQL is detected by verification (NFR checks) | the guarantee comes from Fabric's append-only ledger. PostgreSQL is only a copy, and it can be checked against the ledger |
-| NFR7 performance | not measured | **COMPLETE AND VERIFIED** for one machine: ledger writes 543 ms on average (slowest operation type), reads and sign-in at the 95th percentile 115 ms, 20 concurrent requests committed in 0.26 s (76.2 tx/s) ([NFR report](evidence/completion-2026-11-27/final-run/nfr-report.md)) | the numbers come from the single-host test network. They are not a capacity statement for a deployment |
+| NFR7 performance | not measured | **COMPLETE AND VERIFIED** on the test machines (also on GitHub x64, run 46169704428: 536 ms slowest average write, 127 ms p95 reads). Earlier local figures: ledger writes 543 ms on average (slowest operation type), reads and sign-in at the 95th percentile 115 ms, 20 concurrent requests committed in 0.26 s (76.2 tx/s) ([NFR report](evidence/completion-2026-11-27/final-run/nfr-report.md)) | the numbers come from the single-host test network. They are not a capacity statement for a deployment |
 
 ## 3. Design (§4.3 and §4.4)
 
@@ -58,7 +58,7 @@ the wording. Statuses use the labels of [REQUIREMENTS_TRACEABILITY.md](REQUIREME
 | --- | --- | --- |
 | §5.6 smart-contract testing (planned): each rule with an accepted and a rejected transaction | done. 24 chaincode tests include a rejected case for each of the five rules and accepted workflows. The Fabric integration suite and the browser test repeat this on the real network | **COMPLETE AND VERIFIED** |
 | §5.7 integration testing (planned): 13 routes; real transaction hash; rejections shown; re-run the end-to-end tests against the backend | the API now has 43 documented operations (OpenAPI 0.4.0). The real Fabric transaction id is checked on the peer and in PostgreSQL, and rejections are shown as rejected attempts. Instead of re-running the 54 demonstration tests against the backend, there are 9 live-mode browser tests and one full workflow test on Fabric. The 54 demonstration tests still run in demo mode | **COMPLETE AND VERIFIED**, in a different way than planned |
-| §5.8 user acceptance testing (planned) | not done; no participants | **BLOCKED**: deferred by the project owner; needs the supervisor's plan and participant consent |
+| §5.8 user acceptance testing (planned) | not done; no participants | **DEFERRED TO GP2**, materials prepared but not executed ([UAT_AND_EXPERT_EVALUATION_KIT.md](UAT_AND_EXPERT_EVALUATION_KIT.md)). Needs the supervisor's agreement and participant consent. If this is the final GP482 submission, report it as planned and not done (see §7) |
 | §5.9 performance, security and availability not measured; bundle of 909 KB should be split | measured (NFR 31 of 31; outages of PostgreSQL, orderer and peer handled). The bundle is now 951 KB (274 KB gzipped) and was not split | measurement **COMPLETE AND VERIFIED**; bundle splitting **not done** (frontend change, outside this backend work) |
 
 ## 5. Limitations and future work (§6.5 and §6.6)
@@ -69,9 +69,9 @@ the wording. Statuses use the labels of [REQUIREMENTS_TRACEABILITY.md](REQUIREME
 | §6.6.2 PostgreSQL schema and demonstration data moved into it | **COMPLETE AND VERIFIED** (migrations 001 to 005, seed) |
 | §6.6.3 Fabric test network, chaincode, endorsement by both organizations | **COMPLETE AND VERIFIED** |
 | §6.6.4 dashboard connected to stored forecasts and simulation results, model labeling corrected | **PARTIALLY COMPLETE**: live mode reads the results through the API with checksums. They are stored files on the server, not database rows. The label is corrected: the code and the analytics provenance name scikit-learn's HistGradientBoostingRegressor, and the dashboard's chart calls the illustrative series "Synthetic ML candidate", not XGBoost |
-| §6.6.5 cancellation, returns and partial receipts | **NOT IMPLEMENTED**. A receipt of fewer items than dispatched is accepted and raises a Discrepancy alert, but there is no cancellation, no return and no second receipt for the rest. It needs new chaincode functions, rules and dashboard actions; see [REMAINING_BLOCKERS.md](REMAINING_BLOCKERS.md) |
+| §6.6.5 cancellation, returns and partial receipts | **NOT IMPLEMENTED** (DEFERRED TO GP2 under reading A of §7). A receipt of fewer items than dispatched is accepted and raises a Discrepancy alert, but there is no cancellation, no return and no second receipt for the rest. It needs new chaincode functions, rules and dashboard actions; see [REMAINING_BLOCKERS.md](REMAINING_BLOCKERS.md) |
 | §6.6.6 notification at 390 px covering *Acknowledge*; outdated browser tests | **COMPLETE AND VERIFIED**: the acknowledgement test passes at 390 px and at the other three sizes, and the outdated tests no longer fail (54 of 54 passed) |
-| §6.6.7 evaluation with users; performance against the NFRs | performance **COMPLETE AND VERIFIED**; user evaluation **BLOCKED** (as §5.8) |
+| §6.6.7 evaluation with users; performance against the NFRs | performance **COMPLETE AND VERIFIED**; user evaluation **DEFERRED TO GP2**, materials prepared (as §5.8) |
 | §6.5 "the backend, database and blockchain layers are not implemented" | no longer true |
 | §6.5 "login is a demonstration mechanism" | no longer true in live mode. Demo mode on Vercel keeps its demonstration sign-in |
 | §6.5 the RAF dataset is not from a Saudi military context; Dataset C is synthetic | unchanged and still true |
@@ -90,8 +90,39 @@ These statements would be wrong, given the evidence above:
   (2026-11-28); that is a test, not a deployment, and nothing ran on an Oracle server.
 * Any user acceptance testing or expert evaluation results. None were collected in GP1.
 * "Real-time forecasting". The forecasts are precomputed results of the offline analysis.
-* "All CI passes" without qualification. The pull-request checks pass on GitHub. The manual Fabric workflow ran
-  on GitHub on 2026-11-27 with 7 of 7 integration tests passing, but its NFR report was 30 of 31 (a rate-limit
-  collision that the script did not report as a failure); the fix needs one more GitHub run.
+* "All CI passes" without qualification. The pull-request checks pass on GitHub, and the manual Fabric workflow
+  passed on `main` on 2026-11-28 (run 46169704428: 7 of 7, NFR 31 of 31). The first manual run, on 2026-11-27,
+  showed NFR 30 of 31 hidden by an exit code 0, which was then fixed. The closure branch `gp1-closure` has not run
+  the manual workflows yet.
+* "Meets WCAG 2.2 AA". Only an automated check was run, and it still reports contrast issues.
+* Peak or capacity figures for Oracle. The arm64 figures are at rest, on a GitHub runner.
 * "Security-certified", "penetration-tested" or "WCAG-compliant".
 * "Per-user blockchain signatures". The ledger is signed per organization.
+
+## 7. Phase names (to confirm with the supervisor)
+
+The GP481 report calls the phases **GP481** (Release 1, Semester 1) and **GP482** (Release 2, Semester 2), and lists
+the backend, the Fabric network, cancellation and returns, and user evaluation as GP482 work (§6.6). This
+repository and the closure brief call the current submission **"GP1"** and defer items to **"GP2"**, while the
+documents sit in `docs/gp482/`. No university requirements document was provided to settle it.
+
+* **Reading A.** "GP1" is a milestone inside GP482 (or the course is organized differently from the report), and
+  "GP2" is still to come. The deferrals in REMAINING_BLOCKERS.md stand, with the supervisor's agreement.
+* **Reading B.** "GP1" is the final GP482 submission. Then §6.6 items 5 (cancellation, return, partial receipt)
+  and 7 (evaluation with users) are planned items that were not done. The report should say so plainly and give the
+  reason, rather than call them deferred.
+
+Suggested wording for either reading: "The GP481 report planned cancellation, return and partial-receipt workflows
+and an evaluation with representative users for GP482. They were not carried out in this phase. A short receipt is
+recorded and raises a discrepancy alert, and the evaluation materials are prepared but have not been used."
+
+## 8. Updates from the GP1 closure (2026-11-28)
+
+| Item | Earlier statement in these documents | Now |
+| --- | --- | --- |
+| Manual Fabric workflow on GitHub | NFR 30 of 31; one more run needed | run 46169704428 on `main`: 31 of 31 |
+| Pull-request checks | "reported passing by the owner" | read on GitHub and recorded with run ids |
+| Fabric installer | unpinned upstream helper (finding F16) | pinned and checksum-verified |
+| NFR2 | partially complete | the four named criteria tested; contrast documented |
+| arm64 resource figures | "the whole stack used well under 1 GB" | that is memory at rest after the tests, not peak; peak measurement added but not yet run |
+

@@ -62,8 +62,8 @@ Scripts (all in `fabric/`, all re-use `lib.sh`):
 
 | Script | Purpose |
 |---|---|
-| `setup.sh` / `install.sh` | Download Fabric samples, binaries and images (one time) |
-| `up.sh` | Fresh network with CAs → channel → chaincode → identities → `verify-network.sh` |
+| `setup.sh` / `install.sh` | Download Fabric samples, binaries and images (one time), pinned: samples commit, SHA-256 per archive, image digests |
+| `up.sh [--recreate]` | Fresh network with CAs → channel → chaincode → identities → `verify-network.sh`. Refuses to replace an existing network without confirmation |
 | `deploy-chaincode.sh [version] [sequence]` | Build the chaincode image and deploy it (CCAAS) |
 | `upgrade-chaincode.sh [version]` | Deploy the current source as the next sequence |
 | `enroll-identities.sh` | Register and enroll `wethaq-app` with each org's CA (idempotent) |

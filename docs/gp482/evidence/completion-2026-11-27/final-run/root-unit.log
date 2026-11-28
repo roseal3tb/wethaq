@@ -1,0 +1,13 @@
+
+> wethaq-logistics-dashboard@1.0.0 test
+> vitest run
+
+
+ RUN  v4.1.12 <repo>
+
+
+ Test Files  3 passed (3)
+      Tests  20 passed (20)
+   Start at  20:42:42
+   Duration  376ms (transform 378ms, setup 0ms, import 497ms, tests 88ms, environment 0ms)
+

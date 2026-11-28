@@ -1,0 +1,13 @@
+
+> wethaq-api@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.12 /home/user/roseal3tb/wethaq/wethaq-api
+
+
+ Test Files  10 passed | 1 skipped (11)
+      Tests  109 passed | 7 skipped (116)
+   Start at  17:43:23
+   Duration  11.50s (transform 723ms, setup 0ms, import 2.53s, tests 27.05s, environment 1ms)
+

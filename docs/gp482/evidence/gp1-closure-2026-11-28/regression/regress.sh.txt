@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# Final regression on the candidate commit. Each suite's output goes to its own file; summary.txt collects results.
+set -u
+cd /home/user/roseal3tb/wethaq
+R=/tmp/closure/regression
+S=$R/summary.txt
+export DATABASE_URL=postgres://wethaq:wethaq@127.0.0.1:5432/wethaq LEDGER_MODE=fabric DEMO_PASSWORD=ci-demo-password-1
+export JWT_SECRET=$(openssl rand -hex 32)
+run() { # <name> <command...>
+  local name=$1; shift
+  local s=$(date +%s)
+  "$@" > "$R/$name.txt" 2>&1; local rc=$?
+  printf '%s\texit %s\t%ss\n' "$name" "$rc" "$(( $(date +%s) - s ))" >> "$S"
+  return $rc
+}
+{ echo "commit: $(git rev-parse HEAD)"; echo "date: $(date -u +%FT%TZ)"; echo "node $(node -v), npm $(npm -v), $(docker version --format 'docker {{.Server.Version}}'), $(uname -sm)"; git status --short; } > "$S"
+run npm-ci npm ci --no-audit --no-fund
+run typecheck npm run check
+run build npm run build
+run unit npm test
+run eslint-install npm install --no-save --no-audit --no-fund eslint@9.39.5 @eslint/js@9.39.5 typescript-eslint@8.74.0 eslint-plugin-react-hooks@5.2.0 eslint-plugin-react-refresh@0.4.26 globals@16.5.0 eslint-plugin-prettier@5.5.7 eslint-config-prettier@10.1.9 prettier@3.10.1
+run lint npx eslint .
+git checkout -q -- package-lock.json package.json
+run chaincode sh -c 'cd chaincode/shipment && npm test'
+run api-typecheck sh -c 'cd wethaq-api && npm run check'
+run api sh -c 'cd wethaq-api && LEDGER_MODE=local npm test'
+run audit-root npm audit --omit=dev --audit-level=high
+run audit-api sh -c 'cd wethaq-api && npm audit --omit=dev --audit-level=high'
+run audit-chaincode sh -c 'cd chaincode/shipment && npm audit --omit=dev --audit-level=high'
+run secret-scan sh -c 'found=0; if git ls-files | grep -E "(^|/)\.env$|(^|/)\.env\.[^e]|fabric/identities/|fabric/backups/|_sk$|keystore/|\.tar\.enc$"; then found=1; fi; if git grep -lE -- "-----BEGIN ([A-Z]+ )?PRIVATE KEY-----"; then found=1; fi; if git grep -lE -- "(AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{36}|xox[baprs]-[A-Za-z0-9-]{10,}|sk-[A-Za-z0-9]{32,})" -- ":!*.lock" ":!package-lock.json"; then found=1; fi; echo "found=$found"; exit $found'
+run demo-e2e npx playwright test
+run live-e2e npm run test:live
+# Fabric: pinned installer (idempotent on the existing checkout), fresh network, PostgreSQL, API
+run fabric-install ./fabric/install.sh
+docker rm -f wethaq-pg >/dev/null 2>&1
+su postgres -s /bin/sh -c "/usr/lib/postgresql/16/bin/pg_ctl -D /tmp/pg/data -l /tmp/pg/log start" > "$R/pg-start.txt" 2>&1; sleep 3
+run fabric-up env WETHAQ_SKIP_CC_BUILD=1 WETHAQ_PHASE_TIMINGS=$R/up-phases.tsv ./fabric/up.sh --recreate
+run migrate-twice sh -c 'cd wethaq-api && npm run migrate && npm run migrate'
+run seed sh -c 'cd wethaq-api && npm run seed -- --reset'
+(cd wethaq-api && nohup npm start > $R/api-server.log 2>&1 &)
+for i in $(seq 1 90); do curl -fs -o /dev/null http://127.0.0.1:4000/api/health/ready && break; sleep 1; done
+run fabric-it sh -c 'cd wethaq-api && npm run test:fabric'
+sleep 65
+run nfr sh -c 'cd wethaq-api && npm run nfr'
+# Failure propagation: the same script with a wrong demo password must exit non-zero.
+sleep 65
+DEMO_PASSWORD=wrong-password run nfr-negative sh -c 'cd wethaq-api && npm run nfr'
+# Persistence across a routine stop/start
+./fabric/query.sh history SHP-2026-0001 > $R/history-before.txt 2>&1
+P1=$(psql -tA "$DATABASE_URL" -c "select count(*) from shipments; select coalesce(max(block),0) from ledger_records" | tr '\n' ' ')
+pkill -f "src/server.ts"; sleep 2
+run fabric-stop ./fabric/stop.sh
+run fabric-start ./fabric/start.sh
+./fabric/query.sh history SHP-2026-0001 > $R/history-after.txt 2>&1
+cmp -s $R/history-before.txt $R/history-after.txt && echo "ledger history of SHP-2026-0001 identical after stop/start" >> $R/persistence-ledger.txt || echo "ledger history DIFFERS" >> $R/persistence-ledger.txt
+P2=$(psql -tA "$DATABASE_URL" -c "select count(*) from shipments; select coalesce(max(block),0) from ledger_records" | tr '\n' ' ')
+(cd wethaq-api && nohup npm start > $R/api-server-2.log 2>&1 &)
+for i in $(seq 1 90); do curl -fs -o /dev/null http://127.0.0.1:4000/api/health/ready && break; sleep 1; done
+run consistency-after-restart sh -c 'cd wethaq-api && npm run test:fabric'
+{ echo "before stop: shipments, max block in PostgreSQL = $P1"; echo "after start: $P2"; } > $R/persistence.txt
+pkill -f "src/server.ts"; sleep 2
+run fabric-e2e npx playwright test -c playwright.fabric.config.ts
+run api-docker-build docker build -f wethaq-api/Dockerfile -t wethaq-api:regression .
+echo "done $(date -u +%FT%TZ)" >> "$S"

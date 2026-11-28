@@ -1,0 +1,9 @@
+
+Running 1 test using 1 worker
+
+[WebServer] 5:51:37 PM [vite] http proxy error: /api/auth/me
+[WebServer] Error: connect ECONNREFUSED 127.0.0.1:4000
+[WebServer]     at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1638:16)
+  ✓  1 e2e-fabric/fabric.spec.ts:94:1 › The full workflow runs on Hyperledger Fabric and survives an API restart (26.1s)
+
+  1 passed (28.1s)
