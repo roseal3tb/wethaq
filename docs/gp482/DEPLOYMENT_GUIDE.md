@@ -110,6 +110,18 @@ cd .. && npm run dev:live
 
 Stop in the reverse order; `./fabric/stop.sh` keeps the ledger, `./fabric/reset.sh` deletes it (asks for confirmation).
 
+Initial creation and routine restarts are separate commands, and only the restart commands keep data:
+
+| Purpose | Command | Keeps the ledger, identities, PostgreSQL data |
+| --- | --- | --- |
+| First creation of the network | `./fabric/up.sh` | not applicable (new network). If a network already exists it refuses, asks you to type `recreate`, and exits without changes when not interactive; `--recreate` replaces it |
+| Routine stop and start | `./fabric/stop.sh`, `./fabric/start.sh` | yes |
+| Deployment stack stop and start | `docker compose --env-file production.env stop` / `up -d` (in `deploy/`) | yes (`pgdata`, `caddy-data`, `caddy-config` volumes) |
+| Delete everything | `./fabric/reset.sh` (asks for `reset`), `docker compose down -v` | **no**: use only after `./fabric/backup.sh` and a PostgreSQL dump |
+
+Never use `docker compose down -v` or `./fabric/up.sh --recreate` as a restart: both delete data. `./fabric/down.sh`
+now asks for confirmation like `reset.sh` (it used to delete without asking).
+
 | Endpoint | Meaning |
 | --- | --- |
 | `GET /api/health/live` | the process answers (no dependencies checked) |
