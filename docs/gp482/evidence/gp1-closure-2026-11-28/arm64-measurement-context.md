@@ -31,6 +31,6 @@ The workflow now records peaks and phases instead of one sample:
 - `timings.tsv` from `fabric/up.sh`: time for each network start phase.
 - **Optional `a1_limits` input.** When it is ticked, Docker and the API run inside a systemd slice with `CPUQuota=200%`, `MemoryMax=12G` and no swap. That is 2 CPUs and 12 GB in total, which is the size of the planned A1 instance. The workflow checks that `cpu.max` reads `200000 100000` before it starts.
 
-**Status: IMPLEMENTED BUT NOT VERIFIED.** The workflow passes `actionlint`, and the sampler and summary scripts were tested locally on x86_64. It has not run on GitHub yet, because the branch has not been pushed. The project owner needs to run it twice (once normally, once with `a1_limits` ticked).
+**Status: COMPLETE AND VERIFIED on a GitHub-hosted arm64 runner.** Run 46174686728 (no limit) and run 46174759675 (`a1_limits`) both passed on 28 November 2026. The figures are in [github-runs.md](github-runs.md). Under the limit, WETHAQ peaked at about 531 MiB and about 58 % of one core, and every check passed.
 
 **What the limited run will and will not show.** A 2 CPU / 12 GB limit on a GitHub arm64 runner is still a GitHub runner: the CPU model (Neoverse-N2), disk and network are not those of an Oracle A1 instance (Ampere Altra, Neoverse-N1). It shows whether WETHAQ fits in that amount of CPU and memory. It does not predict the exact timings on Oracle.

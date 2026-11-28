@@ -92,10 +92,10 @@ These statements would be wrong, given the evidence above:
 * "Real-time forecasting". The forecasts are precomputed results of the offline analysis.
 * "All CI passes" without qualification. The pull-request checks pass on GitHub, and the manual Fabric workflow
   passed on `main` on 2026-11-28 (run 46169704428: 7 of 7, NFR 31 of 31). The first manual run, on 2026-11-27,
-  showed NFR 30 of 31 hidden by an exit code 0, which was then fixed. The closure branch `gp1-closure` has not run
-  the manual workflows yet.
+  showed NFR 30 of 31 hidden by an exit code 0, which was then fixed. The closure branch `gp1-closure` passed
+  both manual workflows too (2026-11-28).
 * "Meets WCAG 2.2 AA". Only an automated check was run, and it still reports contrast issues.
-* Peak or capacity figures for Oracle. The arm64 figures are at rest, on a GitHub runner.
+* Peak or capacity figures for Oracle. The arm64 peaks were measured on a GitHub runner, not on Oracle.
 * "Security-certified", "penetration-tested" or "WCAG-compliant".
 * "Per-user blockchain signatures". The ledger is signed per organization.
 
@@ -124,5 +124,5 @@ recorded and raises a discrepancy alert, and the evaluation materials are prepar
 | Pull-request checks | "reported passing by the owner" | read on GitHub and recorded with run ids |
 | Fabric installer | unpinned upstream helper (finding F16) | pinned and checksum-verified |
 | NFR2 | partially complete | the four named criteria tested; contrast documented |
-| arm64 resource figures | "the whole stack used well under 1 GB" | that is memory at rest after the tests, not peak; peak measurement added but not yet run |
+| arm64 resource figures | "the whole stack used well under 1 GB" | that was memory at rest; measured peaks are about 0.34 GB of containers without a limit and about 0.53 GB for everything under a 2 CPU / 12 GB limit, on a GitHub runner |
 

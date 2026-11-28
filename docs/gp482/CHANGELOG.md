@@ -22,6 +22,8 @@
   verification, accessibility before and after, arm64 measurement context, academic requirements check, final
   regression.
 * New `UAT_AND_EXPERT_EVALUATION_KIT.md` (prepared, not executed) and `GP1_FINAL_SIGNOFF.md`.
+* The runs on the branch itself (Fabric #3, arm64 #2 and #3 with the 2 CPU / 12 GB limit) recorded in
+  `github-runs.md`; B17 and B18 now COMPLETE AND VERIFIED.
 * Blockers reassessed with reason, justification, required work, dependencies and acceptance criteria for every
   deferred item; traceability, discrepancies (with the phase-name question), security review, Oracle readiness,
   backup, architecture and test reports updated.

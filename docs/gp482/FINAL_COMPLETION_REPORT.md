@@ -21,10 +21,10 @@ The open items are listed in [REMAINING_BLOCKERS.md](REMAINING_BLOCKERS.md).
 | --- | --- | --- | --- |
 | Fresh `fabric.yml` run on GitHub (x64) | run 46169704428 on `main` | COMPLETE AND VERIFIED: 7 of 7, NFR 31 of 31 | [github-runs.md](evidence/gp1-closure-2026-11-28/github-runs.md) |
 | Pull-request checks and Node 20 warnings | read on GitHub, not taken from a report | COMPLETE AND VERIFIED: all passed, no Node 20 deprecation annotation | same |
-| Fabric installer | pinned commit, SHA-256 per archive, image digests; upstream helper no longer run | COMPLETE AND VERIFIED on x86_64; on GitHub not yet run | [fabric-install/](evidence/gp1-closure-2026-11-28/fabric-install/README.md) |
+| Fabric installer | pinned commit, SHA-256 per archive, image digests; upstream helper no longer run | COMPLETE AND VERIFIED (local, GitHub x64 run 46174623807, arm64) | [fabric-install/](evidence/gp1-closure-2026-11-28/fabric-install/README.md) |
 | Accidental network replacement | `up.sh` asks or needs `--recreate`; `down.sh` asks | COMPLETE AND VERIFIED | regression `persistence.txt`; DEPLOYMENT_GUIDE.md §4 |
 | Accessibility | heading order fixed with no visual change; NFR2 table-alternative test | NFR2 criteria COMPLETE AND VERIFIED; contrast documented (B8) | [accessibility/](evidence/gp1-closure-2026-11-28/accessibility/README.md) |
-| arm64 measurements | peaks by phase, storage, network start phases, optional 2 CPU / 12 GB limit | IMPLEMENTED BUT NOT VERIFIED (needs a run) | [arm64-measurement-context.md](evidence/gp1-closure-2026-11-28/arm64-measurement-context.md) |
+| arm64 measurements | peaks by phase, storage, network start phases, optional 2 CPU / 12 GB limit | COMPLETE AND VERIFIED on GitHub arm64 (runs 46174686728, 46174759675); not Oracle hardware | [arm64-measurement-context.md](evidence/gp1-closure-2026-11-28/arm64-measurement-context.md) |
 | Academic requirements | FR1–FR12 and NFR1–NFR7 compared with the GP481 report; phase names questioned | COMPLETE (no university requirements document was available) | [academic-requirements-verification.md](evidence/gp1-closure-2026-11-28/academic-requirements-verification.md) |
 | User and expert evaluation | kit prepared | prepared, **not executed** | [UAT_AND_EXPERT_EVALUATION_KIT.md](UAT_AND_EXPERT_EVALUATION_KIT.md) |
 | Final regression | every suite, at `d0835da` | COMPLETE AND VERIFIED (API image build blocked in this sandbox only) | [regression/](evidence/gp1-closure-2026-11-28/regression/README.md) |

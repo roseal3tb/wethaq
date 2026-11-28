@@ -40,6 +40,7 @@ Image digests are multi-architecture index digests, so the same digest works on 
 | Second run on the same folder | fabric-samples left as it is (already at the pinned commit), archives downloaded and verified again, images pulled again by the same digests | `clean-install.txt` |
 | Wrong expected hash | Stopped with "checksum mismatch … nothing was installed", exit code 1, nothing unpacked | `tamper-test.txt` |
 | Final regression (on the existing checkout) | exit 0 | `../regression/fabric-install.txt` |
-| `fabric.yml` and `oracle-arm64-readiness.yml` on GitHub with this script | **not run yet**: the branch has to be pushed first | — |
+| `fabric.yml` on GitHub x64 (run 46174623807) | samples cloned at the pinned commit, both archives SHA-256 verified, all six images pulled from ghcr.io by digest; 7 of 7, NFR 31 of 31 | `../github-runs.md` |
+| `oracle-arm64-readiness.yml` on GitHub arm64 (runs 46174686728 and 46174759675) | installer step exit 0, network and every check passed | `../github-runs.md` |
 
-On the test machine, ghcr.io's download host is blocked by the network proxy, so every image fell back to Docker Hub. The log shows this as "not available from this registry, trying the next one", followed by the Docker Hub pull of the same release. That tested the fallback path. GitHub-hosted runners can reach ghcr.io, so the GitHub runs that are still to be done will test the ghcr.io path with this script.
+On the test machine, ghcr.io's download host is blocked by the network proxy, so every image fell back to Docker Hub. The log shows this as "not available from this registry, trying the next one", followed by the Docker Hub pull of the same release. That tested the fallback path. The ghcr.io path was then tested on GitHub: in `fabric.yml` run 46174623807 every image came from ghcr.io.

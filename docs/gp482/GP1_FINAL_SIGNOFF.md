@@ -3,8 +3,8 @@
 Date: 28 November 2026. Branch `gp1-closure`, from `main` at `3347560`. Prepared for the project owner. This is a
 technical sign-off by the development work, not a university approval.
 
-**Conclusion: READY WITH DOCUMENTED LIMITATIONS**, on two conditions: the project owner runs the two GitHub
-workflows on this branch (§18), and the supervisor confirms the phase names (§3). If the supervisor says this is the
+**Conclusion: READY WITH DOCUMENTED LIMITATIONS**, on one condition: the supervisor confirms the phase names (§3).
+The GitHub workflows have run on this branch and passed (§5, §8). If the supervisor says this is the
 final GP482 submission, the conclusion still holds, but cancellation and returns (B5) and the user evaluation (B9)
 must be reported as planned items that were not done, not as deferred ones.
 
@@ -22,7 +22,7 @@ changed. Nothing was deployed, bought or activated.
 | Item | Value |
 | --- | --- |
 | Repository | `roseal3tb/wethaq` (public) |
-| Branch | `gp1-closure`, five commits on top of `main` at `3347560` (four code commits and one documentation commit) |
+| Branch | `gp1-closure` (pull request #19): four code commits and two documentation commits on top of `main` at `3347560` |
 | Code commit tested by the final regression | `d0835da` (later commits change documentation and evidence only) |
 | Public demonstration | <https://wethaqksu.vercel.app>, Demo Mode, unchanged, **not connected to any blockchain network** |
 | Submission package | `wethaq-gp1-submission.zip` with `wethaq-gp1-submission.zip.sha256`, built with `git archive` from the branch (§17) |
@@ -41,10 +41,10 @@ applies.**
 
 | Area | Change | Status |
 | --- | --- | --- |
-| Fabric installer | pinned commit, SHA-256 per archive, image digests; no unpinned upstream script | COMPLETE AND VERIFIED on x86_64 |
+| Fabric installer | pinned commit, SHA-256 per archive, image digests; no unpinned upstream script | COMPLETE AND VERIFIED (local, GitHub x64 and arm64) |
 | Network safety | `up.sh` and `down.sh` no longer delete an existing ledger without confirmation | COMPLETE AND VERIFIED |
 | Accessibility | heading order fixed without any visual change; NFR2 test added | COMPLETE AND VERIFIED |
-| arm64 workflow | peaks by phase, storage, extra load, optional 2 CPU / 12 GB limit | IMPLEMENTED BUT NOT VERIFIED |
+| arm64 workflow | peaks by phase, storage, extra load, optional 2 CPU / 12 GB limit | COMPLETE AND VERIFIED on GitHub arm64 |
 | Evaluation materials | UAT and expert kit | prepared, not executed |
 | Verification | GitHub runs read and recorded, fresh `fabric.yml`, final regression | COMPLETE AND VERIFIED |
 | Documentation | blockers reassessed, every status document updated, new evidence folder | COMPLETE |
@@ -59,6 +59,10 @@ Read on GitHub on 28 November 2026 ([github-runs.md](evidence/gp1-closure-2026-1
 fixed). Pull request #18: quality checks #31 and browser QA #27 passed. Unit 20, API 109 passed and 7 skipped,
 chaincode 24, in each run. **No Node 20 deprecation annotation** in any of them. The actions run on the Node 24
 actions runtime; that does not change the API's Node 22 or the chaincode's Node 20.
+
+On this branch (pull request #19, commit 03666f0): quality checks #32 and browser QA #28 passed; Fabric integration
+#3 (run 46174623807) passed with 7 of 7 and NFR 31 of 31; arm64 runs 46174686728 and 46174759675 passed
+([github-runs.md](evidence/gp1-closure-2026-11-28/github-runs.md)).
 
 ## 6. Fabric x64 verification
 
@@ -83,7 +87,10 @@ WETHAQ passed natively on a GitHub-hosted arm64 runner (run 46166121729, Neovers
 container was `linux/arm64`, NFR 31 of 31, with no emulation. The memory figures from that run (about 330 MiB of
 containers and about 185 MB for the API) are **one sample at rest after the tests, not peaks**, on GitHub hardware,
 not Oracle hardware ([arm64-measurement-context.md](evidence/gp1-closure-2026-11-28/arm64-measurement-context.md)).
-The workflow can now record peaks and run limited to 2 CPUs and 12 GB, but **that has not run yet**. The planned
+The workflow now records peaks and can run limited to 2 CPUs and 12 GB. **Run 46174759675 did so and passed
+every check**, including 30 workflow runs and 50 concurrent requests: WETHAQ peaked at about 531 MiB and 58 % of one
+core, and the 50-request burst took 0.69 s (72.8 tx/s). This is still a GitHub runner, not Oracle hardware, so it shows
+that WETHAQ fits in that size, not how fast it will be on Oracle. The planned
 Oracle configuration (VM.Standard.A1.Flex, 2 OCPU, 12 GB, Always Free) was re-checked against Oracle's pages on 28
 November 2026. Actual cloud deployment is intentionally deferred until GP2. WETHAQ has not been deployed to Oracle
 Cloud during GP1.
@@ -127,8 +134,8 @@ items 5 and 7 are not done
 
 | Status | Items |
 | --- | --- |
-| COMPLETE AND VERIFIED | B1, B4, B13, B14, B15, B19; B17 on x86_64; B8 for the NFR2 criteria |
-| IMPLEMENTED BUT NOT VERIFIED | B3 (live revocation), B12 (macOS, WSL 2), B17 on GitHub, B18 (peaks, 2 CPU / 12 GB) |
+| COMPLETE AND VERIFIED | B1, B4, B13, B14, B15, B17, B18, B19; B8 for the NFR2 criteria |
+| IMPLEMENTED BUT NOT VERIFIED | B3 (live revocation), B12 (macOS, WSL 2) |
 | PARTIALLY COMPLETE | B8 colour contrast |
 | BLOCKED | B10 (independent security review); B11 in this sandbox only |
 | DEFERRED TO GP2 | B2 (Oracle deployment), B5 (cancellation, return, partial receipt), B7 (bundle), B9 (UAT and expert evaluation), B16 (chaincode Node 22) |
@@ -175,10 +182,8 @@ unit tests, `npm ci` and tests in `wethaq-api`, and chaincode tests. The results
 
 ## 18. What the project owner must do
 
-1. Push `gp1-closure` and open the pull request (commands supplied with the package).
-2. Run *Fabric integration (manual)* (`fabric.yml`) on `gp1-closure`.
-3. Run *Oracle Cloud ARM64 Readiness* on `gp1-closure` twice: once with `a1_limits` unticked, once ticked. Download
-   both artifacts.
-4. Check that the pull-request checks pass, then merge the pull request. Do not merge before that.
-5. Ask the supervisor which reading of the phase names applies (§3), and whether the UAT kit can be used.
-6. Optional, with explicit approval only: revoke the superseded live `wethaq-app` certificate (B3).
+1. Done: `gp1-closure` pushed, pull request #19 opened, and the three manual runs passed on it.
+2. Push the last documentation commit (it records those runs), check that the pull-request checks pass again, then
+   merge pull request #19.
+3. Ask the supervisor which reading of the phase names applies (§3), and whether the UAT kit can be used.
+4. Optional, with explicit approval only: revoke the superseded live `wethaq-app` certificate (B3).
