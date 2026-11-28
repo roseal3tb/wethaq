@@ -1,5 +1,5 @@
 import { Context, Contract, Info, Returns, Transaction } from 'fabric-contract-api';
-import { applyOperation, checkRules, compareShipment, NEXT_STATUS, type LedgerOperation, type LedgerRecord, type LedgerShipment } from './rules';
+import { applyOperation, checkRules, compareShipment, LEDGER_OPERATIONS, NEXT_STATUS, recordQuantity, type LedgerOperation, type LedgerRecord, type LedgerShipment } from './rules';
 
 const RECORD = 'record';
 /** Index from a transaction id to its record (composite key tx~txId), for ReadTransactionRecord. */
@@ -80,6 +80,21 @@ export class ShipmentContract extends Contract {
   @Returns('string')
   public async Receive(ctx: Context, shipmentId: string, qty: string): Promise<string> { return this.operate(ctx, 'receive', shipmentId, Number(qty)); }
 
+  /** Records part of a receipt; the shipment stays open until the rest is received (version 2). */
+  @Transaction()
+  @Returns('string')
+  public async ReceivePartial(ctx: Context, shipmentId: string, qty: string): Promise<string> { return this.operate(ctx, 'receivePartial', shipmentId, Number(qty)); }
+
+  /** Cancels a shipment that is not yet in transit. Submitted by the issuing organization (version 2). */
+  @Transaction()
+  @Returns('string')
+  public async Cancel(ctx: Context, shipmentId: string): Promise<string> { return this.operate(ctx, 'cancel', shipmentId, 0); }
+
+  /** Returns received items to the issuing organization. Submitted by the receiving organization (version 2). */
+  @Transaction()
+  @Returns('string')
+  public async Return(ctx: Context, shipmentId: string, qty: string): Promise<string> { return this.operate(ctx, 'return', shipmentId, Number(qty)); }
+
   private async operate(ctx: Context, operation: LedgerOperation, shipmentId: string, qty: number): Promise<string> {
     if (typeof shipmentId !== 'string' || !ShipmentContract.SHIPMENT_ID.test(shipmentId)) throw new Error('Invalid shipment identifier');
     const msp = ctx.clientIdentity.getMSPID();
@@ -88,7 +103,7 @@ export class ShipmentContract extends Contract {
     const check = checkRules(operation, current, qty, msp);
     const record: LedgerRecord = {
       docType: 'record', txId, shipmentId, partId: current?.partId ?? 'N/A', operation,
-      quantity: operation === 'transit' ? (current?.dispatchedQty ?? 0) : (Number.isFinite(qty) ? qty : 0), org: msp,
+      quantity: recordQuantity(operation, current, qty), org: msp,
       fromStatus: current?.status, toStatus: check.passed ? NEXT_STATUS[operation] : undefined,
       status: check.passed ? 'Committed' : 'Rejected', failedRule: check.failedRule, reason: check.reason, timestamp
     };
@@ -123,14 +138,14 @@ export class ShipmentContract extends Contract {
 
   /**
    * Transaction records, optionally for one shipment and filtered by operation and outcome, one page at a time.
-   * Arguments: shipmentId ('' for all), operation ('' or request/dispatch/transit/receive),
+   * Arguments: shipmentId ('' for all), operation ('' or request, dispatch, transit, receive, receivePartial, cancel, return),
    * status ('' or Committed/Rejected), pageSize (1-200), bookmark ('' for the first page).
    */
   @Transaction(false)
   @Returns('string')
   public async QueryTransactionRecords(ctx: Context, shipmentId: string, operation: string, status: string, pageSize: string, bookmark: string): Promise<string> {
     if (shipmentId && !ShipmentContract.SHIPMENT_ID.test(shipmentId)) throw new Error('Invalid shipment identifier');
-    if (operation && !['request', 'dispatch', 'transit', 'receive'].includes(operation)) throw new Error('Invalid operation');
+    if (operation && operation !== 'request' && !LEDGER_OPERATIONS.includes(operation as LedgerOperation)) throw new Error('Invalid operation');
     if (status && !['Committed', 'Rejected'].includes(status)) throw new Error('Invalid status');
     const size = Number(pageSize || 50);
     if (!Number.isInteger(size) || size < 1 || size > MAX_PAGE) throw new Error(`pageSize must be between 1 and ${MAX_PAGE}`);
@@ -147,7 +162,7 @@ export class ShipmentContract extends Contract {
 
   /**
    * Compares an off-chain copy of a shipment with the ledger state, on the peer.
-   * expected: JSON with any of partId, requestedQty, dispatchedQty, receivedQty, status, lastTxId.
+   * expected: JSON with any of partId, requestedQty, dispatchedQty, receivedQty, returnedQty, status, lastTxId.
    * Returns { found, match, differences[], ledger }. Read-only: it never changes the ledger.
    */
   @Transaction(false)
